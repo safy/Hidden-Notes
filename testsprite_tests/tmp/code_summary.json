@@ -1,0 +1,108 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "Tailwind CSS",
+    "Chrome Extension API",
+    "Tiptap",
+    "shadcn/ui",
+    "CRXJS"
+  ],
+  "features": [
+    {
+      "name": "Chrome Extension Background",
+      "description": "Service worker for Chrome extension with side panel management",
+      "files": ["src/background/index.ts"]
+    },
+    {
+      "name": "Main Application",
+      "description": "Main React application for side panel with navigation and state management",
+      "files": ["src/sidepanel/App.tsx", "src/sidepanel/index.tsx", "src/sidepanel/index.html"]
+    },
+    {
+      "name": "Rich Text Editor",
+      "description": "Tiptap-based rich text editor with full formatting capabilities",
+      "files": ["src/components/TiptapEditor/TiptapEditor.tsx", "src/components/TiptapEditor/Toolbar.tsx", "src/components/TiptapEditor/index.ts"]
+    },
+    {
+      "name": "Editor Area",
+      "description": "Main editor container component that integrates Tiptap editor",
+      "files": ["src/components/Editor/EditorArea.tsx", "src/components/Editor/index.ts"]
+    },
+    {
+      "name": "Sidebar Navigation",
+      "description": "Notes list sidebar with drag & drop reordering and search functionality",
+      "files": ["src/components/Sidebar/Sidebar.tsx", "src/components/Sidebar/NoteListItem.tsx", "src/components/Sidebar/index.ts"]
+    },
+    {
+      "name": "Note View",
+      "description": "Full-screen note editing view with title editing capabilities",
+      "files": ["src/components/NoteView/NoteView.tsx", "src/components/NoteView/index.ts"]
+    },
+    {
+      "name": "Search Functionality",
+      "description": "Collapsible search dropdown with real-time filtering",
+      "files": ["src/components/Search/SearchDropdown.tsx", "src/components/Search/index.ts"]
+    },
+    {
+      "name": "Color Picker",
+      "description": "Note color selection component integrated with dropdown menu",
+      "files": ["src/components/ColorPicker/ColorPicker.tsx", "src/components/ColorPicker/index.ts"]
+    },
+    {
+      "name": "UI Components",
+      "description": "shadcn/ui component library implementation",
+      "files": [
+        "src/components/ui/button.tsx",
+        "src/components/ui/card.tsx",
+        "src/components/ui/dialog.tsx",
+        "src/components/ui/dropdown-menu.tsx",
+        "src/components/ui/input.tsx",
+        "src/components/ui/separator.tsx",
+        "src/components/ui/toast.tsx",
+        "src/components/ui/toaster.tsx"
+      ]
+    },
+    {
+      "name": "Toast Notifications",
+      "description": "Toast notification system with auto-dismiss functionality",
+      "files": ["src/hooks/use-toast.ts"]
+    },
+    {
+      "name": "Utilities",
+      "description": "Utility functions for class name merging and other helpers",
+      "files": ["src/lib/utils.ts"]
+    },
+    {
+      "name": "Type Definitions",
+      "description": "TypeScript type definitions for notes and other data structures",
+      "files": ["src/types/note.ts"]
+    },
+    {
+      "name": "Global Styles",
+      "description": "Global CSS styles and Tailwind configuration",
+      "files": ["src/styles/globals.css"]
+    },
+    {
+      "name": "Chrome Extension Manifest",
+      "description": "Chrome extension configuration and permissions",
+      "files": ["public/manifest.json"]
+    },
+    {
+      "name": "Build Configuration",
+      "description": "Vite build configuration with CRXJS plugin for Chrome extension",
+      "files": ["vite.config.ts", "tailwind.config.js", "tsconfig.json", "components.json"]
+    },
+    {
+      "name": "Icon Generation",
+      "description": "Script for generating placeholder extension icons",
+      "files": ["scripts/generate-icons.js", "public/icons/icon-16.png", "public/icons/icon-48.png", "public/icons/icon-128.png"]
+    }
+  ]
+}
+
+
+
+
+
