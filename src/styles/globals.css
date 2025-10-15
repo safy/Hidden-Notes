@@ -141,6 +141,18 @@
   margin: 0.5em 0;
 }
 
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  margin: 0.25em 0;
+}
+
 .ProseMirror ul[data-type='taskList'] {
   list-style: none;
   padding-left: 0;
@@ -202,6 +214,69 @@
 
 .ProseMirror a:hover {
   text-decoration: none;
+}
+
+/* Drag & Drop Styles */
+.ProseMirror.drag-over {
+  border: 2px dashed hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.05);
+}
+
+.ProseMirror.drag-over::after {
+  content: 'Перетащите изображение сюда';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: hsl(var(--primary));
+  font-weight: 600;
+  font-size: 1.2em;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Image Resize Styles */
+.image-resize-wrapper {
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+
+.image-resizer {
+  position: relative;
+  display: inline-block;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.image-resizer.selected {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.resize-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: hsl(var(--primary));
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: se-resize;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
 }
 
 

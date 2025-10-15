@@ -12,12 +12,12 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import { ImageResize } from './extensions/ImageResize';
 
 interface TiptapEditorProps {
   content?: string;
@@ -56,7 +56,9 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Image.configure({
+      ImageResize.configure({
+        inline: false,
+        allowBase64: true,
         HTMLAttributes: {
           class: 'rounded-lg max-w-full h-auto',
         },
@@ -94,6 +96,116 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   });
 
   // onCreate уже обрабатывает уведомление о готовности editor
+
+  // Обработчик кликов по ссылкам
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleClick = (event: Event) => {
+      const target = event.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link) {
+        event.preventDefault();
+        const href = link.getAttribute('href');
+        
+        if (href) {
+          // Проверяем, что это валидный URL
+          try {
+            const url = new URL(href);
+            // Открываем ссылку в новой вкладке
+            window.open(url.toString(), '_blank', 'noopener,noreferrer');
+          } catch (error) {
+            // Если URL невалидный, пытаемся открыть как относительный
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+        }
+      }
+    };
+
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener('click', handleClick);
+
+    return () => {
+      editorElement.removeEventListener('click', handleClick);
+    };
+  }, [editor]);
+
+  // Обработчик drag & drop для изображений
+  useEffect(() => {
+    if (!editor) return;
+
+    const editorElement = editor.view.dom;
+
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault();
+      
+      // Проверяем, есть ли файлы изображений
+      const hasImages = Array.from(event.dataTransfer?.items || []).some(
+        item => item.kind === 'file' && item.type.startsWith('image/')
+      );
+      
+      if (hasImages) {
+        event.dataTransfer!.dropEffect = 'copy';
+        editorElement.classList.add('drag-over');
+      }
+    };
+
+    const handleDragLeave = (event: DragEvent) => {
+      // Проверяем, что мы действительно покидаем область редактора
+      if (!editorElement.contains(event.relatedTarget as Node)) {
+        editorElement.classList.remove('drag-over');
+      }
+    };
+
+    const handleDrop = (event: DragEvent) => {
+      event.preventDefault();
+      editorElement.classList.remove('drag-over');
+      
+      const files = Array.from(event.dataTransfer?.files || []);
+      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+      
+      if (imageFiles.length === 0) return;
+
+      // Берем первое изображение
+      const imageFile = imageFiles[0];
+      
+      if (!imageFile) return;
+      
+      // Создаем FileReader для чтения файла
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        
+        if (imageUrl) {
+          // Вставляем изображение
+          editor.chain().focus().setImage({ 
+            src: imageUrl, 
+            alt: imageFile.name || 'Вставленное изображение'
+          }).run();
+        }
+      };
+      
+      reader.onerror = () => {
+        console.error('Ошибка чтения файла изображения');
+      };
+      
+      // Читаем файл как data URL
+      reader.readAsDataURL(imageFile);
+    };
+
+    // Добавляем обработчики событий
+    editorElement.addEventListener('dragover', handleDragOver);
+    editorElement.addEventListener('dragleave', handleDragLeave);
+    editorElement.addEventListener('drop', handleDrop);
+
+    return () => {
+      editorElement.removeEventListener('dragover', handleDragOver);
+      editorElement.removeEventListener('dragleave', handleDragLeave);
+      editorElement.removeEventListener('drop', handleDrop);
+    };
+  }, [editor]);
 
   // Обновляем контент при изменении props
   useEffect(() => {

@@ -28,6 +28,7 @@ import {
   AlignRight,
   AlignJustify,
   Link,
+  Link2Off,
   Image,
   Table,
   Undo,
@@ -44,7 +45,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   const addImage = () => {
     const url = window.prompt('Введите URL изображения:');
     if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
+      editor.chain().focus().setImage({ src: url, alt: 'Вставленное изображение' }).run();
     }
   };
 
@@ -53,6 +54,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
     if (url) {
       editor.chain().focus().setLink({ href: url }).run();
     }
+  };
+
+  const removeLink = () => {
+    editor.chain().focus().unsetLink().run();
   };
 
   const addTable = () => {
@@ -250,6 +255,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
           title="Добавить ссылку"
         >
           <Link className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={editor.isActive('link') ? 'default' : 'ghost'}
+          size="icon"
+          onClick={removeLink}
+          disabled={!editor.isActive('link')}
+          title="Удалить ссылку"
+        >
+          <Link2Off className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
