@@ -11,12 +11,120 @@
 
 ### В работе
 - Phase 1, Задача 1.5: Background Service Worker
+- Доработка Playwright E2E тестов (6/10 тестов проходят)
 
 ### Планируется
 - Phase 2: Core Editor - Интеграция Tiptap
 - Реализация note storage и management
-- Настройка E2E тестов с Playwright
 - Оптимизация bundle size
+- Исправление оставшихся 4 падающих тестов
+
+---
+
+## [2025-10-15] - Добавление Playwright E2E тестов ✅
+
+### Добавлено
+
+#### Playwright тестирование
+
+- ✅ **tests/editor.spec.ts** - E2E тесты для Chrome Extension:
+  - 10 тестов покрывающих основной функционал
+  - ✅ 6 тестов успешно проходят:
+    - Загрузка расширения
+    - Открытие Side Panel
+    - Работа toolbar (Bold/Italic кнопки)
+    - Форматирование Bold текста
+    - Создание заголовков H1
+    - Создание маркированных списков
+  - ⚠️ 4 теста требуют доработки (проблемы с context между тестами):
+    - Отображение интерфейса приложения
+    - Ввод текста в редактор
+    - Форматирование Italic
+    - Undo/Redo функциональность
+
+- ✅ **playwright.config.ts** - Конфигурация для тестирования расширений:
+  - Поддержка Chrome Extension Manifest V3
+  - Настройка для работы с service worker
+  - Конфигурация headless и non-headless режимов
+
+- ✅ **.gitignore** - Исключение временных файлов тестирования
+
+### Технические решения
+
+#### Playwright + Chrome Extensions
+
+**Проблемы и решения**:
+
+1. **`__dirname` не работает в ES modules** ✅
+   - Решение: Добавлен импорт `fileURLToPath` и `path.dirname()`
+   - Код: `const __filename = fileURLToPath(import.meta.url); const __dirname = path.dirname(__filename);`
+
+2. **Невозможность открыть `chrome-extension://` URLs напрямую** ✅
+   - Решение: Использование `chrome.tabs.create()` через service worker context
+   - Helper функция `openSidePanel()` создаёт вкладку через evaluate
+
+3. **Фокус остаётся на пустой вкладке** ✅
+   - Решение: Установка `active: true` при создании вкладки + `page.bringToFront()`
+   - Закрытие пустых `about:blank` вкладок после открытия приложения
+
+4. **Редактор не появляется в тестах** ✅
+   - Проблема: Side Panel открывается, но заметка не выбрана
+   - Решение: Helper функция `createNewNote()` которая кликает на кнопку "+"
+
+5. **Селекторы кнопок не работают** ✅
+   - Проблема: Искали `title="Bold"`, но в коде `title="Жирный"`
+   - Решение: Обновлены селекторы на русские названия
+
+#### Helper функции
+
+```typescript
+// Открытие Side Panel через service worker
+async function openSidePanel() {
+  const serviceWorker = await getServiceWorker();
+  const pagePromise = context.waitForEvent('page');
+  await serviceWorker.evaluate(url => chrome.tabs.create({ url, active: true }), sidePanelUrl);
+  const page = await pagePromise;
+  await closeBlan kTabs();
+  return page;
+}
+
+// Создание новой заметки
+async function createNewNote(page) {
+  await page.locator('button').first().click(); // Кнопка "+"
+  await page.waitForTimeout(2000);
+  return page.locator('.ProseMirror').first();
+}
+```
+
+### Известные проблемы
+
+⚠️ **Context закрывается между некоторыми тестами**
+- Причина: Service worker становится недоступен после закрытия страниц
+- Влияние: 4 теста падают с ошибкой "Target page, context or browser has been closed"
+- Решение: Требуется рефакторинг управления контекстом браузера
+
+### Статистика
+
+| Метрика | Значение |
+|---------|----------|
+| Тесты всего | 10 |
+| Тесты проходят | 6 (60%) |
+| Тесты падают | 4 (40%) |
+| Покрытие функционала | ~60% |
+| Время выполнения | ~1 минута |
+
+### Git
+
+- ✅ Инициализирован git репозиторий
+- ✅ Создан первый коммит: `feat(tests): add Playwright E2E tests for Chrome Extension`
+- ✅ Добавлен .gitignore для исключения временных файлов
+
+### Следующие шаги
+
+1. Исправить проблему с context между тестами
+2. Добиться 10/10 проходящих тестов
+3. Добавить тесты для HiddenText функциональности
+4. Настроить CI/CD с автоматическим запуском тестов
 
 ---
 
