@@ -50,10 +50,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   };
 
   const addLink = () => {
-    const url = window.prompt('Введите URL ссылки:');
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
+    // Если текст не выделен, выделяем слово под курсором
+    if (editor.state.selection.empty) {
+      editor.chain().focus().selectTextblockStart().run();
     }
+    // BubbleMenu автоматически появится при выделении
   };
 
   const removeLink = () => {

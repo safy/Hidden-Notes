@@ -18,6 +18,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { ImageResize } from './extensions/ImageResize';
+import { LinkBubbleMenu } from './LinkBubbleMenu';
 
 interface TiptapEditorProps {
   content?: string;
@@ -231,6 +232,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   return (
     <div className="tiptap-editor">
+      {editor && <LinkBubbleMenu editor={editor} />}
       <EditorContent editor={editor} />
     </div>
   );
