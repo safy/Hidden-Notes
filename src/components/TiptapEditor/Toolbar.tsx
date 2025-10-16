@@ -10,6 +10,11 @@ import { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Bold,
   Italic,
   Underline,
@@ -32,6 +37,7 @@ import {
   Table,
   Undo,
   Redo,
+  Highlighter,
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -40,6 +46,23 @@ interface ToolbarProps {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   if (!editor) return null;
+
+  // Цвета для выделения текста
+  const highlightColors = [
+    { color: '#fef3c7', label: 'Желтый' },      // amber-100
+    { color: '#d1fae5', label: 'Зеленый' },     // emerald-100
+    { color: '#fecdd3', label: 'Розовый' },     // rose-100
+    { color: '#ddd6fe', label: 'Фиолетовый' },  // violet-100
+    { color: '#bfdbfe', label: 'Синий' },       // blue-100
+  ];
+
+  const setHighlight = (color: string) => {
+    editor.chain().focus().setHighlight({ color }).run();
+  };
+
+  const removeHighlight = () => {
+    editor.chain().focus().unsetHighlight().run();
+  };
 
   const addImage = () => {
     const url = window.prompt('Введите URL изображения:');
@@ -126,6 +149,42 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
         >
           <Code className="h-4 w-4" />
         </Button>
+
+        {/* Highlight Color Picker */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={editor.isActive('highlight') ? 'default' : 'ghost'}
+              size="icon"
+              title="Выделить текст"
+            >
+              <Highlighter className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-auto p-2">
+            <div className="flex gap-1">
+              {highlightColors.map(({ color, label }) => (
+                <button
+                  key={color}
+                  onClick={() => setHighlight(color)}
+                  className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors"
+                  style={{ backgroundColor: color }}
+                  title={label}
+                  aria-label={`Выделить ${label}`}
+                />
+              ))}
+              {/* Кнопка для удаления выделения */}
+              <button
+                onClick={removeHighlight}
+                className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors flex items-center justify-center bg-white"
+                title="Убрать выделение"
+                aria-label="Убрать выделение"
+              >
+                <span className="text-xs text-gray-600">✕</span>
+              </button>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Separator orientation="vertical" className="h-6" />
 

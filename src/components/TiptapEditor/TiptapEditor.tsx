@@ -10,6 +10,7 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -53,6 +54,9 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       Underline,
       Color.configure({
         types: [TextStyle.name],
+      }),
+      Highlight.configure({
+        multicolor: true,
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
