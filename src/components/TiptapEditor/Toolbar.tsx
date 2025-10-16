@@ -28,7 +28,6 @@ import {
   AlignRight,
   AlignJustify,
   Link,
-  Link2Off,
   Image,
   Table,
   Undo,
@@ -55,10 +54,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       editor.chain().focus().selectTextblockStart().run();
     }
     // BubbleMenu автоматически появится при выделении
-  };
-
-  const removeLink = () => {
-    editor.chain().focus().unsetLink().run();
   };
 
   const addTable = () => {
@@ -256,15 +251,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
           title="Добавить ссылку"
         >
           <Link className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive('link') ? 'default' : 'ghost'}
-          size="icon"
-          onClick={removeLink}
-          disabled={!editor.isActive('link')}
-          title="Удалить ссылку"
-        >
-          <Link2Off className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
