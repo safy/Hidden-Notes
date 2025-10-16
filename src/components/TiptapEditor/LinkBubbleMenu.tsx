@@ -5,7 +5,7 @@
  * @created: 2025-10-16
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { BubbleMenu, Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,13 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
 }) => {
   const [url, setUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Используем ref чтобы всегда иметь актуальное значение isCreatingLink в shouldShow
+  const isCreatingLinkRef = useRef(isCreatingLink);
+  
+  useEffect(() => {
+    isCreatingLinkRef.current = isCreatingLink;
+  }, [isCreatingLink]);
 
   // Обновляем URL когда открывается меню на существующей ссылке
   useEffect(() => {
@@ -32,6 +39,14 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
       setUrl(href || '');
     }
   }, [editor]);
+
+  // Принудительно обновляем когда isCreatingLink меняется
+  useEffect(() => {
+    if (isCreatingLink) {
+      // Устанавливаем focus чтобы BubbleMenu пересчитал shouldShow
+      editor.chain().focus().run();
+    }
+  }, [isCreatingLink, editor]);
 
   const setLink = useCallback(() => {
     if (!url) {
@@ -86,15 +101,15 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
   // 2. Курсор на существующей ссылке (редактирование)
   const shouldShow = useCallback(
     ({ editor }: { editor: Editor }) => {
-      // Режим создания: включен флаг isCreatingLink
-      const isCreating = isCreatingLink;
+      // Используем ref.current для получения актуального значения
+      const isCreating = isCreatingLinkRef.current;
       
       // Режим редактирования: курсор на существующей ссылке
       const isEditingExisting = editor.isActive('link');
       
       return isCreating || isEditingExisting;
     },
-    [isCreatingLink]
+    [] // Пустой массив зависимостей, используем ref
   );
 
   return (

@@ -73,8 +73,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
   };
 
   const addLink = () => {
+    // Устанавливаем focus на редактор чтобы BubbleMenu пересчитал shouldShow
+    editor.chain().focus().run();
+    
     // Вызываем callback который активирует режим создания ссылки
-    // Это покажет LinkBubbleMenu с input полем
     onAddLink?.();
   };
 
