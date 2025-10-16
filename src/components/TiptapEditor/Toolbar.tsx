@@ -42,9 +42,10 @@ import {
 
 interface ToolbarProps {
   editor: Editor | null;
+  onAddLink?: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
   if (!editor) return null;
 
   // Цвета для выделения текста
@@ -72,31 +73,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   };
 
   const addLink = () => {
-    // Получаем текущий URL если курсор на ссылке
-    const previousUrl = editor.getAttributes('link').href;
-    
-    // Показываем prompt для ввода URL
-    const url = window.prompt('Введите URL:', previousUrl || '');
-    
-    // Если пользователь отменил или ввел пустую строку
-    if (url === null) {
-      return;
-    }
-    
-    // Если URL пустой, удаляем ссылку
-    if (url === '') {
-      editor.chain().focus().unsetLink().run();
-      return;
-    }
-    
-    // Добавляем https:// если протокол не указан
-    let formattedUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      formattedUrl = 'https://' + url;
-    }
-    
-    // Устанавливаем ссылку
-    editor.chain().focus().extendMarkRange('link').setLink({ href: formattedUrl }).run();
+    // Вызываем callback который активирует режим создания ссылки
+    // Это покажет LinkBubbleMenu с input полем
+    onAddLink?.();
   };
 
   const addTable = () => {

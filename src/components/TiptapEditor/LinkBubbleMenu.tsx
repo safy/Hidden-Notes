@@ -13,9 +13,15 @@ import { Link2, Link2Off, ExternalLink, Check, X } from 'lucide-react';
 
 interface LinkBubbleMenuProps {
   editor: Editor;
+  isCreatingLink?: boolean;
+  onLinkCreated?: () => void;
 }
 
-export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
+export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ 
+  editor, 
+  isCreatingLink = false,
+  onLinkCreated 
+}) => {
   const [url, setUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -31,6 +37,7 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
     if (!url) {
       editor.chain().focus().unsetLink().run();
       setIsEditing(false);
+      onLinkCreated?.();
       return;
     }
 
@@ -48,7 +55,9 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
       .run();
 
     setIsEditing(false);
-  }, [editor, url]);
+    setUrl('');
+    onLinkCreated?.();
+  }, [editor, url, onLinkCreated]);
 
   const removeLink = useCallback(() => {
     editor.chain().focus().unsetLink().run();
@@ -63,13 +72,20 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
     }
   }, [editor]);
 
-  // Показываем меню только когда курсор на существующей ссылке
+  // Показываем меню когда:
+  // 1. Нажата кнопка "добавить ссылку" И выделен текст (создание новой ссылки)
+  // 2. Курсор на существующей ссылке (редактирование)
   const shouldShow = useCallback(
     ({ editor }: { editor: Editor }) => {
-      // Показываем только если курсор на существующей ссылке (для редактирования)
-      return editor.isActive('link');
+      // Режим создания: выделен текст И включен флаг isCreatingLink
+      const isCreating = isCreatingLink && !editor.state.selection.empty;
+      
+      // Режим редактирования: курсор на существующей ссылке
+      const isEditing = editor.isActive('link');
+      
+      return isCreating || isEditing;
     },
-    []
+    [isCreatingLink]
   );
 
   return (
@@ -83,7 +99,7 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
       shouldShow={shouldShow}
       className="bg-background border border-border rounded-lg shadow-lg p-2 flex items-center gap-2"
     >
-      {editor.isActive('link') && !isEditing ? (
+      {editor.isActive('link') && !isEditing && !isCreatingLink ? (
         // Режим просмотра существующей ссылки
         <>
           <div className="flex items-center gap-2 px-2">

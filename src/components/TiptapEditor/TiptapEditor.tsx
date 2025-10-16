@@ -28,6 +28,8 @@ interface TiptapEditorProps {
   placeholder?: string;
   editable?: boolean;
   className?: string;
+  isCreatingLink?: boolean;
+  onLinkCreated?: () => void;
 }
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({
@@ -37,6 +39,8 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   placeholder = 'Начните писать...',
   editable = true,
   className = '',
+  isCreatingLink = false,
+  onLinkCreated,
 }) => {
   const editor = useEditor({
     extensions: [
@@ -236,7 +240,13 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   return (
     <div className="tiptap-editor">
-      {editor && <LinkBubbleMenu editor={editor} />}
+      {editor && (
+        <LinkBubbleMenu 
+          editor={editor} 
+          isCreatingLink={isCreatingLink}
+          onLinkCreated={onLinkCreated}
+        />
+      )}
       <EditorContent editor={editor} />
     </div>
   );

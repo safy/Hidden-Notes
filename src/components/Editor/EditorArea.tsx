@@ -26,6 +26,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
 }) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [content, setContent] = useState(initialContent);
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
 
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
@@ -53,7 +54,10 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
   return (
     <div className={`flex-1 flex flex-col ${isInModal ? 'h-full' : 'h-full'}`}>
       {/* Toolbar */}
-      <Toolbar editor={editor} />
+      <Toolbar 
+        editor={editor} 
+        onAddLink={() => setIsCreatingLink(true)}
+      />
 
       {/* Editor Content */}
       <div className={`flex-1 overflow-y-auto ${isInModal ? 'p-4' : 'p-6'}`}>
@@ -64,6 +68,8 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
             onEditorReady={handleEditorReady}
             placeholder="Начните писать заметку..."
             className="min-h-[400px]"
+            isCreatingLink={isCreatingLink}
+            onLinkCreated={() => setIsCreatingLink(false)}
           />
         </div>
       </div>
