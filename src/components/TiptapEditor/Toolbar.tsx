@@ -72,11 +72,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   };
 
   const addLink = () => {
-    // Если текст не выделен, выделяем слово под курсором
-    if (editor.state.selection.empty) {
-      editor.chain().focus().selectTextblockStart().run();
+    // Получаем текущий URL если курсор на ссылке
+    const previousUrl = editor.getAttributes('link').href;
+    
+    // Показываем prompt для ввода URL
+    const url = window.prompt('Введите URL:', previousUrl || '');
+    
+    // Если пользователь отменил или ввел пустую строку
+    if (url === null) {
+      return;
     }
-    // BubbleMenu автоматически появится при выделении
+    
+    // Если URL пустой, удаляем ссылку
+    if (url === '') {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    
+    // Добавляем https:// если протокол не указан
+    let formattedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      formattedUrl = 'https://' + url;
+    }
+    
+    // Устанавливаем ссылку
+    editor.chain().focus().extendMarkRange('link').setLink({ href: formattedUrl }).run();
   };
 
   const addTable = () => {

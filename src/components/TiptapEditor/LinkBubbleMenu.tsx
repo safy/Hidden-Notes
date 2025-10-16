@@ -63,13 +63,11 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
     }
   }, [editor]);
 
-  // Показываем меню только когда выделен текст или курсор на ссылке
+  // Показываем меню только когда курсор на существующей ссылке
   const shouldShow = useCallback(
     ({ editor }: { editor: Editor }) => {
-      // Показываем если:
-      // 1. Выделен текст (для создания новой ссылки)
-      // 2. Курсор на существующей ссылке (для редактирования)
-      return !editor.state.selection.empty || editor.isActive('link');
+      // Показываем только если курсор на существующей ссылке (для редактирования)
+      return editor.isActive('link');
     },
     []
   );

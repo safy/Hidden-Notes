@@ -106,32 +106,50 @@ async function openSidePanel() {
   // Получаем URL Side Panel
   const sidePanelUrl = `chrome-extension://${extensionId}/src/sidepanel/index.html`;
   
-  // Получаем service worker (ждём если его еще нет)
+  // Пробуем через service worker если доступен
   let [serviceWorker] = context.serviceWorkers();
-  if (!serviceWorker) {
+  
+  if (serviceWorker) {
     try {
-      serviceWorker = await context.waitForEvent('serviceworker', { timeout: 5000 });
+      // Создаем Promise для ожидания новой страницы ПЕРЕД созданием вкладки
+      const pagePromise = context.waitForEvent('page', { timeout: 10000 });
+      
+      // Используем service worker для создания новой вкладки с URL расширения
+      await serviceWorker.evaluate(async (url) => {
+        await chrome.tabs.create({ url, active: true });
+      }, sidePanelUrl);
+      
+      // Ждем появления новой страницы
+      const page = await pagePromise;
+      
+      // Ждем загрузки
+      await page.waitForLoadState('load');
+      
+      // Закрываем все пустые вкладки (about:blank)
+      const allPages = context.pages();
+      for (const p of allPages) {
+        if (p !== page && p.url() === 'about:blank') {
+          await p.close();
+        }
+      }
+      
+      // Переводим фокус на нашу страницу
+      await page.bringToFront();
+      
+      return page;
     } catch (error) {
-      throw new Error('Service worker not found after waiting');
+      console.log('Service worker method failed, using alternative...');
     }
   }
   
-  // Создаем Promise для ожидания новой страницы ПЕРЕД созданием вкладки
-  const pagePromise = context.waitForEvent('page', { timeout: 10000 });
+  // Альтернативный метод: создаем новую страницу напрямую
+  // Это работает, когда service worker недоступен
+  const page = await context.newPage();
   
-  // Используем service worker для создания новой вкладки с URL расширения
-  // active: true чтобы вкладка была активной
-  await serviceWorker.evaluate(async (url) => {
-    await chrome.tabs.create({ url, active: true });
-  }, sidePanelUrl);
+  // Навигация к extension URL напрямую
+  await page.goto(sidePanelUrl, { waitUntil: 'load' });
   
-  // Ждем появления новой страницы
-  const page = await pagePromise;
-  
-  // Ждем загрузки
-  await page.waitForLoadState('load');
-  
-  // Закрываем все пустые вкладки (about:blank)
+  // Закрываем пустые вкладки
   const allPages = context.pages();
   for (const p of allPages) {
     if (p !== page && p.url() === 'about:blank') {
@@ -139,7 +157,6 @@ async function openSidePanel() {
     }
   }
   
-  // Переводим фокус на нашу страницу
   await page.bringToFront();
   
   return page;
