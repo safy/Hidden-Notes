@@ -9,7 +9,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { BubbleMenu, Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link2, Link2Off, ExternalLink, Check, X } from 'lucide-react';
+import { Link2, Link2Off, ExternalLink, Check } from 'lucide-react';
 
 interface LinkBubbleMenuProps {
   editor: Editor;
@@ -63,27 +63,36 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
     editor.chain().focus().unsetLink().run();
     setUrl('');
     setIsEditing(false);
-  }, [editor]);
+    onLinkCreated?.();
+  }, [editor, onLinkCreated]);
 
   const openLink = useCallback(() => {
+    // Получаем URL из существующей ссылки или из input поля
     const { href } = editor.getAttributes('link');
-    if (href) {
-      window.open(href, '_blank');
+    const linkUrl = href || url;
+    
+    if (linkUrl) {
+      // Добавляем https:// если нужно
+      let formattedUrl = linkUrl;
+      if (!linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+        formattedUrl = 'https://' + linkUrl;
+      }
+      window.open(formattedUrl, '_blank');
     }
-  }, [editor]);
+  }, [editor, url]);
 
   // Показываем меню когда:
-  // 1. Нажата кнопка "добавить ссылку" И выделен текст (создание новой ссылки)
+  // 1. Нажата кнопка "добавить ссылку" (создание новой ссылки)
   // 2. Курсор на существующей ссылке (редактирование)
   const shouldShow = useCallback(
     ({ editor }: { editor: Editor }) => {
-      // Режим создания: выделен текст И включен флаг isCreatingLink
-      const isCreating = isCreatingLink && !editor.state.selection.empty;
+      // Режим создания: включен флаг isCreatingLink
+      const isCreating = isCreatingLink;
       
       // Режим редактирования: курсор на существующей ссылке
-      const isEditing = editor.isActive('link');
+      const isEditingExisting = editor.isActive('link');
       
-      return isCreating || isEditing;
+      return isCreating || isEditingExisting;
     },
     [isCreatingLink]
   );
@@ -162,19 +171,22 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
               if (e.key === 'Escape') {
                 e.preventDefault();
                 setIsEditing(false);
+                onLinkCreated?.();
               }
             }}
             className="h-8 w-[300px] text-sm"
             autoFocus
           />
 
+          <div className="h-4 w-px bg-border" />
+
           <Button
-            variant="default"
+            variant="ghost"
             size="icon"
             className="h-8 w-8"
             onClick={setLink}
             disabled={!url}
-            title="Сохранить"
+            title="Сохранить ссылку"
           >
             <Check className="h-4 w-4" />
           </Button>
@@ -183,13 +195,21 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
-              setIsEditing(false);
-              setUrl('');
-            }}
-            title="Отмена"
+            onClick={openLink}
+            disabled={!url}
+            title="Открыть ссылку"
           >
-            <X className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={removeLink}
+            title="Удалить ссылку"
+          >
+            <Link2Off className="h-4 w-4" />
           </Button>
         </>
       )}
