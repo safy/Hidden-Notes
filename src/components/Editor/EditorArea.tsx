@@ -56,10 +56,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
       {/* Toolbar */}
       <Toolbar 
         editor={editor} 
-        onAddLink={() => {
-          console.log('EditorArea: Setting isCreatingLink to true');
-          setIsCreatingLink(true);
-        }}
+        onAddLink={() => setIsCreatingLink(true)}
       />
 
       {/* Editor Content */}
