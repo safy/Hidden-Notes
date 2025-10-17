@@ -36,14 +36,24 @@ export function useHiddenTextReveal() {
       hiddenTexts.forEach((element, index) => {
         const htmlElement = element as HTMLElement;
         
+        console.log(`Element ${index}:`, {
+          tag: htmlElement.tagName,
+          class: htmlElement.className,
+          text: htmlElement.textContent?.substring(0, 20),
+        });
+        
         if (isAltPressed) {
           // Apply inline styles to reveal
           htmlElement.style.background = 'none';
-          htmlElement.style.color = 'inherit';
+          htmlElement.style.color = 'rgb(2, 8, 23)'; // Explicit black color instead of inherit
           htmlElement.style.animation = 'none';
           htmlElement.style.padding = '0';
           htmlElement.setAttribute('data-revealing', 'true');
-          console.log(`  ✅ Revealed element ${index}`);
+          
+          console.log(`  ✅ Revealed element ${index}`, {
+            bg: htmlElement.style.background,
+            color: htmlElement.style.color,
+          });
         } else {
           // Remove inline styles to hide again
           htmlElement.style.background = '';
