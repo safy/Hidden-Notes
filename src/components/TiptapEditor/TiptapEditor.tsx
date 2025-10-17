@@ -14,6 +14,8 @@ import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
@@ -77,6 +79,17 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
         HTMLAttributes: {
           class: 'text-blue-600 underline cursor-pointer',
         },
+      }),
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
+      TaskItem.configure({
+        HTMLAttributes: {
+          class: 'task-item',
+        },
+        nested: true,
       }),
       Table.configure({
         resizable: true,

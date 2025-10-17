@@ -235,12 +235,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
           <ListOrdered className="h-4 w-4" />
         </Button>
         <Button
-          variant="ghost"
+          variant={editor.isActive('taskList') ? 'default' : 'ghost'}
           size="icon"
-          onClick={() => {
-            console.log('Task list not yet implemented');
-          }}
-          title="Список задач (скоро)"
+          onClick={() => editor.chain().focus().toggleTaskList().run()}
+          title="Список задач"
         >
           <CheckSquare className="h-4 w-4" />
         </Button>
