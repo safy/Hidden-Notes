@@ -34,11 +34,23 @@ export function useHiddenTextReveal() {
       console.log('📝 Found hidden texts:', hiddenTexts.length);
       
       hiddenTexts.forEach((element, index) => {
+        const htmlElement = element as HTMLElement;
+        
         if (isAltPressed) {
-          element.setAttribute('data-revealing', 'true');
+          // Apply inline styles to reveal
+          htmlElement.style.background = 'none';
+          htmlElement.style.color = 'inherit';
+          htmlElement.style.animation = 'none';
+          htmlElement.style.padding = '0';
+          htmlElement.setAttribute('data-revealing', 'true');
           console.log(`  ✅ Revealed element ${index}`);
         } else {
-          element.removeAttribute('data-revealing');
+          // Remove inline styles to hide again
+          htmlElement.style.background = '';
+          htmlElement.style.color = '';
+          htmlElement.style.animation = '';
+          htmlElement.style.padding = '';
+          htmlElement.removeAttribute('data-revealing');
           console.log(`  ❌ Hidden element ${index}`);
         }
       });
