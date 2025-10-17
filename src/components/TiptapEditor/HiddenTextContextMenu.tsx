@@ -51,6 +51,7 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
 
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
+      console.log('🔍 Context menu handler triggered!');
 
       const { selection } = editor.state;
       const { $from, $to } = selection;
@@ -63,9 +64,11 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
             hasHiddenText = true;
           }
         });
+        console.log('📋 Has selection, hasHiddenText:', hasHiddenText);
       } else {
         // Если нет выделения, ищем скрытый текст в текущей позиции курсора
         const hiddenSpan = findHiddenTextAtPos($from.pos);
+        console.log('🔎 No selection, hiddenSpan:', hiddenSpan);
         if (hiddenSpan) {
           hasHiddenText = true;
           // Выделяем скрытый span
@@ -75,8 +78,9 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
         }
       }
 
-      // Если нет скрытого текста, скрываем меню
-      if (!hasHiddenText) {
+      // Если есть выделение, показываем меню
+      if (selection.empty && !hasHiddenText) {
+        console.log('❌ No selection and no hidden text, hiding menu');
         setShowMenu(false);
         return;
       }
@@ -84,6 +88,7 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
       setIsHidden(hasHiddenText);
       setMenuPos({ x: e.clientX, y: e.clientY });
       setShowMenu(true);
+      console.log('✅ Showing menu! isHidden:', hasHiddenText);
     };
 
     const handleClick = () => {
@@ -103,15 +108,32 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
   const toggleHiddenText = (hide: boolean) => {
     if (!editor) return;
 
+    console.log('🔘 toggleHiddenText called, hide:', hide);
+
+    // Сохраняем текущее выделение
+    const { selection } = editor.state;
+    console.log('Current selection:', selection.$from.pos, '-', selection.$to.pos);
+
     if (hide) {
-      // Для скрытия нужно применить mark к выделению
+      // Для скрытия:
+      // 1. Применяем mark к выделению
       editor.chain().focus().toggleMark('hiddenText').run();
+      console.log('✅ Mark applied');
+      
+      // 2. Затем убираем выделение чтобы mark деактивировался
+      // Перемещаем курсор в конец выделения
+      editor.chain().focus().setTextSelection(selection.$to.pos).run();
+      console.log('✅ Selection cleared, cursor moved to end');
     } else {
-      // Для раскрытия нужно удалить mark
-      editor.chain().focus().unsetMark('hiddenText').run();
+      // Для раскрытия удаляем mark
+      const result = editor.chain().focus().unsetMark('hiddenText').run();
+      console.log('unsetMark result:', result);
     }
 
-    setShowMenu(false);
+    // Небольшая задержка перед закрытием меню чтобы команда выполнилась
+    setTimeout(() => {
+      setShowMenu(false);
+    }, 50);
   };
 
   if (!showMenu) return null;
