@@ -81,6 +81,13 @@
   color: transparent;
 }
 
+/* Reveal text when Alt key is pressed in ProseMirror */
+.ProseMirror .hidden-text[data-revealing="true"] {
+  background: none;
+  color: inherit;
+  animation: none;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
