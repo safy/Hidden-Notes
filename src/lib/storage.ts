@@ -5,10 +5,9 @@
  * @created: 2025-10-17
  */
 
-import { Note, StorageSchema } from '@/types/note';
+import { Note, StorageSchema, DEFAULT_SETTINGS } from '@/types/note';
 
 const STORAGE_KEY = 'hidden_notes';
-const SCHEMA_VERSION = 1;
 
 /**
  * Инициализировать storage с начальной схемой
@@ -18,13 +17,9 @@ export async function initializeStorage(): Promise<void> {
   
   if (!data[STORAGE_KEY]) {
     const initialSchema: StorageSchema = {
-      version: SCHEMA_VERSION,
       notes: [],
-      settings: {
-        theme: 'light',
-        fontSize: 16,
-        autoSaveInterval: 1000,
-      },
+      settings: DEFAULT_SETTINGS,
+      currentNoteId: null,
     };
     
     await chrome.storage.local.set({ [STORAGE_KEY]: initialSchema });
@@ -51,7 +46,7 @@ export async function getNoteById(noteId: string): Promise<Note | null> {
 /**
  * Создать новую заметку
  */
-export async function createNote(note: Note): Promise<Note> {
+export async function createNote(note: Omit<Note, 'createdAt' | 'updatedAt'>): Promise<Note> {
   const data = await chrome.storage.local.get(STORAGE_KEY);
   const schema = data[STORAGE_KEY] as StorageSchema;
   
@@ -70,17 +65,24 @@ export async function createNote(note: Note): Promise<Note> {
 /**
  * Обновить заметку
  */
-export async function updateNote(noteId: string, updates: Partial<Note>): Promise<Note | null> {
+export async function updateNote(noteId: string, updates: Partial<Omit<Note, 'id' | 'createdAt'>>): Promise<Note | null> {
   const data = await chrome.storage.local.get(STORAGE_KEY);
   const schema = data[STORAGE_KEY] as StorageSchema;
   
   const noteIndex = schema.notes.findIndex(note => note.id === noteId);
   if (noteIndex === -1) return null;
   
+  const existingNote = schema.notes[noteIndex];
+  if (!existingNote) return null;
+  
   const updatedNote: Note = {
-    ...schema.notes[noteIndex],
-    ...updates,
+    id: existingNote.id,
+    title: updates.title ?? existingNote.title,
+    content: updates.content ?? existingNote.content,
+    createdAt: existingNote.createdAt,
     updatedAt: Date.now(),
+    tags: updates.tags ?? existingNote.tags,
+    isPinned: updates.isPinned ?? existingNote.isPinned,
   };
   
   schema.notes[noteIndex] = updatedNote;
@@ -139,17 +141,31 @@ export async function exportNotes(): Promise<string> {
  */
 export async function importNotes(jsonString: string): Promise<number> {
   try {
-    const importedNotes = JSON.parse(jsonString) as Note[];
+    const importedNotes = JSON.parse(jsonString) as Array<{
+      id: string;
+      title: string;
+      content: string;
+      createdAt?: number;
+      updatedAt?: number;
+      tags?: string[];
+      isPinned?: boolean;
+    }>;
     const data = await chrome.storage.local.get(STORAGE_KEY);
     const schema = data[STORAGE_KEY] as StorageSchema;
     
     // Генерируем новые IDs для импортированных заметок
-    const notesWithNewIds = importedNotes.map(note => ({
-      ...note,
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }));
+    const notesWithNewIds: Note[] = importedNotes.map(note => {
+      const newNote: Note = {
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        title: note.title || 'Импортированная заметка',
+        content: note.content || '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      if (note.tags) newNote.tags = note.tags;
+      if (note.isPinned) newNote.isPinned = note.isPinned;
+      return newNote;
+    });
     
     schema.notes.push(...notesWithNewIds);
     await chrome.storage.local.set({ [STORAGE_KEY]: schema });

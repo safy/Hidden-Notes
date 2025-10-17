@@ -32,7 +32,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
 ) {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: unknown[]) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
