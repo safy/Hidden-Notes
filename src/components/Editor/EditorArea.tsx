@@ -5,7 +5,7 @@
  * @created: 2025-10-15
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { TiptapEditor } from '@/components/TiptapEditor/TiptapEditor';
 import { Toolbar } from '@/components/TiptapEditor/Toolbar';
 import { Editor } from '@tiptap/react';
@@ -27,11 +27,22 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [content, setContent] = useState(initialContent);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const handleContentUpdate = (newContent: string) => {
+  // Debounced auto-save with 1000ms delay
+  const handleContentUpdate = useCallback((newContent: string) => {
     setContent(newContent);
-    onContentChange?.(newContent);
-  };
+    
+    // Clear previous timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // Set new timeout for debounced save
+    timeoutRef.current = setTimeout(() => {
+      onContentChange?.(newContent);
+    }, 1000);
+  }, [onContentChange]);
 
   const handleEditorReady = (editorInstance: Editor) => {
     setEditor(editorInstance);

@@ -18,6 +18,7 @@ interface NoteViewProps {
   onSave?: () => void;
   onDelete?: () => void;
   onTitleChange?: (newTitle: string) => void;
+  onContentChange?: (noteId: string, content: string) => void;
 }
 
 export const NoteView: React.FC<NoteViewProps> = ({
@@ -27,6 +28,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
   onSave,
   onDelete,
   onTitleChange,
+  onContentChange,
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(noteTitle);
@@ -126,6 +128,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           noteTitle={noteTitle} 
           hasNote={true}
           isInModal={false}
+          onContentChange={(content) => onContentChange?.(_noteId, content)}
         />
       </div>
     </div>

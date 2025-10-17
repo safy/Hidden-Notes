@@ -109,9 +109,23 @@ const App: React.FC = () => {
         toast({
           title: 'Название изменено',
           description: `Заметка переименована в "${newTitle}"`,
-          duration: 3000,
+          duration: 2000,
         });
       }
+    }
+  };
+
+  const handleContentChange = async (noteId: string, content: string) => {
+    // Auto-save content with minimal feedback
+    try {
+      await updateNoteContent(noteId, { content });
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      toast({
+        title: 'Ошибка сохранения',
+        description: 'Не удалось сохранить заметку',
+        duration: 3000,
+      });
     }
   };
 
@@ -282,6 +296,7 @@ const App: React.FC = () => {
                   onSave={handleNoteSave}
                   onDelete={handleCurrentNoteDelete}
                   onTitleChange={handleNoteTitleChange}
+                  onContentChange={handleContentChange}
                 />
               )
             )}
