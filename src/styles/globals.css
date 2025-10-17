@@ -155,69 +155,62 @@
 
 /* Task List */
 .ProseMirror ul.task-list {
-  list-style: none;
-  padding: 0;
-  margin: 0.5em 0;
+  list-style: none !important;
+  padding: 0 !important;
+  padding-left: 0 !important;
+  margin: 0.5em 0 !important;
 }
 
-/* Task Item - главный контейнер */
-.ProseMirror ul.task-list li.task-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3em 0;
-  margin-left: 0;
-  position: relative;
+/* Task Item */
+.ProseMirror ul.task-list li {
+  list-style: none !important;
+  padding: 0.3em 0 !important;
+  margin: 0.25em 0 !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
 
-/* Чекбокс стили - прямой потомок li */
-.ProseMirror ul.task-list li.task-item > input[type='checkbox'] {
-  cursor: pointer;
-  width: 1.1em;
-  height: 1.1em;
-  margin: 0;
-  flex-shrink: 0;
-  accent-color: hsl(var(--primary));
+/* Чекбокс */
+.ProseMirror ul.task-list li input[type='checkbox'] {
+  cursor: pointer !important;
+  width: 1.2em !important;
+  height: 1.2em !important;
+  margin: 0 !important;
+  margin-right: 0.3em !important;
+  flex-shrink: 0 !important;
+  accent-color: hsl(var(--primary)) !important;
+  vertical-align: middle !important;
+  margin-top: 0.1em !important;
 }
 
-/* Label контейнер - объединяет checkbox и текст */
-.ProseMirror ul.task-list li.task-item > label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  cursor: pointer;
+/* Текст внутри task item */
+.ProseMirror ul.task-list li p {
+  margin: 0 !important;
+  flex: 1 !important;
+  display: inline !important;
+  vertical-align: middle !important;
+  line-height: 1.2 !important;
 }
 
-/* Чекбокс внутри label */
-.ProseMirror ul.task-list li.task-item > label > input[type='checkbox'] {
-  cursor: pointer;
-  width: 1.1em;
-  height: 1.1em;
-  margin: 0;
-  flex-shrink: 0;
-  accent-color: hsl(var(--primary));
+/* Зачеркнутый текст для выполненных задач */
+.ProseMirror ul.task-list li[data-checked='true'] input[type='checkbox'] {
+  opacity: 1 !important;
+  flex-shrink: 0 !important;
 }
 
-/* Контейнер с текстом задачи */
-.ProseMirror ul.task-list li.task-item > label > div,
-.ProseMirror ul.task-list li.task-item > p {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25em;
-  margin: 0;
+.ProseMirror ul.task-list li[data-checked='true'] p {
+  text-decoration: line-through !important;
+  opacity: 0.5 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
-/* Зачеркнутый и светлый текст для выполненных задач - если чекбокс вне label */
-.ProseMirror ul.task-list li.task-item[data-checked='true'] > label > div,
-.ProseMirror ul.task-list li.task-item[data-checked='true'] > label > div > p,
-.ProseMirror ul.task-list li.task-item[data-checked='true'] > label > div > *,
-.ProseMirror ul.task-list li.task-item[data-checked='true'] > p,
-.ProseMirror ul.task-list li.task-item[data-checked='true'] > p > * {
-  text-decoration: line-through;
-  color: hsl(var(--muted-foreground));
-  opacity: 0.5;
+.ProseMirror ul.task-list li[data-checked='true'] p * {
+  opacity: 0.5 !important;
+  color: hsl(var(--muted-foreground)) !important;
+  text-decoration: line-through !important;
 }
 
 .ProseMirror table {
