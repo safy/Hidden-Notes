@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { getAllNotes, createNote, updateNote, deleteNote, initializeStorage } from '@/lib/storage';
+import { htmlToText } from '@/lib/utils';
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -107,10 +108,13 @@ export function useNotes() {
     if (!query.trim()) return notes;
 
     const lowerQuery = query.toLowerCase();
-    return notes.filter(note =>
-      note.title.toLowerCase().includes(lowerQuery) ||
-      note.content.toLowerCase().includes(lowerQuery)
-    );
+    return notes.filter(note => {
+      const titleMatch = note.title.toLowerCase().includes(lowerQuery);
+      // Extract text from HTML content for searching
+      const plainContent = htmlToText(note.content);
+      const contentMatch = plainContent.toLowerCase().includes(lowerQuery);
+      return titleMatch || contentMatch;
+    });
   }, [notes]);
 
   // Получить заметку по ID
