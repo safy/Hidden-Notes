@@ -9,37 +9,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hidden Text Feature */
+/* Hidden Text Feature - Telegram-like noise animation */
 .hidden-text {
   position: relative;
   color: transparent;
   user-select: none;
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
-  background-size: 4px 100%;
-  animation: noise 0.1s infinite;
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
+  background-size: 12px 12px, 18px 18px, 8px 8px, 16px 16px, 20px 20px, 14px 14px, 10px 10px, 22px 22px, 6px 6px;
+  animation: telegram-noise 1.2s infinite ease-in-out;
   padding: 2px 4px;
-  border-radius: 2px;
+  border-radius: 3px;
   cursor: pointer;
   transition: all 0.1s ease;
+  overflow: hidden;
 }
 
 /* Keep hidden text hidden during selection */
 .hidden-text::selection {
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
   color: transparent;
 }
 
 .hidden-text::moz-selection {
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
   color: transparent;
 }
 
-@keyframes noise {
+/* Completely disable selection for hidden text */
+.hidden-text {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Override any selection styles */
+.hidden-text * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Force no selection background */
+.hidden-text::selection,
+.hidden-text::-moz-selection,
+.hidden-text::-webkit-selection {
+  background: transparent !important;
+  color: transparent !important;
+}
+
+@keyframes telegram-noise {
   0% {
-    background-position: 0 0;
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  12.5% {
+    background-position: 1px 1px, -2px 2px, 0.5px -0.5px, -1px 1px, 2px -1px, -0.5px 0.5px, 1px 0.5px, -1.5px 1.5px, 0.3px -0.3px;
+  }
+  25% {
+    background-position: 2px 2px, -4px 4px, 1px -1px, -2px 2px, 4px -2px, -1px 1px, 2px 1px, -3px 3px, 0.6px -0.6px;
+  }
+  37.5% {
+    background-position: 3px 3px, -6px 6px, 1.5px -1.5px, -3px 3px, 6px -3px, -1.5px 1.5px, 3px 1.5px, -4.5px 4.5px, 0.9px -0.9px;
+  }
+  50% {
+    background-position: 4px 4px, -8px 8px, 2px -2px, -4px 4px, 8px -4px, -2px 2px, 4px 2px, -6px 6px, 1.2px -1.2px;
+  }
+  62.5% {
+    background-position: 5px 5px, -10px 10px, 2.5px -2.5px, -5px 5px, 10px -5px, -2.5px 2.5px, 5px 2.5px, -7.5px 7.5px, 1.5px -1.5px;
+  }
+  75% {
+    background-position: 6px 6px, -12px 12px, 3px -3px, -6px 6px, 12px -6px, -3px 3px, 6px 3px, -9px 9px, 1.8px -1.8px;
+  }
+  87.5% {
+    background-position: 7px 7px, -14px 14px, 3.5px -3.5px, -7px 7px, 14px -7px, -3.5px 3.5px, 7px 3.5px, -10.5px 10.5px, 2.1px -2.1px;
   }
   100% {
-    background-position: 4px 0;
+    background-position: 8px 8px, -16px 16px, 4px -4px, -8px 8px, 16px -8px, -4px 4px, 8px 4px, -12px 12px, 2.4px -2.4px;
   }
 }
 
@@ -58,14 +133,24 @@
 
 /* ProseMirror specific styles */
 .ProseMirror .hidden-text {
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
-  background-size: 4px 100%;
-  animation: noise 0.1s infinite;
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
+  background-size: 12px 12px, 18px 18px, 8px 8px, 16px 16px, 20px 20px, 14px 14px, 10px 10px, 22px 22px, 6px 6px;
+  animation: telegram-noise 1.2s infinite ease-in-out;
   color: transparent;
   cursor: pointer;
   padding: 2px 4px;
-  border-radius: 2px;
+  border-radius: 3px;
   user-select: none;
+  overflow: hidden;
 }
 
 .ProseMirror .hidden-text:hover {
@@ -73,13 +158,56 @@
 }
 
 .ProseMirror .hidden-text::selection {
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
   color: transparent;
 }
 
 .ProseMirror .hidden-text::moz-selection {
-  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background: 
+    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
+    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
+    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
+    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
+    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
+    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
+    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
+    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
+    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
   color: transparent;
+}
+
+/* Completely disable selection for ProseMirror hidden text */
+.ProseMirror .hidden-text {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.ProseMirror .hidden-text * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Force no selection background for ProseMirror */
+.ProseMirror .hidden-text::selection,
+.ProseMirror .hidden-text::-moz-selection,
+.ProseMirror .hidden-text::-webkit-selection {
+  background: transparent !important;
+  color: transparent !important;
 }
 
 /* Reveal text when Alt key is pressed in ProseMirror */

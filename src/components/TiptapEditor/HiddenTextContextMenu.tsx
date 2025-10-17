@@ -18,6 +18,7 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
   const [showMenu, setShowMenu] = useState(false);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [isHidden, setIsHidden] = useState(false);
+  const [currentHiddenSpan, setCurrentHiddenSpan] = useState<{ start: number; end: number } | null>(null);
   const { toast } = useToast();
 
   // Вспомогательная функция для поиска hidden text span содержащего позицию
@@ -73,18 +74,26 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
         console.log('🔎 No selection, hiddenSpan:', hiddenSpan);
         if (hiddenSpan) {
           hasHiddenText = true;
-          // Выделяем скрытый span
+          setCurrentHiddenSpan(hiddenSpan);
+          // Выделяем скрытый span для работы с ним
           const start = editor.state.doc.resolve(hiddenSpan.start);
           const end = editor.state.doc.resolve(hiddenSpan.end);
           editor.view.dispatch(editor.state.tr.setSelection(new TextSelection(start, end)));
+        } else {
+          setCurrentHiddenSpan(null);
         }
       }
 
-      // Если есть выделение, показываем меню
+      // Если нет выделения и нет скрытого текста, скрываем меню
       if (selection.empty && !hasHiddenText) {
         console.log('❌ No selection and no hidden text, hiding menu');
         setShowMenu(false);
         return;
+      }
+
+      // Очищаем выделение ПОСЛЕ того как определили что есть скрытый текст
+      if (hasHiddenText && window.getSelection) {
+        window.getSelection()?.removeAllRanges();
       }
 
       setIsHidden(hasHiddenText);
@@ -103,6 +112,13 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
         
         if (hiddenTextElement) {
           e.preventDefault();
+          e.stopPropagation();
+          
+          // Очищаем любое выделение
+          if (window.getSelection) {
+            window.getSelection()?.removeAllRanges();
+          }
+          
           copyHiddenText(hiddenTextElement);
         }
       }
@@ -146,7 +162,11 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
 
     console.log('🔘 toggleHiddenText called, hide:', hide);
 
-    // Сохраняем текущее выделение
+    // Очищаем любое выделение
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+
     const { selection } = editor.state;
     console.log('Current selection:', selection.$from.pos, '-', selection.$to.pos);
 
@@ -161,9 +181,20 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
       editor.chain().focus().setTextSelection(selection.$to.pos).run();
       console.log('✅ Selection cleared, cursor moved to end');
     } else {
-      // Для раскрытия удаляем mark
-      const result = editor.chain().focus().unsetMark('hiddenText').run();
-      console.log('unsetMark result:', result);
+      // Для раскрытия - используем сохраненную информацию о скрытом тексте
+      if (currentHiddenSpan) {
+        // Выделяем скрытый span для удаления mark
+        const start = editor.state.doc.resolve(currentHiddenSpan.start);
+        const end = editor.state.doc.resolve(currentHiddenSpan.end);
+        editor.view.dispatch(editor.state.tr.setSelection(new TextSelection(start, end)));
+        
+        // Удаляем mark
+        const result = editor.chain().focus().unsetMark('hiddenText').run();
+        console.log('unsetMark result:', result);
+        
+        // Очищаем выделение
+        editor.chain().focus().setTextSelection(currentHiddenSpan.end).run();
+      }
     }
 
     // Небольшая задержка перед закрытием меню чтобы команда выполнилась
