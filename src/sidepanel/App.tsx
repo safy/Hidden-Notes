@@ -1,15 +1,16 @@
 /**
  * @file: App.tsx
  * @description: Главный компонент приложения Hidden Notes
- * @dependencies: React, shadcn/ui components
+ * @dependencies: React, shadcn/ui components, useNotes hook
  * @created: 2025-10-15
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useNotes } from '@/hooks/useNotes';
 import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
@@ -24,23 +25,40 @@ const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  
+  // Использование useNotes hook
+  const { notes, isLoading, error, addNote, updateNoteContent, removeNote, searchNotes, getNoteById } = useNotes();
   const { toast } = useToast();
+
+  // Обработка ошибок storage
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Ошибка',
+        description: error,
+        duration: 5000,
+      });
+    }
+  }, [error, toast]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark');
     
-        toast({
-          title: 'Тема изменена',
-          description: `Переключено на ${newTheme === 'dark' ? 'темную' : 'светлую'} тему`,
-          duration: 3000,
-        });
+    toast({
+      title: 'Тема изменена',
+      description: `Переключено на ${newTheme === 'dark' ? 'темную' : 'светлую'} тему`,
+      duration: 3000,
+    });
   };
 
-  const handleNoteSelect = (noteId: string, noteTitle: string) => {
-    setSelectedNote({ id: noteId, title: noteTitle });
-    setCurrentView('note');
+  const handleNoteSelect = (noteId: string) => {
+    const note = getNoteById(noteId);
+    if (note) {
+      setSelectedNote({ id: noteId, title: note.title });
+      setCurrentView('note');
+    }
   };
 
   const handleBackToList = () => {
@@ -48,9 +66,17 @@ const App: React.FC = () => {
     setSelectedNote(null);
   };
 
-  const handleCreateNote = () => {
-    setSelectedNote({ id: 'new', title: 'Новая заметка' });
-    setCurrentView('note');
+  const handleCreateNote = async () => {
+    const newNote = await addNote('Новая заметка');
+    if (newNote) {
+      setSelectedNote({ id: newNote.id, title: newNote.title });
+      setCurrentView('note');
+      toast({
+        title: 'Заметка создана',
+        description: 'Новая заметка готова к редактированию',
+        duration: 3000,
+      });
+    }
   };
 
   const handleNoteSave = () => {
@@ -61,23 +87,31 @@ const App: React.FC = () => {
     });
   };
 
-  const handleCurrentNoteDelete = () => {
-    toast({
-      title: 'Заметка удалена',
-      description: `"${selectedNote?.title}" удалена`,
-      duration: 3000,
-    });
-    handleBackToList();
+  const handleCurrentNoteDelete = async () => {
+    if (selectedNote) {
+      const success = await removeNote(selectedNote.id);
+      if (success) {
+        toast({
+          title: 'Заметка удалена',
+          description: `"${selectedNote.title}" удалена`,
+          duration: 3000,
+        });
+        handleBackToList();
+      }
+    }
   };
 
-  const handleNoteTitleChange = (newTitle: string) => {
+  const handleNoteTitleChange = async (newTitle: string) => {
     if (selectedNote) {
-      setSelectedNote({ ...selectedNote, title: newTitle });
-      toast({
-        title: 'Название изменено',
-        description: `Заметка переименована в "${newTitle}"`,
-        duration: 3000,
-      });
+      const updated = await updateNoteContent(selectedNote.id, { title: newTitle });
+      if (updated) {
+        setSelectedNote({ ...selectedNote, title: newTitle });
+        toast({
+          title: 'Название изменено',
+          description: `Заметка переименована в "${newTitle}"`,
+          duration: 3000,
+        });
+      }
     }
   };
 
@@ -91,56 +125,48 @@ const App: React.FC = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // TODO: Реализовать поиск в заметках
-    if (query.trim()) {
-      console.log('Searching for:', query);
+  };
+
+  const handleNotesReorder = (_reorderedNotes: any[]) => {
+    // TODO: Реализовать переупорядочение заметок
+    toast({
+      title: 'Информация',
+      description: 'Переупорядочение будет добавлено в следующей версии',
+      duration: 3000,
+    });
+  };
+
+  const handleNoteArchive = (_noteId: string) => {
+    toast({
+      title: 'Архивирование',
+      description: 'Функция архивирования будет добавлена в следующей версии',
+      duration: 3000,
+    });
+  };
+
+  const handleNoteDelete = async (noteId: string) => {
+    const success = await removeNote(noteId);
+    if (success) {
+      toast({
+        title: 'Заметка удалена',
+        description: 'Заметка удалена из списка',
+        duration: 3000,
+      });
     }
   };
 
-  const handleNotesReorder = (reorderedNotes: any[]) => {
+  const handleNoteColorChange = (_noteId: string, _color: string) => {
     toast({
-      title: 'Порядок изменен',
-      description: `Заметки переставлены (${reorderedNotes.length} заметок)`,
+      title: 'Информация',
+      description: 'Раскраска заметок будет добавлена в следующей версии',
       duration: 3000,
     });
-    // TODO: Сохранить новый порядок в storage
-    console.log('Notes reordered:', reorderedNotes);
-  };
-
-  const handleNoteArchive = (noteId: string) => {
-    toast({
-      title: 'Заметка архивирована',
-      description: 'Заметка перемещена в архив',
-      duration: 3000,
-    });
-    // TODO: Реализовать архивирование
-    console.log('Note archived:', noteId);
-  };
-
-  const handleNoteDelete = (noteId: string) => {
-    toast({
-      title: 'Заметка удалена',
-      description: 'Заметка удалена из списка',
-      duration: 3000,
-    });
-    // TODO: Реализовать удаление
-    console.log('Note deleted:', noteId);
-  };
-
-  const handleNoteColorChange = (noteId: string, color: string) => {
-    toast({
-      title: 'Цвет изменен',
-      description: `Цвет заметки изменен на ${color}`,
-      duration: 3000,
-    });
-    // TODO: Сохранить цвет в storage
-    console.log('Note color changed:', noteId, color);
   };
 
   const handleCreateFolder = () => {
     toast({
-      title: 'Создание папки',
-      description: 'Функция создания папок будет добавлена в следующих версиях',
+      title: 'Информация',
+      description: 'Создание папок будет добавлено в следующей версии',
       duration: 3000,
     });
   };
@@ -148,7 +174,7 @@ const App: React.FC = () => {
   const handleArchive = () => {
     toast({
       title: 'Архивирование',
-      description: 'Функция архивирования заметок будет добавлена в следующих версиях',
+      description: 'Функция архивирования будет добавлена в следующей версии',
       duration: 3000,
     });
   };
@@ -156,103 +182,121 @@ const App: React.FC = () => {
   const handleSort = () => {
     toast({
       title: 'Сортировка',
-      description: 'Функция сортировки заметок будет добавлена в следующих версиях',
+      description: 'Функция сортировки будет добавлена в следующей версии',
       duration: 3000,
     });
   };
 
+  // Фильтрованный список заметок на основе поиска
+  const filteredNotes = searchQuery ? searchNotes(searchQuery) : notes;
+
   return (
     <div className="h-screen w-full bg-background text-foreground flex flex-col">
-      {/* Conditional Header */}
-      {currentView === 'list' && (
-        <header className="border-b border-border px-4 py-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={handleCreateNote} title="Новая заметка">
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleCreateFolder} title="Создать папку">
-                <FolderPlus className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleSearchToggle}
-                title="Поиск"
-                className={isSearchOpen ? 'bg-accent text-accent-foreground' : ''}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleSort} title="Сортировка">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleArchive} title="Архив">
-                <Archive className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsShortcutsOpen(true)}
-                title="Горячие клавиши"
-              >
-                <HelpCircle className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="icon" title="Settings">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin mb-4">⏳</div>
+            <p>Загрузка заметок...</p>
           </div>
-        </header>
+        </div>
       )}
 
-      {/* Search Dropdown */}
-      {currentView === 'list' && (
-        <SearchDropdown
-          isOpen={isSearchOpen}
-          onClose={handleSearchClose}
-          onSearch={handleSearch}
-        />
-      )}
+      {!isLoading && (
+        <>
+          {/* Conditional Header */}
+          {currentView === 'list' && (
+            <header className="border-b border-border px-4 py-3 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" onClick={handleCreateNote} title="Новая заметка">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleCreateFolder} title="Создать папку">
+                    <FolderPlus className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleSearchToggle}
+                    title="Поиск"
+                    className={isSearchOpen ? 'bg-accent text-accent-foreground' : ''}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleSort} title="Сортировка">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleArchive} title="Архив">
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {currentView === 'list' ? (
-          <Sidebar 
-            onNoteSelect={handleNoteSelect} 
-            onNotesReorder={handleNotesReorder}
-            onNoteArchive={handleNoteArchive}
-            onNoteDelete={handleNoteDelete}
-            onNoteColorChange={handleNoteColorChange}
-            searchQuery={searchQuery} 
-          />
-        ) : (
-          selectedNote && (
-            <NoteView
-              noteId={selectedNote.id}
-              noteTitle={selectedNote.title}
-              onBack={handleBackToList}
-              onSave={handleNoteSave}
-              onDelete={handleCurrentNoteDelete}
-              onTitleChange={handleNoteTitleChange}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setIsShortcutsOpen(true)}
+                    title="Горячие клавиши"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
+                    {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" title="Settings">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </header>
+          )}
+
+          {/* Search Dropdown */}
+          {currentView === 'list' && (
+            <SearchDropdown
+              isOpen={isSearchOpen}
+              onClose={handleSearchClose}
+              onSearch={handleSearch}
             />
-          )
-        )}
-      </div>
+          )}
 
-      {/* Dialogs */}
-      <KeyboardShortcutsDialog 
-        open={isShortcutsOpen} 
-        onOpenChange={setIsShortcutsOpen}
-      />
+          {/* Main Content */}
+          <div className="flex-1 overflow-hidden">
+            {currentView === 'list' ? (
+              <Sidebar 
+                notes={filteredNotes}
+                onNoteSelect={handleNoteSelect} 
+                onNotesReorder={handleNotesReorder}
+                onNoteArchive={handleNoteArchive}
+                onNoteDelete={handleNoteDelete}
+                onNoteColorChange={handleNoteColorChange}
+                searchQuery={searchQuery} 
+              />
+            ) : (
+              selectedNote && (
+                <NoteView
+                  noteId={selectedNote.id}
+                  noteTitle={selectedNote.title}
+                  onBack={handleBackToList}
+                  onSave={handleNoteSave}
+                  onDelete={handleCurrentNoteDelete}
+                  onTitleChange={handleNoteTitleChange}
+                />
+              )
+            )}
+          </div>
 
-      {/* Toaster для уведомлений */}
-      <Toaster />
+          {/* Dialogs */}
+          <KeyboardShortcutsDialog 
+            open={isShortcutsOpen} 
+            onOpenChange={setIsShortcutsOpen}
+          />
+
+          {/* Toaster для уведомлений */}
+          <Toaster />
+        </>
+      )}
     </div>
   );
 };
