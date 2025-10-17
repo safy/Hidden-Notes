@@ -50,9 +50,9 @@
 
 /* Reveal text when Alt key is pressed */
 .hidden-text[data-revealing="true"] {
-  background: none;
-  color: inherit;
-  animation: none;
+  background: none !important;
+  color: inherit !important;
+  animation: none !important;
 }
 
 /* ProseMirror specific styles */
@@ -83,9 +83,9 @@
 
 /* Reveal text when Alt key is pressed in ProseMirror */
 .ProseMirror .hidden-text[data-revealing="true"] {
-  background: none;
-  color: inherit;
-  animation: none;
+  background: none !important;
+  color: inherit !important;
+  animation: none !important;
 }
 
 @layer base {

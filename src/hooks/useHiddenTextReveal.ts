@@ -13,6 +13,7 @@ export function useHiddenTextReveal() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
         isAltPressed = true;
+        console.log('🔑 Alt pressed!');
         updateHiddenTexts();
       }
     };
@@ -20,17 +21,22 @@ export function useHiddenTextReveal() {
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
         isAltPressed = false;
+        console.log('🔑 Alt released!');
         updateHiddenTexts();
       }
     };
 
     const updateHiddenTexts = () => {
       const hiddenTexts = document.querySelectorAll('.hidden-text');
-      hiddenTexts.forEach((element) => {
+      console.log('📝 Found hidden texts:', hiddenTexts.length);
+      
+      hiddenTexts.forEach((element, index) => {
         if (isAltPressed) {
           element.setAttribute('data-revealing', 'true');
+          console.log(`  ✅ Revealed element ${index}`);
         } else {
           element.removeAttribute('data-revealing');
+          console.log(`  ❌ Hidden element ${index}`);
         }
       });
     };
