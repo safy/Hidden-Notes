@@ -22,6 +22,8 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
+import { HiddenText } from '@/extensions/HiddenText';
+import { HiddenTextContextMenu } from './HiddenTextContextMenu';
 
 interface TiptapEditorProps {
   content?: string;
@@ -97,6 +99,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TableRow,
       TableHeader,
       TableCell,
+      HiddenText,
     ],
     content,
     editable,
@@ -254,11 +257,14 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   return (
     <div className="tiptap-editor">
       {editor && (
-        <LinkBubbleMenu 
-          editor={editor} 
-          isCreatingLink={isCreatingLink}
-          onLinkCreated={onLinkCreated}
-        />
+        <>
+          <LinkBubbleMenu 
+            editor={editor} 
+            isCreatingLink={isCreatingLink}
+            onLinkCreated={onLinkCreated}
+          />
+          <HiddenTextContextMenu editor={editor} />
+        </>
       )}
       <EditorContent editor={editor} />
     </div>

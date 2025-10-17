@@ -9,6 +9,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hidden Text Feature */
+.hidden-text {
+  position: relative;
+  color: transparent;
+  user-select: none;
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background-size: 4px 100%;
+  animation: noise 0.1s infinite;
+  padding: 2px 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+/* Keep hidden text hidden during selection */
+.hidden-text::selection {
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  color: transparent;
+}
+
+.hidden-text::moz-selection {
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  color: transparent;
+}
+
+@keyframes noise {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 4px 0;
+  }
+}
+
+/* Reveal on Alt + Hover */
+.hidden-text:hover {
+  filter: brightness(1.1);
+}
+
+/* Reveal text when Alt key is pressed */
+.hidden-text[data-revealing="true"] {
+  background: none;
+  color: inherit;
+  animation: none;
+}
+
+/* ProseMirror specific styles */
+.ProseMirror .hidden-text {
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  background-size: 4px 100%;
+  animation: noise 0.1s infinite;
+  color: transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  user-select: none;
+}
+
+.ProseMirror .hidden-text:hover {
+  filter: brightness(1.1);
+}
+
+.ProseMirror .hidden-text::selection {
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  color: transparent;
+}
+
+.ProseMirror .hidden-text::moz-selection {
+  background: linear-gradient(90deg, #999 25%, #aaa 25%, #aaa 50%, #999 50%, #999 75%, #aaa 75%, #aaa);
+  color: transparent;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -63,30 +135,6 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Hidden Text Styles */
-.hidden-text {
-  position: relative;
-  color: transparent;
-  user-select: none;
-  background: repeating-linear-gradient(
-    45deg,
-    hsl(var(--muted)),
-    hsl(var(--muted)) 2px,
-    hsl(var(--muted-foreground) / 0.1) 2px,
-    hsl(var(--muted-foreground) / 0.1) 4px
-  );
-  animation: noise 0.3s infinite;
-  border-radius: 2px;
-  padding: 0 2px;
-}
-
-.hidden-text.revealed {
-  color: inherit;
-  background: hsl(var(--accent));
-  user-select: auto;
-  animation: none;
 }
 
 /* Tiptap Editor Styles */

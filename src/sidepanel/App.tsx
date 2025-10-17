@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useNotes } from '@/hooks/useNotes';
+import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
@@ -29,6 +30,9 @@ const App: React.FC = () => {
   // Использование useNotes hook
   const { notes, isLoading, error, addNote, updateNoteContent, removeNote, searchNotes, getNoteById } = useNotes();
   const { toast } = useToast();
+
+  // Enable Alt+hover reveal for hidden text
+  useHiddenTextReveal();
 
   // Обработка ошибок storage
   useEffect(() => {
