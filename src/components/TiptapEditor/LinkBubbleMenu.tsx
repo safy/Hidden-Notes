@@ -118,16 +118,16 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
       tippyOptions={{
         duration: 100,
         placement: 'top',
-        maxWidth: '500px',
+        maxWidth: 'min(90vw, 500px)', // Адаптивная максимальная ширина
       }}
       shouldShow={shouldShow}
-      className="bg-background border border-border rounded-lg shadow-lg p-2 flex items-center gap-2"
+      className="bg-background border border-border rounded-lg shadow-lg p-2 flex flex-wrap items-center gap-2 max-w-[90vw]"
     >
       {editor.isActive('link') && !isEditing && !isCreatingLink ? (
         // Режим просмотра существующей ссылки
         <>
-          <div className="flex items-center gap-2 px-2">
-            <Link2 className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 px-2 min-w-0 flex-1">
+            <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <a
               href={editor.getAttributes('link').href}
               target="_blank"
@@ -138,37 +138,39 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
             </a>
           </div>
 
-          <div className="h-4 w-px bg-border" />
+          <div className="h-4 w-px bg-border hidden sm:block" />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={openLink}
-            title="Открыть ссылку"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={openLink}
+              title="Открыть ссылку"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setIsEditing(true)}
-            title="Редактировать ссылку"
-          >
-            <Link2 className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsEditing(true)}
+              title="Редактировать ссылку"
+            >
+              <Link2 className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={removeLink}
-            title="Удалить ссылку"
-          >
-            <Link2Off className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={removeLink}
+              title="Удалить ссылку"
+            >
+              <Link2Off className="h-4 w-4" />
+            </Button>
+          </div>
         </>
       ) : (
         // Режим создания/редактирования ссылки
@@ -189,43 +191,45 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({
                 onLinkCreated?.();
               }
             }}
-            className="h-8 w-[300px] text-sm"
+            className="h-8 min-w-[180px] w-full max-w-[300px] text-sm flex-1"
             autoFocus
           />
 
-          <div className="h-4 w-px bg-border" />
+          <div className="h-4 w-px bg-border hidden sm:block" />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={setLink}
-            disabled={!url}
-            title="Сохранить ссылку"
-          >
-            <Check className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={setLink}
+              disabled={!url}
+              title="Сохранить ссылку"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={openLink}
-            disabled={!url}
-            title="Открыть ссылку"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={openLink}
+              disabled={!url}
+              title="Открыть ссылку"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={removeLink}
-            title="Удалить ссылку"
-          >
-            <Link2Off className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={removeLink}
+              title="Удалить ссылку"
+            >
+              <Link2Off className="h-4 w-4" />
+            </Button>
+          </div>
         </>
       )}
     </BubbleMenu>
