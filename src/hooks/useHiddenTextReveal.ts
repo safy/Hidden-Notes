@@ -14,7 +14,6 @@ export function useHiddenTextReveal() {
       if (e.key === 'Alt') {
         e.preventDefault(); // Prevent browser menu
         isAltPressed = true;
-        console.log('🔑 Alt pressed!');
         updateHiddenTexts();
       }
     };
@@ -23,7 +22,6 @@ export function useHiddenTextReveal() {
       if (e.key === 'Alt') {
         e.preventDefault(); // Prevent browser menu
         isAltPressed = false;
-        console.log('🔑 Alt released!');
         updateHiddenTexts();
       }
     };
@@ -31,29 +29,17 @@ export function useHiddenTextReveal() {
     const updateHiddenTexts = () => {
       // Use querySelectorAll to find ALL hidden text elements
       const hiddenTexts = document.querySelectorAll('.hidden-text');
-      console.log('📝 Found hidden texts:', hiddenTexts.length);
       
-      hiddenTexts.forEach((element, index) => {
+      hiddenTexts.forEach((element) => {
         const htmlElement = element as HTMLElement;
-        
-        console.log(`Element ${index}:`, {
-          tag: htmlElement.tagName,
-          class: htmlElement.className,
-          text: htmlElement.textContent?.substring(0, 20),
-        });
         
         if (isAltPressed) {
           // Apply inline styles to reveal
           htmlElement.style.background = 'none';
-          htmlElement.style.color = 'rgb(2, 8, 23)'; // Explicit black color instead of inherit
+          htmlElement.style.color = 'rgb(2, 8, 23)'; // Explicit black color
           htmlElement.style.animation = 'none';
           htmlElement.style.padding = '0';
           htmlElement.setAttribute('data-revealing', 'true');
-          
-          console.log(`  ✅ Revealed element ${index}`, {
-            bg: htmlElement.style.background,
-            color: htmlElement.style.color,
-          });
         } else {
           // Remove inline styles to hide again
           htmlElement.style.background = '';
@@ -61,7 +47,6 @@ export function useHiddenTextReveal() {
           htmlElement.style.animation = '';
           htmlElement.style.padding = '';
           htmlElement.removeAttribute('data-revealing');
-          console.log(`  ❌ Hidden element ${index}`);
         }
       });
     };
