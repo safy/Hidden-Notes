@@ -160,14 +160,14 @@
 
 .ProseMirror ul[data-type='taskList'] li {
   display: flex;
-  align-items: center; /* Выравнивание по центру */
+  align-items: flex-start; /* Выравнивание по верхнему краю */
   gap: 0.5em;
   margin: 0.5em 0;
 }
 
 .ProseMirror ul[data-type='taskList'] li > label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5em;
   flex: 1;
 }
@@ -177,15 +177,15 @@
   width: 1.1em;
   height: 1.1em;
   margin: 0;
+  margin-top: 0.15em; /* Небольшой отступ для выравнивания с первой строкой текста */
   flex-shrink: 0;
 }
 
-/* Перечеркнутый текст для выполненных задач */
+/* Зачеркнутый и светлый текст для выполненных задач */
 .ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > div,
 .ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > p {
   text-decoration: line-through;
   color: hsl(var(--muted-foreground));
-  opacity: 0.7;
 }
 
 .ProseMirror table {
