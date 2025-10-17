@@ -8,8 +8,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
+import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive } from 'lucide-react';
+import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
 import { SearchDropdown } from '@/components/Search';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<{id: string, title: string} | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const { toast } = useToast();
 
   const toggleTheme = () => {
@@ -190,6 +192,14 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsShortcutsOpen(true)}
+                title="Горячие клавиши"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
@@ -234,6 +244,12 @@ const App: React.FC = () => {
           )
         )}
       </div>
+
+      {/* Dialogs */}
+      <KeyboardShortcutsDialog 
+        open={isShortcutsOpen} 
+        onOpenChange={setIsShortcutsOpen}
+      />
 
       {/* Toaster для уведомлений */}
       <Toaster />

@@ -38,6 +38,7 @@ import {
   Undo,
   Redo,
   Highlighter,
+  RotateCcw,
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -84,6 +85,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   };
 
+  const clearFormatting = () => {
+    editor.chain().focus().clearNodes().unsetAllMarks().run();
+  };
+
   return (
     <div className="border-b border-border p-2 bg-muted/30">
       <div className="flex items-center gap-1 flex-wrap">
@@ -105,6 +110,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
           title="Повторить"
         >
           <Redo className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Clear Formatting */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={clearFormatting}
+          title="Очистить форматирование"
+        >
+          <RotateCcw className="h-4 w-4" />
         </Button>
 
         <Separator orientation="vertical" className="h-6" />

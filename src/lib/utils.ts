@@ -1,76 +1,95 @@
 /**
  * @file: utils.ts
- * @description: Общие утилиты проекта
- * @dependencies: clsx, tailwind-merge
+ * @description: Утилиты и хелперы для приложения
+ * @dependencies: clsx, class-variance-authority
  * @created: 2025-10-15
  */
 
-import { type ClassValue, clsx } from 'clsx';
+import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-/**
- * Объединяет классы Tailwind с учетом конфликтов
- * @param inputs - Массив классов или условных классов
- * @returns Объединенная строка классов
- * 
- * @example
- * cn('p-4 text-red-500', condition && 'text-blue-500')
- * // Если condition = true, вернет 'p-4 text-blue-500' (blue перезаписывает red)
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Форматирует дату в читаемый вид
- * @param timestamp - Unix timestamp
- * @returns Отформатированная строка даты
- */
-export function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
+export function formatDate(date: Date | number): string {
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / 60000);
-  const diffInHours = Math.floor(diffInMs / 3600000);
-  const diffInDays = Math.floor(diffInMs / 86400000);
+  const target = new Date(date);
+  const diffMs = now.getTime() - target.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffInMinutes < 1) return 'Только что';
-  if (diffInMinutes < 60) return `${diffInMinutes} мин назад`;
-  if (diffInHours < 24) return `${diffInHours} ч назад`;
-  if (diffInDays < 7) return `${diffInDays} дн назад`;
+  if (diffMins < 1) return 'только что';
+  if (diffMins < 60) return `${diffMins} мин назад`;
+  if (diffHours < 24) return `${diffHours} ч назад`;
+  if (diffDays < 7) return `${diffDays} д назад`;
 
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-  });
+  return target.toLocaleDateString('ru-RU');
 }
 
-/**
- * Debounce функции
- * @param fn - Функция для debounce
- * @param delay - Задержка в миллисекундах
- * @returns Debounced функция
- */
-export function debounce<T extends (...args: never[]) => void>(
-  fn: T,
+export function debounce<T extends (...args: unknown[]) => unknown>(
+  func: T,
   delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout>;
-
-  return function (...args: Parameters<T>) {
+) {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: unknown[]) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
+    timeoutId = setTimeout(() => func(...args), delay);
   };
 }
 
-/**
- * Генерирует короткий UUID
- * @returns UUID строка
- */
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return Math.random().toString(36).substring(2, 11);
 }
+
+/**
+ * Справочник горячих клавиш для редактора
+ */
+export const KEYBOARD_SHORTCUTS = [
+  {
+    category: 'Отмена/Повтор',
+    shortcuts: [
+      { keys: 'Ctrl+Z', description: 'Отменить' },
+      { keys: 'Ctrl+Y', description: 'Повторить' },
+    ],
+  },
+  {
+    category: 'Форматирование текста',
+    shortcuts: [
+      { keys: 'Ctrl+B', description: 'Жирный' },
+      { keys: 'Ctrl+I', description: 'Курсив' },
+      { keys: 'Ctrl+U', description: 'Подчеркнутый' },
+      { keys: 'Ctrl+Shift+X', description: 'Зачеркнутый' },
+      { keys: 'Ctrl+`', description: 'Код' },
+    ],
+  },
+  {
+    category: 'Заголовки',
+    shortcuts: [
+      { keys: 'Ctrl+Alt+1', description: 'Заголовок 1' },
+      { keys: 'Ctrl+Alt+2', description: 'Заголовок 2' },
+      { keys: 'Ctrl+Alt+3', description: 'Заголовок 3' },
+    ],
+  },
+  {
+    category: 'Списки',
+    shortcuts: [
+      { keys: 'Ctrl+Shift+8', description: 'Маркированный список' },
+      { keys: 'Ctrl+Shift+9', description: 'Нумерованный список' },
+      { keys: 'Ctrl+Shift+[', description: 'Список задач' },
+    ],
+  },
+  {
+    category: 'Выравнивание',
+    shortcuts: [
+      { keys: 'Ctrl+Shift+L', description: 'Влево' },
+      { keys: 'Ctrl+Shift+E', description: 'По центру' },
+      { keys: 'Ctrl+Shift+R', description: 'Вправо' },
+      { keys: 'Ctrl+Shift+J', description: 'По ширине' },
+    ],
+  },
+] as const;
 
 
 
