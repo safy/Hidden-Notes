@@ -160,12 +160,32 @@
 
 .ProseMirror ul[data-type='taskList'] li {
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* Выравнивание по центру */
   gap: 0.5em;
+  margin: 0.5em 0;
+}
+
+.ProseMirror ul[data-type='taskList'] li > label {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex: 1;
 }
 
 .ProseMirror ul[data-type='taskList'] li input[type='checkbox'] {
-  margin-top: 0.3em;
+  cursor: pointer;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Перечеркнутый текст для выполненных задач */
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > div,
+.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > label > p {
+  text-decoration: line-through;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.7;
 }
 
 .ProseMirror table {
