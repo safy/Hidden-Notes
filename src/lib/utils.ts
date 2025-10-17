@@ -89,6 +89,14 @@ export const KEYBOARD_SHORTCUTS = [
       { keys: 'Ctrl+Shift+J', description: 'По ширине' },
     ],
   },
+  {
+    category: 'Конфиденциальность',
+    shortcuts: [
+      { keys: 'Ctrl+Shift+H', description: 'Скрыть текст' },
+      { keys: 'Alt+Наведение', description: 'Раскрыть скрытый текст' },
+      { keys: 'Ctrl+Клик', description: 'Копировать скрытый текст' },
+    ],
+  },
 ] as const;
 
 /**

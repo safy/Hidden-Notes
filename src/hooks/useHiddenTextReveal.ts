@@ -9,12 +9,13 @@ import { useEffect } from 'react';
 export function useHiddenTextReveal() {
   useEffect(() => {
     let isAltPressed = false;
+    let hoveredElement: HTMLElement | null = null;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
         e.preventDefault(); // Prevent browser menu
         isAltPressed = true;
-        updateHiddenTexts();
+        updateHoveredElement();
       }
     };
 
@@ -22,41 +23,65 @@ export function useHiddenTextReveal() {
       if (e.key === 'Alt') {
         e.preventDefault(); // Prevent browser menu
         isAltPressed = false;
-        updateHiddenTexts();
+        updateHoveredElement();
       }
     };
 
-    const updateHiddenTexts = () => {
-      // Use querySelectorAll to find ALL hidden text elements
-      const hiddenTexts = document.querySelectorAll('.hidden-text');
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
       
-      hiddenTexts.forEach((element) => {
+      if (hiddenTextElement) {
+        hoveredElement = hiddenTextElement;
+        updateHoveredElement();
+      } else {
+        hoveredElement = null;
+        updateHoveredElement();
+      }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
+      
+      if (hiddenTextElement) {
+        hoveredElement = null;
+        updateHoveredElement();
+      }
+    };
+
+    const updateHoveredElement = () => {
+      // Clear all reveals first
+      const allHiddenTexts = document.querySelectorAll('.hidden-text');
+      allHiddenTexts.forEach((element) => {
         const htmlElement = element as HTMLElement;
-        
-        if (isAltPressed) {
-          // Apply inline styles to reveal
-          htmlElement.style.background = 'none';
-          htmlElement.style.color = 'rgb(2, 8, 23)'; // Explicit black color
-          htmlElement.style.animation = 'none';
-          htmlElement.style.padding = '0';
-          htmlElement.setAttribute('data-revealing', 'true');
-        } else {
-          // Remove inline styles to hide again
-          htmlElement.style.background = '';
-          htmlElement.style.color = '';
-          htmlElement.style.animation = '';
-          htmlElement.style.padding = '';
-          htmlElement.removeAttribute('data-revealing');
-        }
+        htmlElement.style.background = '';
+        htmlElement.style.color = '';
+        htmlElement.style.animation = '';
+        htmlElement.style.padding = '';
+        htmlElement.removeAttribute('data-revealing');
       });
+
+      // Reveal only if Alt is pressed AND hovering over hidden text
+      if (isAltPressed && hoveredElement) {
+        hoveredElement.style.background = 'none';
+        hoveredElement.style.color = 'rgb(2, 8, 23)';
+        hoveredElement.style.animation = 'none';
+        hoveredElement.style.padding = '0';
+        hoveredElement.setAttribute('data-revealing', 'true');
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('mouseout', handleMouseOut);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mouseout', handleMouseOut);
     };
   }, []);
 }

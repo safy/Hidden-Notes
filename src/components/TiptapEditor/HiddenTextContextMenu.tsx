@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { TextSelection } from '@tiptap/pm/state';
+import { useToast } from '@/hooks/use-toast';
 
 interface HiddenTextContextMenuProps {
   editor: Editor | null;
@@ -17,6 +18,7 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
   const [showMenu, setShowMenu] = useState(false);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [isHidden, setIsHidden] = useState(false);
+  const { toast } = useToast();
 
   // Вспомогательная функция для поиска hidden text span содержащего позицию
   const findHiddenTextAtPos = (pos: number): { start: number; end: number } | null => {
@@ -91,19 +93,53 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
       console.log('✅ Showing menu! isHidden:', hasHiddenText);
     };
 
-    const handleClick = () => {
+    const handleClick = (e: MouseEvent) => {
       setShowMenu(false);
+      
+      // Ctrl + Click для копирования скрытого текста
+      if (e.ctrlKey) {
+        const target = e.target as HTMLElement;
+        const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
+        
+        if (hiddenTextElement) {
+          e.preventDefault();
+          copyHiddenText(hiddenTextElement);
+        }
+      }
     };
 
     const editorElement = editor.view.dom;
     editorElement.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('click', handleClick);
+    editorElement.addEventListener('click', handleClick);
 
     return () => {
       editorElement.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('click', handleClick);
+      editorElement.removeEventListener('click', handleClick);
     };
   }, [editor]);
+
+  const copyHiddenText = (hiddenElement: HTMLElement) => {
+    // Получаем текст из элемента и убираем пробелы справа и слева
+    const text = hiddenElement.textContent?.trim() || '';
+    
+    if (text) {
+      navigator.clipboard.writeText(text).then(() => {
+        console.log('📋 Hidden text copied:', text);
+        toast({
+          title: "Текст скопирован",
+          duration: 2000,
+        });
+      }).catch((err) => {
+        console.error('❌ Failed to copy text:', err);
+        toast({
+          title: "Ошибка копирования",
+          description: "Не удалось скопировать текст",
+          variant: "destructive",
+          duration: 3000,
+        });
+      });
+    }
+  };
 
   const toggleHiddenText = (hide: boolean) => {
     if (!editor) return;
