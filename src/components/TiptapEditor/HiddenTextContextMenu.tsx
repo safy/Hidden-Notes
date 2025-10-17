@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { Eye, EyeOff } from 'lucide-react';
+import { TextSelection } from '@tiptap/pm/state';
 
 interface HiddenTextContextMenuProps {
   editor: Editor | null;
@@ -17,26 +18,62 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [isHidden, setIsHidden] = useState(false);
 
+  // Вспомогательная функция для поиска hidden text span содержащего позицию
+  const findHiddenTextAtPos = (pos: number): { start: number; end: number } | null => {
+    if (!editor) return null;
+
+    let result: { start: number; end: number } | null = null;
+
+    editor.state.doc.nodesBetween(Math.max(0, pos - 100), Math.min(editor.state.doc.content.size, pos + 100), (node, nodeStart) => {
+      // Проверяем есть ли hiddenText mark в этом узле
+      const hasHiddenMark = node.marks.some((mark) => mark.type.name === 'hiddenText');
+
+      if (hasHiddenMark) {
+        const nodeEnd = nodeStart + node.nodeSize;
+        // Проверяем находится ли cursor в этом узле
+        if (pos >= nodeStart && pos <= nodeEnd) {
+          result = { start: nodeStart, end: nodeEnd };
+        }
+      }
+    });
+
+    return result;
+  };
+
   useEffect(() => {
     if (!editor) return;
 
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
 
-      // Проверяем есть ли выделение
       const { selection } = editor.state;
-      if (selection.empty) {
+      const { $from, $to } = selection;
+      let hasHiddenText = false;
+
+      if (!selection.empty) {
+        // Если есть выделение, проверяем содержит ли оно скрытый текст
+        editor.state.doc.nodesBetween($from.pos, $to.pos, (node) => {
+          if (node.marks.some((mark) => mark.type.name === 'hiddenText')) {
+            hasHiddenText = true;
+          }
+        });
+      } else {
+        // Если нет выделения, ищем скрытый текст в текущей позиции курсора
+        const hiddenSpan = findHiddenTextAtPos($from.pos);
+        if (hiddenSpan) {
+          hasHiddenText = true;
+          // Выделяем скрытый span
+          const start = editor.state.doc.resolve(hiddenSpan.start);
+          const end = editor.state.doc.resolve(hiddenSpan.end);
+          editor.view.dispatch(editor.state.tr.setSelection(new TextSelection(start, end)));
+        }
+      }
+
+      // Если нет скрытого текста, скрываем меню
+      if (!hasHiddenText) {
         setShowMenu(false);
         return;
       }
-
-      // Проверяем содержит ли выделение скрытый текст
-      let hasHiddenText = false;
-      editor.state.doc.nodesBetween(selection.$from.pos, selection.$to.pos, (node) => {
-        if (node.marks.some((mark) => mark.type.name === 'hiddenText')) {
-          hasHiddenText = true;
-        }
-      });
 
       setIsHidden(hasHiddenText);
       setMenuPos({ x: e.clientX, y: e.clientY });
