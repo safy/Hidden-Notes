@@ -47,7 +47,18 @@ interface ToolbarProps {
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
-  if (!editor) return null;
+  if (!editor) {
+    // Render empty toolbar structure while editor is loading
+    return (
+      <div className="border-b border-border p-2 bg-muted/30">
+        <div className="flex items-center gap-1 flex-wrap opacity-50">
+          <div className="w-8 h-8 bg-muted rounded" />
+          <div className="w-8 h-8 bg-muted rounded" />
+          <div className="w-8 h-8 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
 
   // Цвета для выделения текста
   const highlightColors = [
