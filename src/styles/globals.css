@@ -53,6 +53,7 @@
   background: none !important;
   color: inherit !important;
   animation: none !important;
+  background-size: 0 !important;
 }
 
 /* ProseMirror specific styles */
@@ -82,10 +83,14 @@
 }
 
 /* Reveal text when Alt key is pressed in ProseMirror */
-.ProseMirror .hidden-text[data-revealing="true"] {
+.ProseMirror .hidden-text[data-revealing="true"],
+.hidden-text[data-revealing="true"] {
   background: none !important;
   color: inherit !important;
   animation: none !important;
+  background-size: 0 !important;
+  padding: 0 !important;
+  filter: none !important;
 }
 
 @layer base {

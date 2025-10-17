@@ -12,6 +12,7 @@ export function useHiddenTextReveal() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
+        e.preventDefault(); // Prevent browser menu
         isAltPressed = true;
         console.log('🔑 Alt pressed!');
         updateHiddenTexts();
@@ -20,6 +21,7 @@ export function useHiddenTextReveal() {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Alt') {
+        e.preventDefault(); // Prevent browser menu
         isAltPressed = false;
         console.log('🔑 Alt released!');
         updateHiddenTexts();
@@ -27,6 +29,7 @@ export function useHiddenTextReveal() {
     };
 
     const updateHiddenTexts = () => {
+      // Use querySelectorAll to find ALL hidden text elements
       const hiddenTexts = document.querySelectorAll('.hidden-text');
       console.log('📝 Found hidden texts:', hiddenTexts.length);
       
