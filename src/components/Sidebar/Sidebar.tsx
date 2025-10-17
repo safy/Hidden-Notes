@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { NoteListItem } from './NoteListItem';
+import { generateNotePreview } from '@/lib/utils';
 
 interface SidebarProps {
   notes?: any[]; // Notes array from parent
@@ -106,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     key={note.id}
                     id={note.id}
                     title={note.title}
-                    preview={note.preview}
+                    preview={generateNotePreview(note.content)}
                     updatedAt={note.updatedAt}
                     isActive={note.isActive}
                     color={note.color}

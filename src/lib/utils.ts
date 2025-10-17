@@ -91,6 +91,67 @@ export const KEYBOARD_SHORTCUTS = [
   },
 ] as const;
 
+/**
+ * Извлечь текст из HTML
+ * @param html - HTML строка (из Tiptap)
+ * @returns Чистый текст без HTML тегов
+ */
+export function htmlToText(html: string): string {
+  if (!html) return '';
+  
+  // Создаем временный элемент для парсинга HTML
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  
+  // Получаем текст с сохранением переносов строк
+  let text = '';
+  
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent || '';
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      
+      // Добавляем перенос строки для блочных элементов
+      if (['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BR'].includes(element.tagName)) {
+        if (text && !text.endsWith('\n')) {
+          text += '\n';
+        }
+      }
+      
+      // Рекурсивно проходим по дочерним элементам
+      node.childNodes.forEach(child => walk(child));
+    }
+  };
+  
+  walk(temp);
+  
+  // Очищаем текст
+  text = text
+    .trim()
+    .replace(/\n\n+/g, '\n') // Удаляем множественные переносы
+    .replace(/\s+/g, ' '); // Удаляем множественные пробелы
+  
+  return text;
+}
+
+/**
+ * Генерировать превью заметки из контента
+ * @param htmlContent - HTML контент из редактора
+ * @param maxLength - Максимальная длина превью (по умолчанию 120)
+ * @returns Текст превью
+ */
+export function generateNotePreview(htmlContent: string, maxLength: number = 120): string {
+  const text = htmlToText(htmlContent);
+  
+  if (text.length <= maxLength) {
+    return text;
+  }
+  
+  // Обрезаем текст и добавляем многоточие
+  return text.substring(0, maxLength).trim() + '…';
+}
+
 
 
 
