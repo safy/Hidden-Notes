@@ -24,17 +24,23 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
 
     let result: { start: number; end: number } | null = null;
 
-    editor.state.doc.nodesBetween(Math.max(0, pos - 100), Math.min(editor.state.doc.content.size, pos + 100), (node, nodeStart) => {
-      // Проверяем есть ли hiddenText mark в этом узле
-      const hasHiddenMark = node.marks.some((mark) => mark.type.name === 'hiddenText');
+    // Проходим по всем текстовым узлам в документе
+    editor.state.doc.nodesBetween(0, editor.state.doc.content.size, (node, nodeStart) => {
+      if (node.isText) {
+        // Проверяем есть ли hiddenText mark в этом текстовом узле
+        const hasHiddenMark = node.marks.some((mark) => mark.type.name === 'hiddenText');
 
-      if (hasHiddenMark) {
-        const nodeEnd = nodeStart + node.nodeSize;
-        // Проверяем находится ли cursor в этом узле
-        if (pos >= nodeStart && pos <= nodeEnd) {
-          result = { start: nodeStart, end: nodeEnd };
+        if (hasHiddenMark) {
+          const nodeEnd = nodeStart + node.nodeSize;
+
+          // Проверяем находится ли cursor в этом узле
+          if (pos > nodeStart && pos <= nodeEnd) {
+            result = { start: nodeStart, end: nodeEnd };
+            return false; // Stop iteration
+          }
         }
       }
+      return true; // Continue iteration
     });
 
     return result;
@@ -98,8 +104,10 @@ export const HiddenTextContextMenu: React.FC<HiddenTextContextMenuProps> = ({ ed
     if (!editor) return;
 
     if (hide) {
-      editor.chain().focus().setMark('hiddenText').run();
+      // Для скрытия нужно применить mark к выделению
+      editor.chain().focus().toggleMark('hiddenText').run();
     } else {
+      // Для раскрытия нужно удалить mark
       editor.chain().focus().unsetMark('hiddenText').run();
     }
 
