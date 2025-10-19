@@ -90,7 +90,7 @@
 
 @keyframes telegram-noise {
   0% {
-    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
   }
   12.5% {
     background-position: 1px 1px, -2px 2px, 0.5px -0.5px, -1px 1px, 2px -1px, -0.5px 0.5px, 1px 0.5px, -1.5px 1.5px, 0.3px -0.3px;
@@ -553,7 +553,7 @@
   left: -24px;
   top: 50%;
   transform: translateY(-50%);
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--foreground) / 0.5);
   font-size: 12px;
   cursor: grab;
   opacity: 0;
@@ -577,13 +577,21 @@
 .ProseMirror ol:hover::before,
 .ProseMirror table:hover::before {
   opacity: 1;
-  background-color: hsl(var(--muted));
+  background-color: hsl(var(--primary) / 0.15);
+  color: hsl(var(--foreground) / 0.9);
+  border: 1px solid hsl(var(--primary) / 0.3);
+  border-radius: 3px;
 }
 
 /* Active drag state */
 .ProseMirror .dragging {
   opacity: 0.5 !important;
   background-color: hsl(var(--muted)) !important;
+  border: 2px solid hsl(var(--primary)) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2), 
+              inset 0 0 0 2px hsl(var(--primary)) !important;
+  padding: 4px !important;
 }
 
 /* Drop target indicator */
@@ -601,6 +609,19 @@
   height: 2px;
   background: hsl(var(--primary));
   animation: pulse-border 0.6s ease infinite;
+}
+
+/* Improved drop indicators */
+.ProseMirror .drag-over-top {
+  border-top: 3px solid hsl(var(--primary));
+  padding-top: 8px !important;
+  margin-top: 2px;
+}
+
+.ProseMirror .drag-over-bottom {
+  border-bottom: 3px solid hsl(var(--primary));
+  padding-bottom: 8px !important;
+  margin-bottom: 2px;
 }
 
 @keyframes pulse-border {
@@ -628,7 +649,7 @@
 .ProseMirror ul[draggable="true"],
 .ProseMirror ol[draggable="true"],
 .ProseMirror table[draggable="true"] {
-  cursor: grab;
+  cursor: grab !important;
 }
 
 .ProseMirror p[draggable="true"]:active,
@@ -643,7 +664,7 @@
 .ProseMirror ul[draggable="true"]:active,
 .ProseMirror ol[draggable="true"]:active,
 .ProseMirror table[draggable="true"]:active {
-  cursor: grabbing;
+  cursor: grabbing !important;
 }
 
 /* ================================================================ */
