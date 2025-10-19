@@ -24,7 +24,6 @@ import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
 import { HiddenTextContextMenu } from './HiddenTextContextMenu';
-import { DraggableBlock } from './extensions/DraggableBlock';
 
 interface TiptapEditorProps {
   content?: string;
@@ -101,7 +100,6 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TableHeader,
       TableCell,
       HiddenText,
-      DraggableBlock, // ✅ Добавлено для drag & drop блоков
     ],
     content,
     editable,
