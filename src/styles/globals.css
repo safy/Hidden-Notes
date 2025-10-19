@@ -584,7 +584,7 @@
 }
 
 /* Active drag state */
-.ProseMirror .is-dragging {
+.ProseMirror .dragging {
   opacity: 0.5 !important;
   background-color: hsl(var(--muted)) !important;
   border: 2px solid hsl(var(--primary)) !important;
@@ -604,7 +604,7 @@
   box-shadow: inset 0 -2px 0 hsl(var(--primary) / 0.2);
 }
 
-/* Cursor for draggable blocks */
+/* Smooth transitions for drag feedback */
 .ProseMirror p,
 .ProseMirror h1,
 .ProseMirror h2,
@@ -618,6 +618,22 @@
 .ProseMirror ol,
 .ProseMirror table {
   transition: all 0.15s ease;
+  cursor: grab;
+}
+
+.ProseMirror p:active,
+.ProseMirror h1:active,
+.ProseMirror h2:active,
+.ProseMirror h3:active,
+.ProseMirror h4:active,
+.ProseMirror h5:active,
+.ProseMirror h6:active,
+.ProseMirror blockquote:active,
+.ProseMirror pre:active,
+.ProseMirror ul:active,
+.ProseMirror ol:active,
+.ProseMirror table:active {
+  cursor: grabbing;
 }
 
 @keyframes pulse-border {
