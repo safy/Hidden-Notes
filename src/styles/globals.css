@@ -512,6 +512,142 @@
   border-radius: 50%;
 }
 
+/* ==================== DRAG & DROP BLOCK STYLES ==================== */
+
+/* Drag Handle styles */
+.ProseMirror {
+  position: relative;
+}
+
+/* Блок с drag handle при наведении */
+.ProseMirror p:hover,
+.ProseMirror h1:hover,
+.ProseMirror h2:hover,
+.ProseMirror h3:hover,
+.ProseMirror h4:hover,
+.ProseMirror h5:hover,
+.ProseMirror h6:hover,
+.ProseMirror blockquote:hover,
+.ProseMirror pre:hover,
+.ProseMirror ul:hover,
+.ProseMirror ol:hover,
+.ProseMirror table:hover {
+  position: relative;
+}
+
+/* Drag handle icon */
+.ProseMirror p::before,
+.ProseMirror h1::before,
+.ProseMirror h2::before,
+.ProseMirror h3::before,
+.ProseMirror h4::before,
+.ProseMirror h5::before,
+.ProseMirror h6::before,
+.ProseMirror blockquote::before,
+.ProseMirror pre::before,
+.ProseMirror ul::before,
+.ProseMirror ol::before,
+.ProseMirror table::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  user-select: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Show drag handle on hover */
+.ProseMirror p:hover::before,
+.ProseMirror h1:hover::before,
+.ProseMirror h2:hover::before,
+.ProseMirror h3:hover::before,
+.ProseMirror h4:hover::before,
+.ProseMirror h5:hover::before,
+.ProseMirror h6:hover::before,
+.ProseMirror blockquote:hover::before,
+.ProseMirror pre:hover::before,
+.ProseMirror ul:hover::before,
+.ProseMirror ol:hover::before,
+.ProseMirror table:hover::before {
+  opacity: 1;
+  background-color: hsl(var(--muted));
+}
+
+/* Active drag state */
+.ProseMirror .dragging {
+  opacity: 0.5 !important;
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* Drop target indicator */
+.ProseMirror .drag-over {
+  border-top: 2px solid hsl(var(--primary));
+  padding-top: 4px;
+}
+
+.ProseMirror .drag-over::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -2px;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  animation: pulse-border 0.6s ease infinite;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+/* Drag cursor styles */
+.ProseMirror p[draggable="true"],
+.ProseMirror h1[draggable="true"],
+.ProseMirror h2[draggable="true"],
+.ProseMirror h3[draggable="true"],
+.ProseMirror h4[draggable="true"],
+.ProseMirror h5[draggable="true"],
+.ProseMirror h6[draggable="true"],
+.ProseMirror blockquote[draggable="true"],
+.ProseMirror pre[draggable="true"],
+.ProseMirror ul[draggable="true"],
+.ProseMirror ol[draggable="true"],
+.ProseMirror table[draggable="true"] {
+  cursor: grab;
+}
+
+.ProseMirror p[draggable="true"]:active,
+.ProseMirror h1[draggable="true"]:active,
+.ProseMirror h2[draggable="true"]:active,
+.ProseMirror h3[draggable="true"]:active,
+.ProseMirror h4[draggable="true"]:active,
+.ProseMirror h5[draggable="true"]:active,
+.ProseMirror h6[draggable="true"]:active,
+.ProseMirror blockquote[draggable="true"]:active,
+.ProseMirror pre[draggable="true"]:active,
+.ProseMirror ul[draggable="true"]:active,
+.ProseMirror ol[draggable="true"]:active,
+.ProseMirror table[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* ================================================================ */
+
 
 
 
