@@ -18,14 +18,12 @@ export const DraggableBlock = Extension.create({
         key: new PluginKey('draggableBlock'),
         
         props: {
-          decorations(state) {
+          decorations() {
             return null;
           },
 
           handleDOMEvents: {
             dragstart(view: EditorView, event: DragEvent) {
-              const { node: domNode } = view.domAtPos(view.state.selection.from);
-              
               // Получаем ближайший block элемент
               let blockElement = (event.target as HTMLElement)?.closest('[data-block]') ||
                                 (event.target as HTMLElement)?.closest('p, h1, h2, h3, h4, h5, h6, li, pre, blockquote, table');
@@ -45,7 +43,7 @@ export const DraggableBlock = Extension.create({
 
                   // Создаем visual feedback
                   blockElement.classList.add('dragging');
-                  blockElement.style.opacity = '0.5';
+                  (blockElement as HTMLElement).style.opacity = '0.5';
 
                   return true;
                 }
@@ -54,7 +52,7 @@ export const DraggableBlock = Extension.create({
               return false;
             },
 
-            dragover(view: EditorView, event: DragEvent) {
+            dragover(_view: EditorView, event: DragEvent) {
               if ((event.dataTransfer as DataTransfer).types.includes('application/x-tiptap-drag-block')) {
                 event.preventDefault();
                 (event.dataTransfer as DataTransfer).dropEffect = 'move';
@@ -70,7 +68,7 @@ export const DraggableBlock = Extension.create({
               return false;
             },
 
-            dragleave(view: EditorView, event: DragEvent) {
+            dragleave(_view: EditorView, event: DragEvent) {
               const blockElement = (event.target as HTMLElement);
               blockElement?.classList.remove('drag-over');
               return false;
@@ -127,7 +125,7 @@ export const DraggableBlock = Extension.create({
               }
             },
 
-            dragend(view: EditorView, event: DragEvent) {
+            dragend(_view: EditorView, _event: DragEvent) {
               document.querySelectorAll('.dragging, .drag-over').forEach(el => {
                 el.classList.remove('dragging', 'drag-over');
                 (el as HTMLElement).style.opacity = '';

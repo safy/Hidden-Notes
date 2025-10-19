@@ -149,6 +149,8 @@ export const startMonitoring = (): void => {
 
       Object.keys(changes).forEach((key) => {
         const change = changes[key];
+        if (!change) return;
+        
         const hasOldValue = 'oldValue' in change;
         const hasNewValue = 'newValue' in change;
 
