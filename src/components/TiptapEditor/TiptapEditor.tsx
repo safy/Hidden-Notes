@@ -101,8 +101,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TableHeader,
       TableCell,
       HiddenText,
-      // NOTE: DragHandle extension НЕ добавляется здесь!
-      // DragHandleReact компонент автоматически регистрирует его плагин
+      // NOTE: DragHandle НЕ добавляется! DragHandleComponent его регистрирует автоматически
     ],
     content,
     editable,
@@ -261,6 +260,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     <div className="tiptap-editor relative">
       {editor && (
         <>
+          {console.log('🎯 Rendering DragHandleComponent', editor ? 'with editor' : 'without editor')}
           <DragHandleComponent editor={editor} />
           <LinkBubbleMenu 
             editor={editor} 

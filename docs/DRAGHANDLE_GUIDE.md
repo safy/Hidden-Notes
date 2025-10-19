@@ -110,8 +110,8 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor, ... }) => {
     extensions: [
       // ... другие расширения
       HiddenText,
-      // ⚠️ ВАЖНО: DragHandle extension НЕ добавляется в extensions!
-      // DragHandleReact компонент автоматически регистрирует плагин
+      // ⚠️ НЕ добавляйте DragHandle здесь!
+      // DragHandleComponent сам его регистрирует
     ],
   });
 
@@ -124,12 +124,16 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor, ... }) => {
 };
 ```
 
-**⚠️ Важное замечание**: Не добавляйте `DragHandle.configure({})` в `extensions`! Это вызовет ошибку:
-```
-RangeError: Adding different instances of a keyed plugin (dragHandle$)
+**✅ Правильно**: 
+- Добавьте ТОЛЬКО `<DragHandleComponent>` в JSX
+- НЕ добавляйте DragHandle в extensions
+
+**❌ Неправильно**:
+```typescript
+DragHandle,  // ❌ Это создает конфликт!
 ```
 
-Компонент `DragHandleReact` автоматически регистрирует свой плагин, поэтому разделение создает конфликт.
+Компонент работает **только вместе** с расширением!
 
 ### 2. CSS стили
 
@@ -223,14 +227,53 @@ import { Move, GripHorizontal, Dot } from 'lucide-react';
 
 ## Troubleshooting
 
+### ⚠️ Первый запуск / Обновление расширения
+
+После сборки проекта **ОБЯЗАТЕЛЬНО перезагрузите расширение в Chrome**:
+
+1. **Откройте** `chrome://extensions/` (в адресной строке)
+2. **Найдите** "Hidden Notes"
+3. **Нажмите** иконку обновления (круглая стрелка) справа внизу карточки расширения
+4. **Проверьте** консоль DevTools — ошибок быть не должно
+
+Без перезагрузки браузер использует старый код из кэша!
+
+---
+
 ### Drag handle не появляется
 
 **Проблема**: При наведении на блок handle не видно.
 
 **Решения**:
-1. Проверьте, что CSS стили загружены (`src/styles/globals.css`)
-2. Убедитесь, что TiptapEditor имеет `className="relative"` (для позиционирования)
-3. Проверьте консоль браузера на ошибки
+1. ✅ Перезагрузите расширение (см. выше)
+2. Проверьте, что CSS стили загружены (`src/styles/globals.css`)
+3. Убедитесь, что TiptapEditor имеет `className="relative"` (для позиционирования)
+4. Проверьте консоль браузера на ошибки
+5. Убедитесь что нет ошибки: `RangeError: Adding different instances of a keyed plugin (dragHandle$)`
+   - Если есть — значит DragHandle добавлен в extensions (неправильно!)
+   - Решение: Удалить из extensions, оставить только компонент DragHandleComponent
+
+### Ошибка: "Adding different instances of a keyed plugin"
+
+**Проблема**: Видите в консоли:
+```
+RangeError: Adding different instances of a keyed plugin (dragHandle$)
+```
+
+**Причина**: DragHandle добавлен И в extensions массив, И регистрируется компонентом DragHandleReact.
+
+**Решение**: 
+- **УДАЛИТЬ** эту строку из extensions:
+```typescript
+DragHandle.configure({})  // ❌ УДАЛИТЬ ЭТО
+```
+
+- Оставить ТОЛЬКО компонент:
+```typescript
+{editor && <DragHandleComponent editor={editor} />}  // ✅ ЭТО ПРАВИЛЬНО
+```
+
+После исправления пересоберите и перезагрузите расширение!
 
 ### Drag & drop не работает
 

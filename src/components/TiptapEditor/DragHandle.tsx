@@ -5,42 +5,31 @@
  */
 
 import React from 'react';
-import { DragHandle as DragHandleReact } from '@tiptap/extension-drag-handle-react';
+import { DragHandle as DragHandleComponent } from '@tiptap/extension-drag-handle-react';
 import { Editor } from '@tiptap/react';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface DragHandleProps {
+interface DragHandleWrapperProps {
   editor: Editor;
-}
-
-interface NodeChangeEvent {
-  node: {
-    type: {
-      name: string;
-    };
-  } | null;
-  editor: Editor;
-  pos: number;
 }
 
 /**
- * DragHandle компонент - обеспечивает визуальную ручку для перетаскивания блоков
- * Показывает иконку "⋮⋮" при наведении на блок
+ * DragHandleWrapper компонент - обеспечивает визуальную ручку для перетаскивания блоков
+ * Показывает иконку при наведении на блок
  * Поддерживает drag & drop для реорганизации контента
  */
-export const DragHandle: React.FC<DragHandleProps> = ({ editor }) => {
+export const DragHandle: React.FC<DragHandleWrapperProps> = ({ editor }) => {
+  // Логирование для диагностики
+  React.useEffect(() => {
+    console.log('🎯 DragHandle component mounted!');
+    console.log('Editor:', editor);
+    console.log('Editor view:', editor?.view);
+  }, [editor]);
+
+  // DragHandleComponent функция/компонент для перетаскивания
   return (
-    <DragHandleReact
-      editor={editor}
-      onNodeChange={(event: NodeChangeEvent) => {
-        // Отслеживаем активный узел для визуального feedback
-        if (event.node) {
-          // Логирование для отладки (можно удалить в production)
-          console.debug(`DragHandle: Node changed to ${event.node.type.name}`);
-        }
-      }}
-    >
+    <DragHandleComponent editor={editor}>
       <div
         className={cn(
           'drag-handle',
@@ -56,6 +45,6 @@ export const DragHandle: React.FC<DragHandleProps> = ({ editor }) => {
       >
         <GripVertical className="w-4 h-4" />
       </div>
-    </DragHandleReact>
+    </DragHandleComponent>
   );
 };
