@@ -103,16 +103,15 @@ export const DragHandle: React.FC<{ editor: Editor }> = ({ editor }) => {
 ### 1. Добавление в TiptapEditor
 
 ```typescript
-import DragHandle from '@tiptap/extension-drag-handle';
 import { DragHandle as DragHandleComponent } from './DragHandle';
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor, ... }) => {
   const editor = useEditor({
     extensions: [
       // ... другие расширения
-      DragHandle.configure({
-        // конфигурация по умолчанию работает отлично
-      }),
+      HiddenText,
+      // ⚠️ ВАЖНО: DragHandle extension НЕ добавляется в extensions!
+      // DragHandleReact компонент автоматически регистрирует плагин
     ],
   });
 
@@ -124,6 +123,13 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ editor, ... }) => {
   );
 };
 ```
+
+**⚠️ Важное замечание**: Не добавляйте `DragHandle.configure({})` в `extensions`! Это вызовет ошибку:
+```
+RangeError: Adding different instances of a keyed plugin (dragHandle$)
+```
+
+Компонент `DragHandleReact` автоматически регистрирует свой плагин, поэтому разделение создает конфликт.
 
 ### 2. CSS стили
 

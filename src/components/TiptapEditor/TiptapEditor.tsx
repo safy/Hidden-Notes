@@ -20,7 +20,6 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
-import DragHandle from '@tiptap/extension-drag-handle';
 import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
@@ -102,9 +101,8 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TableHeader,
       TableCell,
       HiddenText,
-      DragHandle.configure({
-        // Конфигурация по умолчанию достаточна
-      }),
+      // NOTE: DragHandle extension НЕ добавляется здесь!
+      // DragHandleReact компонент автоматически регистрирует его плагин
     ],
     content,
     editable,

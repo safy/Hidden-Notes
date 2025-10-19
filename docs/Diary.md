@@ -80,6 +80,7 @@ DragHandle.configure({})
 | TS6133: 'selectedNode' declared but never read | Неиспользуемый state | Убрать useState, использовать callback |
 | Build failed: Rollup failed to resolve "@tiptap/extension-collaboration" | Недостающая peer dep | Установить с `--legacy-peer-deps` |
 | Build failed: Rollup failed to resolve "@tiptap/y-tiptap" | Каскад зависимостей | Установить yjs и y-protocols |
+| **RangeError: Adding different instances of a keyed plugin (dragHandle$)** | **DragHandle добавлен в extensions И регистрируется DragHandleReact компонентом** | **Удалить DragHandle из extensions! DragHandleReact сам его регистрирует.** |
 | Bundle size warning (913 KB) | Большой размер chunks | Нормально для Chrome Extension с полным функционалом |
 
 ### 📈 Результаты
