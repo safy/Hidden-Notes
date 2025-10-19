@@ -281,6 +281,8 @@
 .ProseMirror {
   outline: none;
   min-height: 200px;
+  position: relative;
+  padding-left: 10px;
 }
 
 .ProseMirror p {
@@ -293,9 +295,8 @@
 .ProseMirror h4,
 .ProseMirror h5,
 .ProseMirror h6 {
-  margin: 1em 0 0.5em;
-  font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.1;
+  margin-top: 0.25em;
 }
 
 .ProseMirror h1 { font-size: 2em; }
@@ -515,19 +516,50 @@
 /* ================================================================ */
 /* DragHandle React Styles */
 .drag-handle {
-  position: absolute;
-  left: -32px;
-  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: grab;
-  opacity: 0;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   user-select: none;
-  padding: 4px;
+  padding: 6px 10px;
+  margin-right: 10px;
   border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #3b82f6;
+  background-color: #eff6ff;
+  pointer-events: all;
+  line-height: 1;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.drag-handle:active {
-  cursor: grabbing;
+.drag-handle:hover {
+  opacity: 1;
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* Адаптивный drag-handle для разных типов элементов через CSS переменные */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  --drag-handle-offset: -50%;
+}
+
+.ProseMirror p,
+.ProseMirror li,
+.ProseMirror blockquote {
+  --drag-handle-offset: -20%;
+}
+
+.ProseMirror pre {
+  --drag-handle-offset: -15%;
 }
 
 /* Show drag handle on hover over editor blocks */
@@ -535,18 +567,16 @@
   position: relative;
 }
 
-.ProseMirror > *:hover .drag-handle,
-.ProseMirror > *:hover ~ .drag-handle {
+.ProseMirror > *:hover .drag-handle {
   opacity: 1;
 }
 
 /* Drag handle visible when parent has focus */
 .ProseMirror:focus-within .drag-handle {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
-.ProseMirror:focus-within > *:hover .drag-handle,
-.ProseMirror:focus-within > *:hover ~ .drag-handle {
+.ProseMirror:focus-within > *:hover .drag-handle {
   opacity: 1;
 }
 
