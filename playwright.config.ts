@@ -24,15 +24,12 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   
   // Репортеры
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['list'],
-  ],
+  reporter: 'html',
   
   // Глобальные настройки для всех тестов
   use: {
     // Базовый URL (если понадобится)
-    // baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:3000',
     
     // Скриншоты при падении
     screenshot: 'only-on-failure',
@@ -41,7 +38,7 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     // Trace при падении
-    trace: 'retain-on-failure',
+    trace: 'on-first-retry',
     
     // Таймауты для actions
     actionTimeout: 10 * 1000,
@@ -51,36 +48,46 @@ export default defineConfig({
   // Проекты - разные конфигурации запуска
   projects: [
     {
-      name: 'chromium-extension',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Запускать НЕ в headless режиме для расширений
-        headless: false,
-        // Путь к собранному расширению
-        args: [
-          `--disable-extensions-except=${path.join(__dirname, './dist')}`,
-          `--load-extension=${path.join(__dirname, './dist')}`,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-        ],
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
-    
-    // Опционально: headless режим для CI
+
     {
-      name: 'chromium-extension-headless',
-      use: {
-        ...devices['Desktop Chrome'],
-        headless: true,
-        args: [
-          `--disable-extensions-except=${path.join(__dirname, './dist')}`,
-          `--load-extension=${path.join(__dirname, './dist')}`,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--headless=new',
-        ],
-      },
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
     },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
+
+    /* Test against branded browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    // },
+    // {
+    //   name: 'Google Chrome',
+    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    // },
   ],
+
+  /* Run your local dev server before starting the tests */
+  // webServer: {
+  //   command: 'npm run dev',
+  //   url: 'http://127.0.0.1:3000',
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });
 

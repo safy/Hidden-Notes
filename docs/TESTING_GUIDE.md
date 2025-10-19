@@ -376,15 +376,324 @@ image.png# 🧪 Руководство по тестированию Hidden Note
 
 ---
 
-## 📞 Поддержка
+## 🔍 Chrome DevTools для тестирования расширения
 
-При обнаружении критических проблем:
-1. Сделайте скриншоты
-2. Скопируйте ошибки из консоли
-3. Опишите шаги воспроизведения
-4. Добавьте информацию в `docs/qa.md`
+### 1. Открытие DevTools для Side Panel
+
+#### Способ 1: Встроенный DevTools Side Panel
+1. Кликните на иконку **Hidden Notes** на панели инструментов
+2. Откройте Side Panel приложение
+3. На странице с Side Panel нажмите **F12** или **Ctrl+Shift+I**
+4. DevTools откроется внизу экрана
+5. Переключитесь на вкладку **Console** для просмотра логов
+
+#### Способ 2: DevTools для Background Service Worker
+1. Откройте `chrome://extensions/`
+2. Найдите расширение **Hidden Notes**
+3. Нажмите на ссылку **"service worker"** или **"background page"**
+   - ✅ Откроется отдельное окно DevTools для background script
+
+#### Способ 3: DevTools для Popup/Manifests
+1. Откройте `chrome://extensions/`
+2. Найдите расширение **Hidden Notes**
+3. Нажмите **Details** (детали) → **Extension options** (если доступно)
 
 ---
 
-**Удачного тестирования! 🚀**
+### 2. Инспектирование Storage
+
+**Для проверки сохраняемых заметок**:
+
+1. Откройте **DevTools** (F12)
+2. Перейдите на вкладку **Application** (или **Storage**)
+3. Слева выберите **Storage** → **Extension Storage** (не обычное Local Storage!)
+4. Выберите ID расширения (выглядит как `jckhhakhlahdkgbmekia...`)
+5. Просмотрите содержимое:
+   - Ключ `notes` - массив всех заметок в JSON формате
+   - Ключ `settings` - пользовательские настройки
+
+**Эффективный способ проверить заметку**:
+```javascript
+// В консоли выполните:
+chrome.storage.local.get(['notes', 'settings'], (result) => {
+  console.log('Все заметки:', result.notes);
+  console.log('Настройки:', result.settings);
+});
+```
+
+---
+
+### 3. Debugging в консоли
+
+**Открытие консоли**:
+1. F12 → **Console** tab
+
+**Полезные команды**:
+
+```javascript
+// Просмотр всех заметок
+chrome.storage.local.get(null, console.log);
+
+// Добавление тестовой заметки
+chrome.storage.local.get('notes', (result) => {
+  const notes = result.notes || [];
+  notes.push({
+    id: 'test-' + Date.now(),
+    title: 'Тестовая заметка',
+    content: '<p>Содержимое для тестирования</p>',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  chrome.storage.local.set({ notes });
+  console.log('✅ Заметка добавлена');
+});
+
+// Очистка всех данных
+chrome.storage.local.clear(() => console.log('✅ Storage очищено'));
+
+// Получение размера storage
+chrome.storage.local.getBytesInUse(null, (bytes) => {
+  console.log(`Используется: ${bytes} байт (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
+});
+
+// Проверка квоты
+chrome.storage.local.getBytesInUse(null, (used) => {
+  const quota = 10 * 1024 * 1024; // 10MB
+  const percent = (used / quota * 100).toFixed(2);
+  console.log(`Storage: ${percent}% использовано (${used} / ${quota} bytes)`);
+});
+
+// Слушать изменения storage (для кросс-табов)
+chrome.storage.onChanged.addListener((changes, area) => {
+  console.log('📝 Storage изменился:', { changes, area });
+});
+```
+
+---
+
+### 4. Network/Performance тестирование
+
+#### Профилирование Side Panel
+
+1. **Откройте DevTools** → **Performance** tab
+2. Нажмите кнопку **record** (красный кружок)
+3. Выполните действие (создание заметки, поиск, скрытие текста)
+4. Нажмите **stop** и дождитесь анализа
+
+**Что проверить**:
+- ⚡ Ввод текста должен быть < 16ms (60 FPS)
+- ⚡ Сохранение заметки < 100ms
+- ⚡ Поиск < 50ms
+
+#### Network tab
+
+1. **DevTools** → **Network** tab
+2. Откройте Side Panel
+3. Проверьте запросы:
+   - Не должно быть запросов к внешним сервисам (только локальное)
+   - Размер bundle < 1MB
+   - Время загрузки < 500ms
+
+---
+
+### 5. Отладка состояния React
+
+#### Установка React DevTools
+
+1. Откройте Chrome Web Store
+2. Найдите **"React Developer Tools"**
+3. Нажмите **Add to Chrome**
+
+#### Использование React DevTools
+
+1. Откройте **DevTools** → **Components** tab (React DevTools)
+2. Инспектируйте компоненты:
+   - `App` - главный компонент
+   - `TiptapEditor` - редактор
+   - `Sidebar` - список заметок
+   - `NoteView` - просмотр заметки
+
+3. Проверьте **Props** и **State** для каждого компонента
+4. Используйте **Profiler** для поиска неэффективных ре-рендеров:
+   - **Profiler tab** → **record** → выполните действие → **stop**
+   - Посмотрите какие компоненты ре-рендерились зачем
+
+---
+
+### 6. Скрипт автоматизированного тестирования в Console
+
+**Скопируйте и выполните в консоли**:
+
+```javascript
+// 🧪 AUTO TEST SCRIPT для Hidden Notes
+console.log('🚀 Начинается автоматический тест...\n');
+
+const tests = [];
+let passCount = 0;
+let failCount = 0;
+
+// Утилита для тестирования
+const test = (name, fn) => {
+  try {
+    fn();
+    console.log(`✅ ${name}`);
+    passCount++;
+  } catch (err) {
+    console.error(`❌ ${name}:`, err.message);
+    failCount++;
+  }
+};
+
+// Тесты
+test('Storage API доступна', () => {
+  if (!chrome.storage) throw new Error('Chrome Storage API недоступна');
+});
+
+test('Можно получить хранилище', async () => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(null, (result) => {
+      if (result) resolve();
+      else reject(new Error('Get failed'));
+    });
+  });
+});
+
+test('Можно сохранить данные', async () => {
+  return new Promise((resolve, reject) => {
+    const testData = { testKey: 'testValue', timestamp: Date.now() };
+    chrome.storage.local.set(testData, () => {
+      chrome.storage.local.get('testKey', (result) => {
+        if (result.testKey === 'testValue') {
+          resolve();
+        } else {
+          reject(new Error('Data mismatch'));
+        }
+      });
+    });
+  });
+});
+
+test('Размер storage < 100KB', async () => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.getBytesInUse(null, (bytes) => {
+      if (bytes < 100 * 1024) {
+        console.log(`   (${bytes} bytes)`);
+        resolve();
+      } else {
+        reject(new Error(`Storage too large: ${bytes} bytes`));
+      }
+    });
+  });
+});
+
+// Итоги
+setTimeout(() => {
+  console.log('\n📊 Результаты:');
+  console.log(`✅ Прошли: ${passCount}`);
+  console.log(`❌ Не прошли: ${failCount}`);
+  console.log(`📈 Успешность: ${((passCount / (passCount + failCount)) * 100).toFixed(1)}%`);
+}, 1000);
+```
+
+---
+
+### 7. Мониторинг в реальном времени
+
+**Скрипт для отслеживания изменений**:
+
+```javascript
+// 📡 Real-time Storage Monitor
+let lastData = null;
+
+const startMonitoring = () => {
+  console.log('📡 Мониторинг storage начат...\n');
+  
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local') {
+      console.log(`[${new Date().toLocaleTimeString()}] 📝 Storage изменился:`);
+      
+      Object.keys(changes).forEach(key => {
+        const change = changes[key];
+        console.log(`  ${key}:`, {
+          oldValue: change.oldValue,
+          newValue: change.newValue,
+          changed: change.oldValue !== change.newValue
+        });
+      });
+      
+      console.log('');
+    }
+  });
+};
+
+const stopMonitoring = () => {
+  console.log('⏹️ Мониторинг остановлен');
+};
+
+// Начать мониторинг
+startMonitoring();
+// Введите: stopMonitoring() в консоль для остановки
+```
+
+---
+
+### 8. Тестирование на разных скоростях сети
+
+**Симуляция медленного интернета**:
+
+1. Откройте **DevTools** → **Network** tab
+2. Найдите dropdown (по умолчанию "No throttling")
+3. Выберите одну из опций:
+   - **Slow 3G** - сильное замедление
+   - **Fast 3G** - умеренное замедление
+   - **Slow 4G** - легкое замедление
+4. Перезагрузите страницу и тестируйте
+
+---
+
+### 9. Тестирование памяти (Memory leaks)
+
+**Поиск утечек памяти**:
+
+1. **DevTools** → **Memory** tab
+2. Нажмите **Take snapshot** (соберет снимок памяти)
+3. Выполните действие (например, создайте 50 заметок)
+4. Нажмите **Take snapshot** снова
+5. Сравните размер памяти
+
+**Хороший знак**: Память не должна расти более чем на 1-2 MB
+
+---
+
+### 10. Интеграция Playwright с Chrome DevTools
+
+**Для автоматизированного E2E тестирования**:
+
+```typescript
+// tests/devtools.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('Проверка данных через DevTools', async ({ browser }) => {
+  const context = await browser.createBrowserContext();
+  const page = await context.newPage();
+  
+  // Загрузить расширение
+  await page.goto('chrome://extensions/');
+  
+  // Открыть DevTools программно
+  await page.keyboard.press('F12');
+  
+  // Выполнить скрипт в консоли
+  const result = await page.evaluate(() => {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(null, resolve);
+    });
+  });
+  
+  console.log('Данные storage:', result);
+  expect(result).toBeDefined();
+  
+  await context.close();
+});
+```
 

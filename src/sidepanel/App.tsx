@@ -12,6 +12,7 @@ import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dial
 import { useToast } from '@/hooks/use-toast';
 import { useNotes } from '@/hooks/useNotes';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
+import { initDevtoolsHelper } from '@/lib/devtools-helpers';
 import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
@@ -33,6 +34,11 @@ const App: React.FC = () => {
 
   // Enable Alt+hover reveal for hidden text
   useHiddenTextReveal();
+
+  // 🔧 Инициализировать DevTools Helper
+  useEffect(() => {
+    initDevtoolsHelper();
+  }, []);
 
   // Обработка ошибок storage
   useEffect(() => {
