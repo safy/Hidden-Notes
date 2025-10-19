@@ -584,44 +584,40 @@
 }
 
 /* Active drag state */
-.ProseMirror .dragging {
+.ProseMirror .is-dragging {
   opacity: 0.5 !important;
   background-color: hsl(var(--muted)) !important;
   border: 2px solid hsl(var(--primary)) !important;
   border-radius: 4px !important;
-  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2), 
-              inset 0 0 0 2px hsl(var(--primary)) !important;
-  padding: 4px !important;
 }
 
-/* Drop target indicator */
-.ProseMirror .drag-over {
-  border-top: 2px solid hsl(var(--primary));
-  padding-top: 4px;
-}
-
-.ProseMirror .drag-over::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: -2px;
-  right: 0;
-  height: 2px;
-  background: hsl(var(--primary));
-  animation: pulse-border 0.6s ease infinite;
-}
-
-/* Improved drop indicators */
+/* Drop target indicators */
 .ProseMirror .drag-over-top {
   border-top: 3px solid hsl(var(--primary));
   padding-top: 8px !important;
-  margin-top: 2px;
+  box-shadow: inset 0 2px 0 hsl(var(--primary) / 0.2);
 }
 
 .ProseMirror .drag-over-bottom {
   border-bottom: 3px solid hsl(var(--primary));
   padding-bottom: 8px !important;
-  margin-bottom: 2px;
+  box-shadow: inset 0 -2px 0 hsl(var(--primary) / 0.2);
+}
+
+/* Cursor for draggable blocks */
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6,
+.ProseMirror blockquote,
+.ProseMirror pre,
+.ProseMirror ul,
+.ProseMirror ol,
+.ProseMirror table {
+  transition: all 0.15s ease;
 }
 
 @keyframes pulse-border {

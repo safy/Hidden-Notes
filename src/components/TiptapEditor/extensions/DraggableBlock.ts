@@ -1,272 +1,177 @@
 /**
  * @file: DraggableBlock.ts
- * @description: Tiptap расширение для drag & drop перемещения блоков как в Notion
+ * @description: Tiptap расширение для drag & drop перемещения блоков (официальный подход)
  * @dependencies: @tiptap/core, @tiptap/pm
  * @created: 2025-10-19
- * @updated: 2025-10-19 - Улучшена реализация с тестированием на standalone странице
+ * @updated: 2025-10-19 - Переработана согласно официальной документации Tiptap
  */
 
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { EditorView } from '@tiptap/pm/view';
-import { DecorationSet } from '@tiptap/pm/view';
-
-interface DragState {
-  draggedFrom: number | null;
-  isDragging: boolean;
-  lastOverElement: HTMLElement | null;
-  lastOverPosition: 'top' | 'bottom' | null;
-  lastDragoverTime: number;
-  dragoverThrottle: number;
-}
 
 export const DraggableBlock = Extension.create({
   name: 'draggableBlock',
 
   addProseMirrorPlugins() {
-    let dragState: DragState = {
-      draggedFrom: null,
-      isDragging: false,
-      lastOverElement: null,
-      lastOverPosition: null,
-      lastDragoverTime: 0,
-      dragoverThrottle: 100, // 100ms throttle
-    };
-
     return [
       new Plugin({
         key: new PluginKey('draggableBlock'),
         
-        state: {
-          init() {
-            return DecorationSet.empty;
-          },
-          apply() {
-            return DecorationSet.empty;
-          },
-        },
-        
         props: {
-          decorations() {
-            return DecorationSet.empty;
-          },
-
           handleDOMEvents: {
-            dragstart(view: EditorView, event: DragEvent) {
-              // Получаем ближайший block элемент
-              const blockElement = (event.target as HTMLElement)?.closest('[data-block]') ||
-                                  (event.target as HTMLElement)?.closest('p, h1, h2, h3, h4, h5, h6, li, pre, blockquote, table');
+            dragstart(view, event) {
+              // Находим block элемент (параграф, заголовок, и т.д.)
+              let blockElement = (event.target as HTMLElement).closest(
+                '.ProseMirror > p, .ProseMirror > h1, .ProseMirror > h2, .ProseMirror > h3, ' +
+                '.ProseMirror > h4, .ProseMirror > h5, .ProseMirror > h6, ' +
+                '.ProseMirror > blockquote, .ProseMirror > pre, ' +
+                '.ProseMirror > ul, .ProseMirror > ol, .ProseMirror > table'
+              );
+
+              if (!blockElement) {
+                blockElement = (event.target as HTMLElement).closest(
+                  'p, h1, h2, h3, h4, h5, h6, blockquote, pre, ul, ol, table'
+                );
+              }
+
+              if (!blockElement) {
+                return false;
+              }
+
+              // Получаем позицию блока
+              const pos = view.posAtDOM(blockElement, 0);
               
-              if (!blockElement || !blockElement.closest('.ProseMirror')) {
-                return false;
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/x-block-pos', pos.toString());
+                event.dataTransfer.setData('text/html', blockElement.innerHTML);
               }
 
-              try {
-                // Получаем позицию блока в документе
-                const pos = view.posAtDOM(blockElement, 0);
-                const $pos = view.state.doc.resolve(pos);
-                const node = $pos.parent;
-
-                if (!node) {
-                  return false;
-                }
-
-                dragState.draggedFrom = pos;
-                dragState.isDragging = true;
-
-                // Заполняем dataTransfer
-                if (event.dataTransfer) {
-                  event.dataTransfer.effectAllowed = 'move';
-                  event.dataTransfer.setData(
-                    'application/x-tiptap-drag-block',
-                    JSON.stringify({
-                      pos,
-                      nodeType: node.type.name,
-                      nodeSize: node.nodeSize,
-                    })
-                  );
-                  
-                  // Добавляем текст для fallback
-                  event.dataTransfer.setData('text/plain', node.textContent || '');
-                }
-
-                // Visual feedback - добавляем класс для стилизации
-                blockElement.classList.add('dragging');
-                (blockElement as HTMLElement).style.opacity = '0.5';
-
-                return true;
-              } catch (error) {
-                console.error('Error in dragstart:', error);
-                return false;
-              }
+              blockElement.classList.add('is-dragging');
+              return true;
             },
 
-            dragover(_view: EditorView, event: DragEvent) {
-              if (!event.dataTransfer) return false;
+            dragover(_view, event) {
+              if (!event.dataTransfer) {
+                return false;
+              }
 
-              // Проверяем что это наш тип drag data
-              if (!event.dataTransfer.types.includes('application/x-tiptap-drag-block')) {
+              // Проверяем что это наш drag
+              const dragData = event.dataTransfer.getData('text/x-block-pos');
+              if (!dragData) {
                 return false;
               }
 
               event.preventDefault();
               event.dataTransfer.dropEffect = 'move';
 
-              // Throttle dragover события (максимум 1 раз в 100ms)
-              const now = Date.now();
-              if (now - dragState.lastDragoverTime < dragState.dragoverThrottle) {
-                return true; // Игнорируем событие, но возвращаем true чтобы браузер знал что мы обработали
-              }
-              dragState.lastDragoverTime = now;
+              // Находим текущий блок под курсором
+              let targetBlock = (event.target as HTMLElement).closest(
+                'p, h1, h2, h3, h4, h5, h6, blockquote, pre, ul, ol, table'
+              );
 
-              const blockElement = (event.target as HTMLElement)?.closest('[data-block]') ||
-                                  (event.target as HTMLElement)?.closest('p, h1, h2, h3, h4, h5, h6, li, pre, blockquote, table');
-              
-              if (blockElement && blockElement !== dragState.lastOverElement) {
-                // Новый элемент - очищаем старые маркеры
-                if (dragState.lastOverElement) {
-                  dragState.lastOverElement.classList.remove('drag-over-top', 'drag-over-bottom');
-                }
-                dragState.lastOverElement = blockElement as HTMLElement;
-                dragState.lastOverPosition = null; // Reset для нового элемента
+              if (!targetBlock || !targetBlock.closest('.ProseMirror')) {
+                return false;
               }
 
-              if (blockElement) {
-                // Определяем нужно ли вставить сверху или снизу
-                // Используем 60% threshold для лучшей точности (вместо 50%)
-                const rect = blockElement.getBoundingClientRect();
-                const elementHeight = rect.height;
-                const offsetFromTop = event.clientY - rect.top;
-                
-                // Если находимся в верхних 40% элемента - это "top", остальное "bottom"
-                const isTop = offsetFromTop < elementHeight * 0.4;
-                const newPosition: 'top' | 'bottom' = isTop ? 'top' : 'bottom';
+              // Определяем вверху или внизу вставить (по вертикальной позиции)
+              const rect = targetBlock.getBoundingClientRect();
+              const isTop = event.clientY - rect.top < rect.height / 2;
 
-                // Только обновляем если позиция действительно изменилась
-                if (dragState.lastOverPosition !== newPosition) {
-                  blockElement.classList.remove('drag-over-top', 'drag-over-bottom');
-                  
-                  if (newPosition === 'top') {
-                    blockElement.classList.add('drag-over-top');
-                  } else {
-                    blockElement.classList.add('drag-over-bottom');
-                  }
-
-                  dragState.lastOverPosition = newPosition;
-                }
+              // Добавляем визуальный feedback
+              targetBlock.classList.remove('drag-over-bottom');
+              if (isTop) {
+                targetBlock.classList.add('drag-over-top');
+              } else {
+                targetBlock.classList.remove('drag-over-top');
+                targetBlock.classList.add('drag-over-bottom');
               }
 
               return true;
             },
 
-            dragleave(_view: EditorView, event: DragEvent) {
-              const blockElement = (event.target as HTMLElement);
-              
-              // Только удаляем классы если это элемент который мы отслеживали
-              if (blockElement === dragState.lastOverElement) {
-                blockElement?.classList.remove('drag-over-top', 'drag-over-bottom');
-                dragState.lastOverElement = null;
-                dragState.lastOverPosition = null;
-              }
-              
+            dragleave(_view, event) {
+              const target = event.target as HTMLElement;
+              target.classList.remove('drag-over-top', 'drag-over-bottom');
               return false;
             },
 
-            drop(view: EditorView, event: DragEvent) {
-              if (!event.dataTransfer) return false;
+            drop(view, event) {
+              if (!event.dataTransfer) {
+                return false;
+              }
 
-              const dragData = event.dataTransfer.getData('application/x-tiptap-drag-block');
-              
+              const dragData = event.dataTransfer.getData('text/x-block-pos');
               if (!dragData) {
                 return false;
               }
 
               event.preventDefault();
 
+              // Очищаем визуальные эффекты
+              document.querySelectorAll('.is-dragging, .drag-over-top, .drag-over-bottom').forEach(el => {
+                el.classList.remove('is-dragging', 'drag-over-top', 'drag-over-bottom');
+              });
+
               try {
-                const dragInfo = JSON.parse(dragData);
-                const { pos: sourcePos } = dragInfo;
-
-                // Очищаем визуальные подсказки
-                document.querySelectorAll('.dragging, .drag-over-top, .drag-over-bottom').forEach(el => {
-                  el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
-                  (el as HTMLElement).style.opacity = '';
-                });
-
-                // Получаем позицию drop
-                const dropCoords = view.posAtCoords({
-                  left: event.clientX,
-                  top: event.clientY,
-                });
-
-                if (!dropCoords) {
-                  return false;
-                }
-
-                const { pos: targetPos } = dropCoords;
-
-                // Не перемещаем если позиции одинаковые или очень близко
-                if (Math.abs(sourcePos - targetPos) < 3) {
-                  return false;
-                }
-
-                const { tr } = view.state;
-                const $source = view.state.doc.resolve(sourcePos);
+                const sourcePos = parseInt(dragData, 10);
                 
-                // Получаем блок которое нужно переместить
-                const resolvedNodeSize = $source.node($source.depth).nodeSize;
-                let from = $source.before($source.depth);
-                let to = from + resolvedNodeSize;
+                // Находим target блок
+                let targetBlock = (event.target as HTMLElement).closest(
+                  'p, h1, h2, h3, h4, h5, h6, blockquote, pre, ul, ol, table'
+                );
+
+                if (!targetBlock) {
+                  return false;
+                }
+
+                const targetPos = view.posAtDOM(targetBlock, 0);
+                
+                // Если это один и тот же блок - ничего не делаем
+                if (Math.abs(sourcePos - targetPos) < 2) {
+                  return false;
+                }
+
+                // Получаем информацию о блоке
+                const $source = view.state.doc.resolve(sourcePos);
+                const nodeSize = $source.nodeAfter?.nodeSize || 1;
 
                 // Вырезаем блок
-                const slice = view.state.doc.cut(from, to);
-
+                const tr = view.state.tr;
+                const start = $source.pos;
+                const end = start + nodeSize;
+                
+                const cut = view.state.doc.cut(start, end);
+                
                 // Вычисляем позицию вставки
-                const $target = view.state.doc.resolve(targetPos);
-                let insertPos = $target.before($target.depth);
-
-                // Если перемещаем вниз, вычитаем размер перемещаемого блока
+                let insertPos = targetPos;
                 if (targetPos > sourcePos) {
-                  insertPos -= resolvedNodeSize;
+                  // Если перемещаем вниз, компенсируем удаленный блок
+                  insertPos -= nodeSize;
                 }
 
-                // Выполняем операцию: удаляем и вставляем
-                tr.delete(from, to);
-                tr.insert(Math.max(0, insertPos), slice);
+                // Выполняем операцию
+                tr.delete(start, end);
+                tr.insert(insertPos, cut.content);
 
                 view.dispatch(tr);
                 return true;
               } catch (error) {
-                console.error('Error during drop:', error);
+                console.error('Error in drop:', error);
                 return false;
               }
             },
 
-            dragend(_view: EditorView, _event: DragEvent) {
-              // Очищаем все классы и состояние
-              document.querySelectorAll('.dragging, .drag-over-top, .drag-over-bottom').forEach(el => {
-                el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
-                (el as HTMLElement).style.opacity = '';
+            dragend(_view, _event) {
+              // Очищаем все visual feedback
+              document.querySelectorAll('.is-dragging, .drag-over-top, .drag-over-bottom').forEach(el => {
+                el.classList.remove('is-dragging', 'drag-over-top', 'drag-over-bottom');
               });
-
-              dragState.draggedFrom = null;
-              dragState.isDragging = false;
-              dragState.lastOverElement = null;
-              dragState.lastOverPosition = null;
-              dragState.lastDragoverTime = 0;
-              
               return false;
             },
           },
         },
       }),
     ];
-  },
-
-  addKeyboardShortcuts() {
-    return {
-      // Можно добавить горячие клавиши для переноса блоков (Opt+Up/Down)
-      // но пока оставим только drag-drop
-    };
   },
 });
