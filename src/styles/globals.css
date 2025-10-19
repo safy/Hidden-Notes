@@ -513,6 +513,89 @@
 }
 
 /* ================================================================ */
+/* DragHandle React Styles */
+.drag-handle {
+  position: absolute;
+  left: -32px;
+  top: 0;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Show drag handle on hover over editor blocks */
+.ProseMirror > * {
+  position: relative;
+}
+
+.ProseMirror > *:hover .drag-handle,
+.ProseMirror > *:hover ~ .drag-handle {
+  opacity: 1;
+}
+
+/* Drag handle visible when parent has focus */
+.ProseMirror:focus-within .drag-handle {
+  opacity: 0.5;
+}
+
+.ProseMirror:focus-within > *:hover .drag-handle,
+.ProseMirror:focus-within > *:hover ~ .drag-handle {
+  opacity: 1;
+}
+
+/* Visual feedback during dragging */
+.drag-cursor {
+  cursor: grab !important;
+}
+
+.drag-cursor.dragging {
+  cursor: grabbing !important;
+}
+
+/* Highlight block being dragged over */
+.drag-handle-over {
+  background-color: hsl(var(--primary) / 0.1);
+  border-left: 3px solid hsl(var(--primary));
+}
+
+/* Dark mode styles for drag handle */
+.dark .drag-handle {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .drag-handle:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+
+/* Light mode styles for drag handle */
+.light .drag-handle {
+  color: hsl(var(--muted-foreground));
+}
+
+.light .drag-handle:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+
+/* Smooth transitions for block reordering */
+.ProseMirror > * {
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+/* Accessibility - ensure keyboard users can still access functionality */
+.drag-handle:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  opacity: 1 !important;
+}
 
 
 

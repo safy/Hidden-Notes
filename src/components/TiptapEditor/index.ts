@@ -6,6 +6,7 @@
 
 export { TiptapEditor } from './TiptapEditor';
 export { Toolbar } from './Toolbar';
+export { DragHandle } from './DragHandle';
 
 
 

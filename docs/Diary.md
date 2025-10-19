@@ -4,6 +4,112 @@
 
 ---
 
+## 📅 2025-10-19 | DragHandleReact интеграция из официальной документации Tiptap
+
+### 🎯 Цель
+Заменить кастомный DraggableBlock функционал на официальный **DragHandleReact** компонент от Tiptap для более надежного и производительного решения.
+
+### 📊 Наблюдения
+
+#### Проблема версионирования
+1. **Несовместимость версий Tiptap**: 
+   - Текущий проект использует `@tiptap/react@2.26.3` с `@tiptap/core@2.x`
+   - DragHandleReact требует `@tiptap/core@3.x`
+   - Решение: использовать флаг `--legacy-peer-deps` при установке
+
+2. **Цепочка зависимостей**:
+   ```
+   @tiptap/extension-drag-handle → @tiptap/extension-collaboration
+   @tiptap/extension-collaboration → @tiptap/y-tiptap, yjs
+   ```
+   - Потребовалась установка 3 волн зависимостей
+   - Каждая волна раскрывала новые peer dependencies
+
+#### Структура DragHandleReact
+- Экспортируется как `DragHandle` компонент (не `DragHandleReact`)
+- Принимает props: `editor`, `onNodeChange`, `children`
+- `onNodeChange` callback получает объект с `{ node, editor, pos }`
+- Работает с любыми типами блоков (paragraph, heading, list, table и т.д.)
+
+### ✅ Решения
+
+#### 1. Правильный импорт и типизация
+```typescript
+import { DragHandle as DragHandleReact } from '@tiptap/extension-drag-handle-react';
+
+interface NodeChangeEvent {
+  node: { type: { name: string } } | null;
+  editor: Editor;
+  pos: number;
+}
+
+export const DragHandle: React.FC<DragHandleProps> = ({ editor }) => {
+  return (
+    <DragHandleReact
+      editor={editor}
+      onNodeChange={(event: NodeChangeEvent) => {
+        console.debug(`Node: ${event.node?.type.name}`);
+      }}
+    >
+      <GripVertical className="w-4 h-4" />
+    </DragHandleReact>
+  );
+};
+```
+
+#### 2. CSS позиционирование
+- DragHandle позиционируется слева: `position: absolute; left: -32px`
+- Скрыт по умолчанию: `opacity: 0`
+- Видим при наведении: `.ProseMirror > *:hover .drag-handle { opacity: 1 }`
+- Smooth transitions: `transition: opacity 0.2s ease, background-color 0.2s ease`
+
+#### 3. Интеграция с TiptapEditor
+```typescript
+// В extensions:
+DragHandle.configure({})
+
+// В JSX:
+{editor && <DragHandleComponent editor={editor} />}
+```
+
+### ⚠️ Проблемы и решения
+
+| Проблема | Причина | Решение |
+|----------|---------|---------|
+| TS2724: No exported member 'DragHandleReact' | Неверное имя экспорта | Использовать `import { DragHandle as DragHandleReact }` |
+| TS6133: 'selectedNode' declared but never read | Неиспользуемый state | Убрать useState, использовать callback |
+| Build failed: Rollup failed to resolve "@tiptap/extension-collaboration" | Недостающая peer dep | Установить с `--legacy-peer-deps` |
+| Build failed: Rollup failed to resolve "@tiptap/y-tiptap" | Каскад зависимостей | Установить yjs и y-protocols |
+| Bundle size warning (913 KB) | Большой размер chunks | Нормально для Chrome Extension с полным функционалом |
+
+### 📈 Результаты
+
+**Build успешен:**
+```
+✓ 1785 modules transformed
+✓ built in 5.51s
+dist/assets/index-DCaeR94b.js  913.35 kB │ gzip: 289.89 kB
+```
+
+**Интегрировано:**
+- ✅ 5 новых npm пакетов (@tiptap/extension-drag-handle-react, -collaboration, -node-range, @tiptap/y-tiptap, yjs)
+- ✅ Новый компонент DragHandle.tsx (52 строки)
+- ✅ CSS стили (.drag-handle и related) (~60 строк)
+- ✅ Интеграция в TiptapEditor (добавлены 2 импорта, 3 строки конфига)
+
+**Функционал:**
+- 🎯 Drag handle видим при наведении на блоки
+- 🎯 GripVertical иконка показывает где "хватить" за блок
+- 🎯 Плавные переходы и hover effects
+- 🎯 Support для всех типов блоков
+- 🎯 Keyboard accessibility с focus outline
+
+### 📚 Источники
+- [Tiptap DragHandleReact Docs](https://tiptap.dev/docs/editor/extensions/functionality/drag-handle-react)
+- [Memory: DRAG_DROP_TIPTAP_GUIDE.md](память о drag & drop подходе)
+
+---
+
 ## 📅 2025-10-19 | День N+6 | Реализация Drag & Drop функционала как в Notion
 
 ### 🎯 Цель дня

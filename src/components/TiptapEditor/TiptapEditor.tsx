@@ -20,10 +20,12 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import DragHandle from '@tiptap/extension-drag-handle';
 import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
 import { HiddenTextContextMenu } from './HiddenTextContextMenu';
+import { DragHandle as DragHandleComponent } from './DragHandle';
 
 interface TiptapEditorProps {
   content?: string;
@@ -100,6 +102,9 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       TableHeader,
       TableCell,
       HiddenText,
+      DragHandle.configure({
+        // Конфигурация по умолчанию достаточна
+      }),
     ],
     content,
     editable,
@@ -255,9 +260,10 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   }, [editor, placeholder]);
 
   return (
-    <div className="tiptap-editor">
+    <div className="tiptap-editor relative">
       {editor && (
         <>
+          <DragHandleComponent editor={editor} />
           <LinkBubbleMenu 
             editor={editor} 
             isCreatingLink={isCreatingLink}
