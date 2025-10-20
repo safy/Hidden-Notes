@@ -5,10 +5,11 @@
  * @created: 2025-10-15
  */
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { TiptapEditor } from '@/components/TiptapEditor/TiptapEditor';
 import { Toolbar } from '@/components/TiptapEditor/Toolbar';
 import { Editor } from '@tiptap/react';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 
 interface EditorAreaProps {
   noteTitle?: string;
@@ -17,6 +18,8 @@ interface EditorAreaProps {
   onContentChange?: (content: string) => void;
   initialContent?: string;
 }
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export const EditorArea: React.FC<EditorAreaProps> = ({
   hasNote = true,
@@ -27,11 +30,14 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [content, setContent] = useState(initialContent);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const savedIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Debounced auto-save with 1000ms delay
+  // Debounced auto-save with 1000ms delay and status tracking
   const handleContentUpdate = useCallback((newContent: string) => {
     setContent(newContent);
+    setSaveStatus('saving');
     
     // Clear previous timeout
     if (timeoutRef.current) {
@@ -39,10 +45,58 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
     }
     
     // Set new timeout for debounced save
-    timeoutRef.current = setTimeout(() => {
-      onContentChange?.(newContent);
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await onContentChange?.(newContent);
+        setSaveStatus('saved');
+        
+        // Скрываем индикатор "Saved" через 2 секунды
+        savedIndicatorTimeoutRef.current = setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+      } catch (error) {
+        console.error('Error saving note:', error);
+        setSaveStatus('error');
+        
+        // Показываем ошибку 5 секунд, затем возвращаемся к idle
+        savedIndicatorTimeoutRef.current = setTimeout(() => {
+          setSaveStatus('idle');
+        }, 5000);
+      }
     }, 1000);
   }, [onContentChange]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Предотвращаем потерю данных при закрытии панели
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'saving') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveStatus]);
+
+  // Обновляем content когда меняется initialContent (при открытии другой заметки)
+  useEffect(() => {
+    if (initialContent !== content) {
+      setContent(initialContent);
+    }
+  }, [initialContent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEditorReady = (editorInstance: Editor) => {
     setEditor(editorInstance);
@@ -87,8 +141,34 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
 
       {/* Footer */}
       <div className="p-3 border-t border-border flex-shrink-0">
-        <div className="text-xs text-muted-foreground text-center">
-          Слов: {content.split(/\s+/).filter(word => word.length > 0).length} | Символов: {content.length} | Время чтения: {Math.ceil(content.split(/\s+/).filter(word => word.length > 0).length / 200)} мин
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex-1 text-center">
+            Слов: {content.split(/\s+/).filter(word => word.length > 0).length} | Символов: {content.length} | Время чтения: {Math.ceil(content.split(/\s+/).filter(word => word.length > 0).length / 200)} мин
+          </div>
+          
+          {/* Save Status Indicator */}
+          {saveStatus !== 'idle' && (
+            <div className="flex items-center gap-1.5 px-3">
+              {saveStatus === 'saving' && (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                  <span className="text-blue-500">Сохранение...</span>
+                </>
+              )}
+              {saveStatus === 'saved' && (
+                <>
+                  <Check className="h-3 w-3 text-green-500" />
+                  <span className="text-green-500">Сохранено</span>
+                </>
+              )}
+              {saveStatus === 'error' && (
+                <>
+                  <AlertCircle className="h-3 w-3 text-red-500" />
+                  <span className="text-red-500">Ошибка сохранения</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

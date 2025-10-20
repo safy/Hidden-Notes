@@ -5,7 +5,7 @@
  * @created: 2025-01-15
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NodeViewWrapper, NodeViewProps } from '@tiptap/react';
 
 export const ImageResizeView: React.FC<NodeViewProps> = ({
@@ -13,7 +13,7 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
   updateAttributes,
   selected,
 }) => {
-  const { src, alt, width, height } = node.attrs;
+  const { src, alt, width, height, isHidden } = node.attrs;
   const [currentWidth, setCurrentWidth] = useState(width || 300);
   const [currentHeight, setCurrentHeight] = useState(height || 200);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -21,6 +21,20 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
   const startY = useRef(0);
   const startWidth = useRef(0);
   const startHeight = useRef(0);
+  const isInitialized = useRef(false);
+
+  // Синхронизируем локальный state с node.attrs при изменении
+  useEffect(() => {
+    console.log('📥 ImageResizeView mounted/updated, node.attrs:', { width, height, src: src?.substring(0, 50) });
+    if (width && height) {
+      console.log('✅ Setting size from node.attrs:', width, 'x', height);
+      setCurrentWidth(width);
+      setCurrentHeight(height);
+      isInitialized.current = true;
+    } else {
+      console.log('⚠️ No width/height in node.attrs, will use defaults or auto-detect');
+    }
+  }, [width, height, src]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!imageRef.current) return;
@@ -41,10 +55,12 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
     };
 
     const handleMouseUp = () => {
+      console.log('🖼️ Image resized to:', currentWidth, 'x', currentHeight);
       updateAttributes({
         width: currentWidth,
         height: currentHeight,
       });
+      console.log('✅ updateAttributes called with:', { width: currentWidth, height: currentHeight });
       
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -55,7 +71,8 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
   };
 
   const handleImageLoad = () => {
-    if (!imageRef.current || width || height) return;
+    // Если размеры уже установлены (из сохраненных данных), не перезаписываем
+    if (!imageRef.current || isInitialized.current || width || height) return;
     
     const { naturalWidth, naturalHeight } = imageRef.current;
     const maxWidth = 400;
@@ -76,12 +93,14 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
       width: newWidth,
       height: newHeight,
     });
+    isInitialized.current = true;
   };
 
   return (
     <NodeViewWrapper className="image-resize-wrapper">
       <div
-        className={`image-resizer ${selected ? 'selected' : ''}`}
+        className={`image-resizer ${selected ? 'selected' : ''} ${isHidden ? 'hidden-image' : ''}`}
+        data-hidden={isHidden ? 'true' : 'false'}
         style={{
           width: currentWidth,
           height: currentHeight,
@@ -93,6 +112,7 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
           ref={imageRef}
           src={src}
           alt={alt || ''}
+          className={isHidden ? 'opacity-0' : ''}
           style={{
             width: '100%',
             height: '100%',

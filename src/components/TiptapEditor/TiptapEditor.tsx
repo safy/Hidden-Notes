@@ -23,7 +23,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
-import { HiddenTextContextMenu } from './HiddenTextContextMenu';
+import { HiddenContextMenu } from './HiddenContextMenu';
 import { DragHandle as DragHandleComponent } from './DragHandle';
 
 interface TiptapEditorProps {
@@ -107,6 +107,24 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     editable,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
+      console.log('📝 Editor content updated, HTML preview:', html.substring(0, 200));
+      
+      // Проверяем изображения в контенте
+      const imgMatches = html.match(/<img[^>]*>/g);
+      if (imgMatches) {
+        console.log('🖼️ Images in content:', imgMatches.length);
+        imgMatches.forEach((img, i) => {
+          const widthMatch = img.match(/width="(\d+)"/);
+          const heightMatch = img.match(/height="(\d+)"/);
+          console.log(`  Image ${i + 1}:`, {
+            hasWidth: !!widthMatch,
+            width: widthMatch?.[1],
+            hasHeight: !!heightMatch,
+            height: heightMatch?.[1],
+          });
+        });
+      }
+      
       onUpdate?.(html);
     },
     onCreate: ({ editor }) => {
@@ -267,7 +285,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
             isCreatingLink={isCreatingLink}
             onLinkCreated={onLinkCreated}
           />
-          <HiddenTextContextMenu editor={editor} />
+          <HiddenContextMenu editor={editor} />
         </>
       )}
       <EditorContent editor={editor} />

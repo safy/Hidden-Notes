@@ -29,7 +29,6 @@ import { fileURLToPath } from 'url';
  * ═════════════════════════════════════════════════════════════════════
  */
 
-import { test, expect } from '@playwright/test';
 
 test.describe('Editor Tests', () => {
   test('Example test', async ({ page }) => {

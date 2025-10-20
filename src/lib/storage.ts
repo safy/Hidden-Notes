@@ -1,11 +1,13 @@
 /**
  * @file: storage.ts
  * @description: Абстракция над Chrome Storage API для CRUD операций с заметками
- * @dependencies: Chrome Extension Storage API, types/note
+ * @dependencies: Chrome Extension Storage API, types/note, data-protection
  * @created: 2025-10-17
+ * @updated: 2025-10-20 - Добавлена интеграция с системой защиты данных
  */
 
 import { Note, StorageSchema, DEFAULT_SETTINGS } from '@/types/note';
+import { saveNoteVersion, moveToTrash } from './data-protection';
 
 const STORAGE_KEY = 'hidden_notes';
 
@@ -88,22 +90,32 @@ export async function updateNote(noteId: string, updates: Partial<Omit<Note, 'id
   schema.notes[noteIndex] = updatedNote;
   await chrome.storage.local.set({ [STORAGE_KEY]: schema });
   
+  // Сохраняем версию заметки для истории
+  await saveNoteVersion(updatedNote);
+  
   return updatedNote;
 }
 
 /**
- * Удалить заметку
+ * Удалить заметку (soft delete - перемещение в корзину)
  */
 export async function deleteNote(noteId: string): Promise<boolean> {
   const data = await chrome.storage.local.get(STORAGE_KEY);
   const schema = data[STORAGE_KEY] as StorageSchema;
   
-  const initialLength = schema.notes.length;
+  const noteIndex = schema.notes.findIndex(note => note.id === noteId);
+  if (noteIndex === -1) return false;
+  
+  const noteToDelete = schema.notes[noteIndex];
+  if (!noteToDelete) return false;
+  
+  // Перемещаем в корзину вместо полного удаления
+  await moveToTrash(noteToDelete);
+  
+  // Удаляем из основного хранилища
   schema.notes = schema.notes.filter(note => note.id !== noteId);
-  
-  if (schema.notes.length === initialLength) return false;
-  
   await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+  
   return true;
 }
 

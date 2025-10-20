@@ -14,6 +14,7 @@ import { ArrowLeft, Trash2, Save } from 'lucide-react';
 interface NoteViewProps {
   noteId: string;
   noteTitle: string;
+  noteContent: string; // Добавляем контент заметки
   onBack: () => void;
   onSave?: () => void;
   onDelete?: () => void;
@@ -24,6 +25,7 @@ interface NoteViewProps {
 export const NoteView: React.FC<NoteViewProps> = ({
   noteId: _noteId,
   noteTitle,
+  noteContent,
   onBack,
   onSave,
   onDelete,
@@ -32,6 +34,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(noteTitle);
+  
   const handleSave = () => {
     onSave?.();
   };
@@ -45,9 +48,18 @@ export const NoteView: React.FC<NoteViewProps> = ({
   };
 
   const handleTitleSave = () => {
-    if (editedTitle.trim() !== noteTitle) {
-      onTitleChange?.(editedTitle.trim());
+    const trimmedTitle = editedTitle.trim();
+    const finalTitle = trimmedTitle || 'Без названия';
+    
+    if (finalTitle !== noteTitle) {
+      onTitleChange?.(finalTitle);
     }
+    
+    // Обновляем отображаемый title если было пусто
+    if (!trimmedTitle) {
+      setEditedTitle('Без названия');
+    }
+    
     setIsEditingTitle(false);
   };
 
@@ -58,6 +70,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // Предотвращаем перенос строки
       handleTitleSave();
     } else if (e.key === 'Escape') {
       handleTitleCancel();
@@ -128,6 +141,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           noteTitle={noteTitle} 
           hasNote={true}
           isInModal={false}
+          initialContent={noteContent}
           onContentChange={(content) => onContentChange?.(_noteId, content)}
         />
       </div>

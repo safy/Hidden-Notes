@@ -30,9 +30,13 @@ export function useHiddenTextReveal() {
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
+      const hiddenImageElement = target.closest('.hidden-image') as HTMLElement;
       
       if (hiddenTextElement) {
         hoveredElement = hiddenTextElement;
+        updateHoveredElement();
+      } else if (hiddenImageElement) {
+        hoveredElement = hiddenImageElement;
         updateHoveredElement();
       } else {
         hoveredElement = null;
@@ -43,15 +47,16 @@ export function useHiddenTextReveal() {
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
+      const hiddenImageElement = target.closest('.hidden-image') as HTMLElement;
       
-      if (hiddenTextElement) {
+      if (hiddenTextElement || hiddenImageElement) {
         hoveredElement = null;
         updateHoveredElement();
       }
     };
 
     const updateHoveredElement = () => {
-      // Clear all reveals first
+      // Clear all reveals first (text)
       const allHiddenTexts = document.querySelectorAll('.hidden-text');
       allHiddenTexts.forEach((element) => {
         const htmlElement = element as HTMLElement;
@@ -62,13 +67,26 @@ export function useHiddenTextReveal() {
         htmlElement.removeAttribute('data-revealing');
       });
 
-      // Reveal only if Alt is pressed AND hovering over hidden text
+      // Clear all reveals (images)
+      const allHiddenImages = document.querySelectorAll('.hidden-image');
+      allHiddenImages.forEach((element) => {
+        const htmlElement = element as HTMLElement;
+        htmlElement.removeAttribute('data-revealing');
+      });
+
+      // Reveal only if Alt is pressed AND hovering over hidden element
       if (isAltPressed && hoveredElement) {
-        hoveredElement.style.background = 'none';
-        hoveredElement.style.color = 'rgb(2, 8, 23)';
-        hoveredElement.style.animation = 'none';
-        hoveredElement.style.padding = '0';
-        hoveredElement.setAttribute('data-revealing', 'true');
+        if (hoveredElement.classList.contains('hidden-text')) {
+          // Reveal text
+          hoveredElement.style.background = 'none';
+          hoveredElement.style.color = 'rgb(2, 8, 23)';
+          hoveredElement.style.animation = 'none';
+          hoveredElement.style.padding = '0';
+          hoveredElement.setAttribute('data-revealing', 'true');
+        } else if (hoveredElement.classList.contains('hidden-image')) {
+          // Reveal image
+          hoveredElement.setAttribute('data-revealing', 'true');
+        }
       }
     };
 

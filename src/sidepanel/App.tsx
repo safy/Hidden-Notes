@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNotes } from '@/hooks/useNotes';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { initDevtoolsHelper } from '@/lib/devtools-helpers';
+import { initDataProtection, verifyDataIntegrity, listBackups, restoreFromBackup } from '@/lib/data-protection';
 import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
@@ -35,10 +36,26 @@ const App: React.FC = () => {
   // Enable Alt+hover reveal for hidden text
   useHiddenTextReveal();
 
-  // 🔧 Инициализировать DevTools Helper
+  // 🔧 Инициализировать DevTools Helper и систему защиты данных
   useEffect(() => {
     initDevtoolsHelper();
-  }, []);
+    
+    // Инициализируем защиту данных (async)
+    initDataProtection().then(() => {
+      // Проверяем целостность данных при запуске
+      verifyDataIntegrity().then(result => {
+        if (!result.isValid) {
+          toast({
+            title: '⚠️ Проблемы с данными обнаружены',
+            description: `Ошибок: ${result.errors.length}. Нажмите Ctrl+Shift+R для восстановления.`,
+            duration: 10000,
+          });
+        } else if (result.warnings.length > 0) {
+          console.warn('Data warnings:', result.warnings);
+        }
+      });
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Обработка ошибок storage
   useEffect(() => {
@@ -211,6 +228,107 @@ const App: React.FC = () => {
     });
   };
 
+  const handleExportNotes = async () => {
+    try {
+      const { exportNotes } = await import('@/lib/storage');
+      const jsonData = await exportNotes();
+      
+      // Создаем blob и скачиваем файл
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Форматируем имя файла с временной меткой
+      const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+      link.download = `hidden-notes-backup-${timestamp}.json`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Экспорт завершен',
+        description: `Экспортировано заметок: ${notes.length}`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: 'Ошибка экспорта',
+        description: 'Не удалось экспортировать заметки',
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleSettings = () => {
+    // TODO: Открыть модальное окно настроек
+    toast({
+      title: 'Настройки',
+      description: 'Окно настроек будет добавлено в следующей версии. Нажмите Ctrl+E для экспорта заметок.',
+      duration: 4000,
+    });
+  };
+
+  // Функция восстановления из бэкапа
+  const handleRestoreFromBackup = async () => {
+    const backups = await listBackups();
+    
+    if (backups.length === 0) {
+      toast({
+        title: 'Нет бэкапов',
+        description: 'Автоматические бэкапы еще не созданы',
+        duration: 3000,
+      });
+      return;
+    }
+    
+    // Показываем информацию о последнем бэкапе
+    const lastBackup = backups[backups.length - 1];
+    if (!lastBackup) return;
+    
+    if (confirm(`Восстановить данные из бэкапа?\n\nДата: ${lastBackup.date}\nЗаметок: ${lastBackup.notesCount}\n\nТекущие несохраненные изменения будут потеряны!`)) {
+      const success = await restoreFromBackup();
+      
+      if (success) {
+        // Перезагружаем страницу для обновления данных
+        window.location.reload();
+      } else {
+        toast({
+          title: 'Ошибка восстановления',
+          description: 'Не удалось восстановить данные из бэкапа',
+          duration: 5000,
+        });
+      }
+    }
+  };
+
+  // Глобальные горячие клавиши
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+E - Экспорт заметок
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        handleExportNotes();
+      }
+      // Ctrl+/ - Помощь по горячим клавишам
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setIsShortcutsOpen(true);
+      }
+      // Ctrl+Shift+R - Восстановление из бэкапа
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        handleRestoreFromBackup();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [notes.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Фильтрованный список заметок на основе поиска
   const filteredNotes = searchQuery ? searchNotes(searchQuery) : notes;
 
@@ -268,7 +386,7 @@ const App: React.FC = () => {
                   <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
                     {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                   </Button>
-                  <Button variant="ghost" size="icon" title="Settings">
+                  <Button variant="ghost" size="icon" onClick={handleSettings} title="Settings (Ctrl+E для экспорта)">
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
@@ -302,6 +420,7 @@ const App: React.FC = () => {
                 <NoteView
                   noteId={selectedNote.id}
                   noteTitle={selectedNote.title}
+                  noteContent={getNoteById(selectedNote.id)?.content || ''}
                   onBack={handleBackToList}
                   onSave={handleNoteSave}
                   onDelete={handleCurrentNoteDelete}
