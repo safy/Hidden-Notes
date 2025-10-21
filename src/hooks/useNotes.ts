@@ -122,6 +122,17 @@ export function useNotes() {
     return notes.find(n => n.id === noteId);
   }, [notes]);
 
+  // Обновить список заметок
+  const refreshNotes = useCallback(async () => {
+    try {
+      const loadedNotes = await getAllNotes();
+      setNotes(loadedNotes);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh notes');
+      console.error('Error refreshing notes:', err);
+    }
+  }, []);
+
   return {
     notes,
     isLoading,
@@ -131,5 +142,6 @@ export function useNotes() {
     removeNote,
     searchNotes,
     getNoteById,
+    refreshNotes,
   };
 }

@@ -8,7 +8,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MoreVertical, Archive, Trash2, Palette } from 'lucide-react';
+import { GripVertical, MoreVertical, Archive, Trash2, Palette, FolderInput } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ interface NoteListItemProps {
   onArchive?: (id: string) => void;
   onDelete?: (id: string) => void;
   onColorChange?: (id: string, color: string) => void;
+  onMoveToFolder?: (id: string) => void;
 }
 
 const noteColors = [
@@ -53,6 +54,7 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
   onArchive,
   onDelete,
   onColorChange,
+  onMoveToFolder,
 }) => {
   const {
     attributes,
@@ -72,6 +74,10 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
 
   const handleColorChange = (newColor: string) => {
     onColorChange?.(id, newColor);
+  };
+
+  const handleMoveToFolder = () => {
+    onMoveToFolder?.(id);
   };
 
   const handleArchive = () => {
@@ -148,6 +154,10 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
                 Цвет заметки
               </DropdownMenuItem>
             </ColorPicker>
+            <DropdownMenuItem onClick={handleMoveToFolder}>
+              <FolderInput className="mr-2 h-4 w-4" />
+              Переместить в папку
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleArchive}>
               <Archive className="mr-2 h-4 w-4" />

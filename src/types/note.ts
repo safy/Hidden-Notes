@@ -18,6 +18,9 @@ export interface Note {
   /** Содержимое заметки в формате JSON (Tiptap) */
   content: string;
 
+  /** ID папки в которой находится заметка (null = без папки) */
+  folderId?: string | null;
+
   /** Timestamp создания заметки */
   createdAt: number;
 
@@ -27,8 +30,17 @@ export interface Note {
   /** Теги заметки (для будущих версий) */
   tags?: string[];
 
-  /** Закреплена ли заметка (для будущих версий) */
+  /** Закреплена ли заметка */
   isPinned?: boolean;
+
+  /** Заметка в архиве (скрыта из основного списка) */
+  isArchived?: boolean;
+
+  /** Timestamp архивирования */
+  archivedAt?: number;
+
+  /** Порядок заметки в списке/папке */
+  order?: number;
 }
 
 /**
@@ -45,8 +57,12 @@ export interface CreateNoteInput {
 export interface UpdateNoteInput {
   title?: string;
   content?: string;
+  folderId?: string | null;
   tags?: string[];
   isPinned?: boolean;
+  isArchived?: boolean;
+  archivedAt?: number;
+  order?: number;
 }
 
 /**
@@ -70,9 +86,12 @@ export interface Settings {
  * Схема хранилища Chrome Storage
  */
 export interface StorageSchema {
+  version: number;                    // версия схемы для миграций
   notes: Note[];
+  folders: Array<import('./folder').Folder>; // NEW - папки для организации
   settings: Settings;
   currentNoteId: string | null;
+  currentFolderId: string | null;     // NEW - текущая открытая папка
 }
 
 /**

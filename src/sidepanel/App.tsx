@@ -11,13 +11,16 @@ import { Toaster } from '@/components/ui/toaster';
 import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useNotes } from '@/hooks/useNotes';
+import { useFolders } from '@/hooks/useFolders';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { initDevtoolsHelper } from '@/lib/devtools-helpers';
 import { initDataProtection, verifyDataIntegrity, listBackups, restoreFromBackup } from '@/lib/data-protection';
-import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, FolderPlus, Archive, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, Archive, HelpCircle, ArrowLeft } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
 import { SearchDropdown } from '@/components/Search';
+import { FolderCreateMenu, MoveToFolderDialog } from '@/components/Folder';
+import { moveNoteToFolder, toggleNoteArchive } from '@/lib/storage';
 
 type AppView = 'list' | 'note';
 
@@ -28,9 +31,16 @@ const App: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   
-  // Использование useNotes hook
-  const { notes, isLoading, error, addNote, updateNoteContent, removeNote, searchNotes, getNoteById } = useNotes();
+  // Dialogs state
+  const [isFolderCreateMenuOpen, setIsFolderCreateMenuOpen] = useState(false);
+  const [isMoveToFolderDialogOpen, setIsMoveToFolderDialogOpen] = useState(false);
+  const [movingNoteId, setMovingNoteId] = useState<string | null>(null);
+  
+  // Использование useNotes и useFolders hooks
+  const { notes, isLoading, error, addNote, updateNoteContent, removeNote, getNoteById, refreshNotes } = useNotes();
+  const { folders, createNewFolder } = useFolders();
   const { toast } = useToast();
 
   // Enable Alt+hover reveal for hidden text
@@ -177,14 +187,6 @@ const App: React.FC = () => {
     });
   };
 
-  const handleNoteArchive = (_noteId: string) => {
-    toast({
-      title: 'Архивирование',
-      description: 'Функция архивирования будет добавлена в следующей версии',
-      duration: 3000,
-    });
-  };
-
   const handleNoteDelete = async (noteId: string) => {
     const success = await removeNote(noteId);
     if (success) {
@@ -205,17 +207,109 @@ const App: React.FC = () => {
   };
 
   const handleCreateFolder = () => {
+    setIsFolderCreateMenuOpen(true);
+  };
+
+  const handleFolderCreateSubmit = async (data: { name: string; color: string; icon?: string }) => {
+    const newFolder = await createNewFolder({
+      name: data.name,
+      color: data.color,
+      icon: data.icon,
+    });
+    
+    if (newFolder) {
+      toast({
+        title: 'Папка создана',
+        description: `"${data.name}" успешно создана`,
+        duration: 3000,
+      });
+    }
+    
+    setIsFolderCreateMenuOpen(false);
+  };
+
+  const handleMoveNoteToFolder = (noteId: string) => {
+    setMovingNoteId(noteId);
+    setIsMoveToFolderDialogOpen(true);
+  };
+
+  const handleMoveToFolderSubmit = async (folderId: string | null) => {
+    if (!movingNoteId) return;
+    
+    const note = getNoteById(movingNoteId);
+    if (!note) return;
+    
+    const success = await moveNoteToFolder(movingNoteId, folderId);
+    
+    if (success) {
+      const folderName = folderId 
+        ? folders.find(f => f.id === folderId)?.name || 'папку'
+        : 'корень';
+      
+      // Обновляем список заметок
+      await refreshNotes();
+      
+      toast({
+        title: 'Заметка перемещена',
+        description: `"${note.title}" перемещена в ${folderName}`,
+        duration: 3000,
+      });
+    }
+    
+    setIsMoveToFolderDialogOpen(false);
+    setMovingNoteId(null);
+  };
+
+  const handleMoveNoteToFolderSubmit = async (noteId: string, folderId: string) => {
+    const note = getNoteById(noteId);
+    if (!note) return;
+    
+    const success = await moveNoteToFolder(noteId, folderId);
+    
+    if (success) {
+      const folderName = folders.find(f => f.id === folderId)?.name || 'папку';
+      
+      // Обновляем список заметок чтобы заметка исчезла из текущего списка
+      await refreshNotes();
+      
+      toast({
+        title: 'Заметка перемещена',
+        description: `"${note.title}" перемещена в папку "${folderName}"`,
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleFolderSelect = (folderId: string | null) => {
+    setCurrentFolderId(folderId);
+    // Сбрасываем поиск при смене папки
+    setSearchQuery('');
+    setIsSearchOpen(false);
+  };
+
+  const handleBackToRoot = () => {
+    setCurrentFolderId(null);
+  };
+
+  const handleNoteArchive = async (noteId: string) => {
+    const note = getNoteById(noteId);
+    if (!note) return;
+    
+    const success = await toggleNoteArchive(noteId);
+    
+    if (success) {
     toast({
-      title: 'Информация',
-      description: 'Создание папок будет добавлено в следующей версии',
+        title: note.isArchived ? 'Заметка восстановлена' : 'Заметка архивирована',
+        description: `"${note.title}" ${note.isArchived ? 'восстановлена из архива' : 'перемещена в архив'}`,
       duration: 3000,
     });
+    }
   };
 
   const handleArchive = () => {
     toast({
-      title: 'Архивирование',
-      description: 'Функция архивирования будет добавлена в следующей версии',
+      title: 'Архив',
+      description: 'Просмотр архива будет добавлен в следующей версии',
       duration: 3000,
     });
   };
@@ -329,8 +423,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [notes.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Фильтрованный список заметок на основе поиска
-  const filteredNotes = searchQuery ? searchNotes(searchQuery) : notes;
+  // Фильтрованный список заметок на основе поиска и папки
+  const filteredNotes = React.useMemo(() => {
+    let result = notes;
+    
+    // Фильтр по папке
+    if (currentFolderId !== null) {
+      result = result.filter(note => note.folderId === currentFolderId);
+    } else {
+      // Показываем заметки без папки (корень)
+      result = result.filter(note => !note.folderId);
+    }
+    
+    // Фильтр по поиску
+    if (searchQuery) {
+      result = result.filter(note =>
+        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        note.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return result;
+  }, [notes, currentFolderId, searchQuery]);
 
   return (
     <div className="h-screen w-full bg-background text-foreground flex flex-col">
@@ -351,11 +465,13 @@ const App: React.FC = () => {
             <header className="border-b border-border px-4 py-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  {currentFolderId && (
+                    <Button variant="ghost" size="icon" onClick={handleBackToRoot} title="Назад к корню">
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" onClick={handleCreateNote} title="Новая заметка">
                     <Plus className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={handleCreateFolder} title="Создать папку">
-                    <FolderPlus className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -403,16 +519,31 @@ const App: React.FC = () => {
             />
           )}
 
+          {/* Folder Create Menu */}
+          {currentView === 'list' && (
+            <FolderCreateMenu
+              isOpen={isFolderCreateMenuOpen}
+              onClose={() => setIsFolderCreateMenuOpen(false)}
+              onSubmit={handleFolderCreateSubmit}
+            />
+          )}
+
           {/* Main Content */}
           <div className="flex-1 overflow-hidden">
             {currentView === 'list' ? (
               <Sidebar 
                 notes={filteredNotes}
+                currentFolderId={currentFolderId}
                 onNoteSelect={handleNoteSelect} 
                 onNotesReorder={handleNotesReorder}
                 onNoteArchive={handleNoteArchive}
                 onNoteDelete={handleNoteDelete}
                 onNoteColorChange={handleNoteColorChange}
+                onMoveToFolder={handleMoveNoteToFolder}
+                onCreateFolder={handleCreateFolder}
+                onFolderSelect={handleFolderSelect}
+                onBackToRoot={handleBackToRoot}
+                onMoveNoteToFolder={handleMoveNoteToFolderSubmit}
                 searchQuery={searchQuery} 
               />
             ) : (
@@ -435,6 +566,17 @@ const App: React.FC = () => {
           <KeyboardShortcutsDialog 
             open={isShortcutsOpen} 
             onOpenChange={setIsShortcutsOpen}
+          />
+          
+          <MoveToFolderDialog
+            isOpen={isMoveToFolderDialogOpen}
+            onClose={() => {
+              setIsMoveToFolderDialogOpen(false);
+              setMovingNoteId(null);
+            }}
+            onMove={handleMoveToFolderSubmit}
+            currentFolderId={movingNoteId ? getNoteById(movingNoteId)?.folderId : null}
+            noteTitle={movingNoteId ? getNoteById(movingNoteId)?.title : undefined}
           />
 
           {/* Toaster для уведомлений */}

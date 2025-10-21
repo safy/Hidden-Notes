@@ -1,15 +1,17 @@
 /**
  * @file: storage.ts
- * @description: Абстракция над Chrome Storage API для CRUD операций с заметками
- * @dependencies: Chrome Extension Storage API, types/note, data-protection
+ * @description: Абстракция над Chrome Storage API для CRUD операций с заметками и папками
+ * @dependencies: Chrome Extension Storage API, types/note, types/folder, data-protection
  * @created: 2025-10-17
- * @updated: 2025-10-20 - Добавлена интеграция с системой защиты данных
+ * @updated: 2025-10-21 - Добавлена поддержка папок и архива
  */
 
-import { Note, StorageSchema, DEFAULT_SETTINGS } from '@/types/note';
+import { Note, StorageSchema, DEFAULT_SETTINGS, UpdateNoteInput } from '@/types/note';
+import { Folder, createFolder as createFolderHelper, CreateFolderInput, UpdateFolderInput } from '@/types/folder';
 import { saveNoteVersion, moveToTrash } from './data-protection';
 
 const STORAGE_KEY = 'hidden_notes';
+const SCHEMA_VERSION = 2; // Увеличена версия для поддержки папок
 
 /**
  * Инициализировать storage с начальной схемой
@@ -19,12 +21,47 @@ export async function initializeStorage(): Promise<void> {
   
   if (!data[STORAGE_KEY]) {
     const initialSchema: StorageSchema = {
+      version: SCHEMA_VERSION,
       notes: [],
+      folders: [],
       settings: DEFAULT_SETTINGS,
       currentNoteId: null,
+      currentFolderId: null,
     };
     
     await chrome.storage.local.set({ [STORAGE_KEY]: initialSchema });
+  } else {
+    // Миграция старой схемы если необходимо
+    await migrateStorageSchema(data[STORAGE_KEY]);
+  }
+}
+
+/**
+ * Миграция схемы данных при обновлении
+ */
+async function migrateStorageSchema(schema: any): Promise<void> {
+  const currentVersion = schema.version || 1;
+  
+  if (currentVersion < SCHEMA_VERSION) {
+    console.log(`🔄 Migrating storage from v${currentVersion} to v${SCHEMA_VERSION}`);
+    
+    // Миграция v1 → v2: добавление папок
+    if (currentVersion === 1 || !schema.version) {
+      schema.version = 2;
+      schema.folders = schema.folders || [];
+      schema.currentFolderId = null;
+      
+      // Обновляем все заметки - добавляем новые поля
+      schema.notes = schema.notes.map((note: Note) => ({
+        ...note,
+        folderId: note.folderId || null,
+        isArchived: note.isArchived || false,
+        order: note.order || 0,
+      }));
+      
+      await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+      console.log('✅ Migration completed: added folders support');
+    }
   }
 }
 
@@ -146,6 +183,223 @@ export async function getStorageStats(): Promise<{
 export async function exportNotes(): Promise<string> {
   const notes = await getAllNotes();
   return JSON.stringify(notes, null, 2);
+}
+
+// ============================================================
+// FOLDERS CRUD OPERATIONS
+// ============================================================
+
+/**
+ * Получить все папки из storage
+ */
+export async function getAllFolders(): Promise<Folder[]> {
+  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const schema = data[STORAGE_KEY] as StorageSchema;
+  return schema?.folders || [];
+}
+
+/**
+ * Получить папку по ID
+ */
+export async function getFolderById(folderId: string): Promise<Folder | null> {
+  const folders = await getAllFolders();
+  return folders.find(f => f.id === folderId) || null;
+}
+
+/**
+ * Создать новую папку
+ */
+export async function createFolder(input: CreateFolderInput): Promise<Folder> {
+  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const schema = data[STORAGE_KEY] as StorageSchema;
+  
+  // Если order не указан, ставим в конец
+  if (input.order === undefined) {
+    const maxOrder = schema.folders.reduce((max, f) => Math.max(max, f.order), -1);
+    input.order = maxOrder + 1;
+  }
+  
+  const newFolder = createFolderHelper(input);
+  schema.folders.push(newFolder);
+  
+  await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+  
+  console.log('📁 Folder created:', newFolder.name, newFolder.id);
+  return newFolder;
+}
+
+/**
+ * Обновить папку
+ */
+export async function updateFolder(
+  folderId: string,
+  updates: UpdateFolderInput
+): Promise<Folder | null> {
+  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const schema = data[STORAGE_KEY] as StorageSchema;
+  
+  const folderIndex = schema.folders.findIndex(f => f.id === folderId);
+  if (folderIndex === -1) {
+    console.error('❌ Folder not found:', folderId);
+    return null;
+  }
+  
+  // Обновляем только разрешенные поля (сохраняя обязательные)
+  const currentFolder = schema.folders[folderIndex];
+  if (!currentFolder) {
+    console.error('❌ Folder unexpectedly undefined');
+    return null;
+  }
+  
+  schema.folders[folderIndex] = {
+    id: currentFolder.id,
+    name: updates.name ?? currentFolder.name,
+    color: updates.color ?? currentFolder.color,
+    icon: updates.icon ?? currentFolder.icon,
+    parentId: updates.parentId !== undefined ? updates.parentId : currentFolder.parentId,
+    isExpanded: updates.isExpanded ?? currentFolder.isExpanded,
+    order: updates.order ?? currentFolder.order,
+    createdAt: currentFolder.createdAt,
+    updatedAt: Date.now(),
+  };
+  
+  await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+  
+  const updatedFolder = schema.folders[folderIndex];
+  if (!updatedFolder) {
+    console.error('❌ Folder unexpectedly missing after update');
+    return null;
+  }
+  
+  console.log('📁 Folder updated:', updatedFolder.name);
+  return updatedFolder;
+}
+
+/**
+ * Удалить папку (с опцией переноса заметок)
+ */
+export async function deleteFolder(
+  folderId: string,
+  moveNotesToFolder?: string | null
+): Promise<boolean> {
+  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const schema = data[STORAGE_KEY] as StorageSchema;
+  
+  const folderIndex = schema.folders.findIndex(f => f.id === folderId);
+  if (folderIndex === -1) {
+    console.error('❌ Folder not found:', folderId);
+    return false;
+  }
+  
+  // Перемещаем или удаляем заметки в папке
+  const notesInFolder = schema.notes.filter(n => n.folderId === folderId);
+  
+  if (notesInFolder.length > 0) {
+    if (moveNotesToFolder !== undefined) {
+      // Перемещаем заметки в указанную папку
+      schema.notes = schema.notes.map(note =>
+        note.folderId === folderId
+          ? { ...note, folderId: moveNotesToFolder, updatedAt: Date.now() }
+          : note
+      );
+      console.log(`📝 Moved ${notesInFolder.length} notes to ${moveNotesToFolder || 'root'}`);
+    } else {
+      // Удаляем заметки вместе с папкой (перемещаем в корзину)
+      for (const note of notesInFolder) {
+        await moveToTrash(note);
+      }
+      schema.notes = schema.notes.filter(n => n.folderId !== folderId);
+      console.log(`🗑️ Moved ${notesInFolder.length} notes to trash`);
+    }
+  }
+  
+  // Удаляем папку
+  schema.folders.splice(folderIndex, 1);
+  
+  // Если это была текущая папка, сбрасываем
+  if (schema.currentFolderId === folderId) {
+    schema.currentFolderId = null;
+  }
+  
+  await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+  
+  console.log('🗑️ Folder deleted:', folderId);
+  return true;
+}
+
+/**
+ * Получить заметки в конкретной папке
+ */
+export async function getNotesByFolder(folderId: string | null): Promise<Note[]> {
+  const notes = await getAllNotes();
+  
+  // null = заметки без папки (корень)
+  if (folderId === null) {
+    return notes.filter(note => !note.folderId && !note.isArchived);
+  }
+  
+  return notes.filter(note => note.folderId === folderId && !note.isArchived);
+}
+
+/**
+ * Получить архивные заметки
+ */
+export async function getArchivedNotes(): Promise<Note[]> {
+  const notes = await getAllNotes();
+  return notes.filter(note => note.isArchived);
+}
+
+/**
+ * Переместить заметку в папку
+ */
+export async function moveNoteToFolder(
+  noteId: string,
+  folderId: string | null
+): Promise<boolean> {
+  const result = await updateNote(noteId, { folderId });
+  return result !== null;
+}
+
+/**
+ * Переместить заметку в архив / вернуть из архива
+ */
+export async function toggleNoteArchive(noteId: string): Promise<boolean> {
+  const note = await getNoteById(noteId);
+  if (!note) return false;
+  
+  const updates: UpdateNoteInput = {
+    isArchived: !note.isArchived,
+    archivedAt: !note.isArchived ? Date.now() : undefined,
+  };
+  
+  const result = await updateNote(noteId, updates);
+  console.log(note.isArchived ? '📤 Note unarchived' : '📥 Note archived', noteId);
+  return result !== null;
+}
+
+/**
+ * Получить статистику по папке
+ */
+export async function getFolderStats(folderId: string): Promise<{
+  notesCount: number;
+  archivedCount: number;
+  lastUpdated: number;
+}> {
+  const allNotes = await getAllNotes();
+  
+  const folderNotes = allNotes.filter(n => n.folderId === folderId);
+  const activeNotes = folderNotes.filter(n => !n.isArchived);
+  const archivedNotes = folderNotes.filter(n => n.isArchived);
+  
+  const lastUpdated = folderNotes.length > 0
+    ? Math.max(...folderNotes.map(n => n.updatedAt))
+    : 0;
+  
+  return {
+    notesCount: activeNotes.length,
+    archivedCount: archivedNotes.length,
+    lastUpdated,
+  };
 }
 
 /**
