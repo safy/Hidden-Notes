@@ -129,10 +129,18 @@ export const ImageResize = Node.create<ImageResizeOptions>({
       ...this.options.HTMLAttributes,
       ...HTMLAttributes,
       src: node.attrs.src,
-      alt: node.attrs.alt,
-      width: node.attrs.width,
-      height: node.attrs.height,
     };
+    
+    // Добавляем атрибуты только если они не null/undefined
+    if (node.attrs.alt) {
+      attrs.alt = node.attrs.alt;
+    }
+    if (node.attrs.width != null) {
+      attrs.width = node.attrs.width;
+    }
+    if (node.attrs.height != null) {
+      attrs.height = node.attrs.height;
+    }
     
     if (node.attrs.isHidden) {
       attrs['data-hidden'] = 'true';

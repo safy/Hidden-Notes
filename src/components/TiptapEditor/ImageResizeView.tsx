@@ -43,6 +43,9 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
     startWidth.current = currentWidth;
     startHeight.current = currentHeight;
 
+    let finalWidth = currentWidth;
+    let finalHeight = currentHeight;
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX.current;
       const deltaY = e.clientY - startY.current;
@@ -50,17 +53,20 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
       const newWidth = Math.max(50, startWidth.current + deltaX);
       const newHeight = Math.max(50, startHeight.current + deltaY);
       
+      finalWidth = newWidth;
+      finalHeight = newHeight;
+      
       setCurrentWidth(newWidth);
       setCurrentHeight(newHeight);
     };
 
     const handleMouseUp = () => {
-      console.log('🖼️ Image resized to:', currentWidth, 'x', currentHeight);
+      console.log('🖼️ Image resized to:', finalWidth, 'x', finalHeight);
       updateAttributes({
-        width: currentWidth,
-        height: currentHeight,
+        width: finalWidth,
+        height: finalHeight,
       });
-      console.log('✅ updateAttributes called with:', { width: currentWidth, height: currentHeight });
+      console.log('✅ updateAttributes called with:', { width: finalWidth, height: finalHeight });
       
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
