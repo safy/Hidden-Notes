@@ -1,7 +1,7 @@
 /**
- * @file: FolderCreateMenu.tsx
- * @description: Fly-out меню для создания папки (в стиле SearchDropdown)
- * @dependencies: ui components, FOLDER_COLORS, FOLDER_ICONS, FolderIcon
+ * @file: FolderEditMenu.tsx
+ * @description: Выдвигающееся меню для редактирования папки
+ * @dependencies: React, shadcn/ui components
  * @created: 2025-10-21
  */
 
@@ -12,73 +12,75 @@ import { FOLDER_COLORS, FOLDER_ICONS } from '@/types/folder';
 import { FolderIcon } from './FolderIcon';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Folder as FolderType } from '@/types/folder';
 
-interface FolderCreateMenuProps {
+interface FolderEditMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; color: string; icon?: string }) => void;
+  onSave: (data: { name: string; color: string; icon?: string }) => void;
+  folder: FolderType | null;
 }
 
-export const FolderCreateMenu: React.FC<FolderCreateMenuProps> = ({
+export const FolderEditMenu: React.FC<FolderEditMenuProps> = ({
   isOpen,
   onClose,
-  onSubmit,
+  onSave,
+  folder,
 }) => {
   const [name, setName] = useState('');
-  const [color, setColor] = useState<string>(FOLDER_COLORS[0].value);
-  const [icon, setIcon] = useState<string>(FOLDER_ICONS[0]);
+  const [color, setColor] = useState('#3b82f6');
+  const [icon, setIcon] = useState('folder');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Фокус на input при открытии
+  // Обновляем состояние при изменении папки
+  useEffect(() => {
+    if (folder) {
+      setName(folder.name);
+      setColor(folder.color);
+      setIcon(folder.icon || 'folder');
+    }
+  }, [folder]);
+
+  // Фокус на поле ввода при открытии
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
+      inputRef.current.select();
     }
   }, [isOpen]);
 
   // Закрытие по Escape
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
     }
+    
     return undefined;
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!name.trim()) {
-      return;
+    if (name.trim()) {
+      onSave({ name: name.trim(), color, icon });
+      onClose();
     }
-
-    onSubmit({
-      name: name.trim(),
-      color,
-      icon,
-    });
-
-    // Сброс формы
-    setName('');
-    setColor(FOLDER_COLORS[0].value);
-    setIcon(FOLDER_ICONS[0]);
-    onClose();
   };
 
   const handleClose = () => {
     setName('');
-    setColor(FOLDER_COLORS[0].value);
-    setIcon(FOLDER_ICONS[0]);
+    setColor('#3b82f6');
+    setIcon('folder');
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !folder) return null;
 
   return (
     <div className="w-full border-b border-border">
@@ -94,14 +96,14 @@ export const FolderCreateMenu: React.FC<FolderCreateMenuProps> = ({
           />
           {/* Иконки справа */}
           <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {/* Зеленая галочка - Создать */}
+            {/* Зеленая галочка - Сохранить */}
             <Button
               type="submit"
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
               disabled={!name.trim()}
-              title="Создать папку"
+              title="Сохранить изменения"
             >
               <Check size={14} />
             </Button>
@@ -159,9 +161,10 @@ export const FolderCreateMenu: React.FC<FolderCreateMenuProps> = ({
                   'hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring',
                   icon === iconOption
                     ? 'bg-accent ring-1 ring-ring'
-                    : 'hover:bg-accent/50'
+                    : 'hover:bg-accent'
                 )}
                 onClick={() => setIcon(iconOption)}
+                title={iconOption}
               >
                 <FolderIcon iconName={iconOption} size={16} />
               </button>
@@ -169,24 +172,21 @@ export const FolderCreateMenu: React.FC<FolderCreateMenuProps> = ({
           </div>
         </div>
 
-        {/* Предпросмотр */}
+        {/* Предварительный просмотр */}
         <div className="space-y-2">
           <label className="text-xs font-medium text-muted-foreground">
-            Предпросмотр
+            Предварительный просмотр
           </label>
-          <div className="flex items-center gap-3 p-2 rounded-md bg-accent">
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
             <div
               className="w-8 h-8 rounded-md flex items-center justify-center border border-border/20"
               style={{ backgroundColor: color }}
             >
               <FolderIcon iconName={icon} size={16} />
             </div>
-            <span className="text-sm font-medium">
-              {name || 'Название папки'}
-            </span>
+            <span className="text-sm font-medium">{name || 'Название папки'}</span>
           </div>
         </div>
-
       </form>
     </div>
   );

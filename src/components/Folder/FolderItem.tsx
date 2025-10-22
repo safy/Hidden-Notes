@@ -10,7 +10,6 @@ import { Folder as FolderType } from '@/types/folder';
 import { MoreVertical, Trash2, Edit2 } from 'lucide-react';
 import { FolderIcon } from './FolderIcon';
 import { cn } from '@/lib/utils';
-import { useDroppable } from '@dnd-kit/core';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +27,7 @@ interface FolderItemProps {
   onDelete: (folderId: string) => void;
   onToggleExpanded?: (folderId: string, isExpanded: boolean) => void;
   onDrop?: (noteId: string, folderId: string) => void;
+  onMoveFolder?: (folderId: string, targetFolderId: string | null) => void;
 }
 
 export const FolderItem: React.FC<FolderItemProps> = ({
@@ -37,6 +37,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   onClick,
   onEdit,
   onDelete,
+  // onMoveFolder, // Используется в useSortable, но не в обработчике
   // onDrop, // Используется в useDroppable, но не в обработчике
   // onToggleExpanded, // Закомментировано до реализации вложенных папок
 }) => {
@@ -49,13 +50,34 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   //   onToggleExpanded?.(folder.id, newExpanded);
   // };
 
-  const { setNodeRef, isOver } = useDroppable({
-    id: `folder-${folder.id}`,
-    data: {
-      type: 'folder',
-      folderId: folder.id,
-    },
-  });
+  // Временно отключаем drag & drop для отладки кликов
+  // const {
+  //   attributes,
+  //   listeners,
+  //   setNodeRef: setSortableNodeRef,
+  //   transform,
+  //   transition,
+  //   isDragging,
+  // } = useSortable({
+  //   id: `folder-${folder.id}`,
+  //   data: {
+  //     type: 'folder',
+  //     folderId: folder.id,
+  //   },
+  // });
+
+  // const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
+  //   id: `folder-drop-${folder.id}`,
+  //   data: {
+  //     type: 'folder-drop',
+  //     folderId: folder.id,
+  //   },
+  // });
+
+  // const style = {
+  //   transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+  //   transition,
+  // };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,14 +91,11 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
-      ref={setNodeRef}
       className={cn(
-        'group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors',
+        'group relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
         'hover:bg-accent',
-        isActive && 'bg-accent',
-        isOver && 'bg-primary/20 border-2 border-primary border-dashed'
+        isActive && 'bg-accent'
       )}
-      onClick={() => onClick(folder.id)}
     >
       {/* Expand/Collapse кнопка (для будущих вложенных папок) */}
       {/* <button
@@ -86,23 +105,46 @@ export const FolderItem: React.FC<FolderItemProps> = ({
         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button> */}
 
-      {/* Иконка папки с цветом */}
-      <div
-        className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center border border-border/20"
-        style={{ backgroundColor: folder.color }}
+      {/* Drag handle - временно отключен */}
+      {/* <div
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+        onClick={(e) => {
+          console.log('Drag handle clicked:', folder.id);
+          e.stopPropagation();
+        }}
       >
-        <FolderIcon iconName={folder.icon || 'folder'} size={16} />
-      </div>
+        <GripVertical size={12} />
+      </div> */}
 
-      {/* Название папки */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium truncate">{folder.name}</span>
-          {notesCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {notesCount}
-            </span>
-          )}
+      {/* Кликабельная область для открытия папки */}
+      <div 
+        className="flex items-center gap-2 flex-1 cursor-pointer"
+        onClick={(e) => {
+          console.log('Folder clicked:', folder.id, folder.name);
+          e.stopPropagation();
+          onClick(folder.id);
+        }}
+      >
+        {/* Иконка папки с цветом */}
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center border border-border/20"
+          style={{ backgroundColor: folder.color }}
+        >
+          <FolderIcon iconName={folder.icon || 'folder'} size={16} />
+        </div>
+
+        {/* Название папки */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium truncate">{folder.name}</span>
+            {notesCount > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {notesCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

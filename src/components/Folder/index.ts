@@ -7,6 +7,7 @@ export { FolderList } from './FolderList';
 export { FolderItem } from './FolderItem';
 export { FolderDialog } from './FolderDialog';
 export { FolderCreateMenu } from './FolderCreateMenu';
+export { FolderEditMenu } from './FolderEditMenu';
 export { FolderIcon } from './FolderIcon';
 export { MoveToFolderDialog } from './MoveToFolderDialog';
 

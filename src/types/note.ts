@@ -18,6 +18,9 @@ export interface Note {
   /** Содержимое заметки в формате JSON (Tiptap) */
   content: string;
 
+  /** Цвет карточки заметки (ui-метаданные) */
+  color?: string; // 'default' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
+
   /** ID папки в которой находится заметка (null = без папки) */
   folderId?: string | null;
 
@@ -57,6 +60,7 @@ export interface CreateNoteInput {
 export interface UpdateNoteInput {
   title?: string;
   content?: string;
+  color?: string;
   folderId?: string | null;
   tags?: string[];
   isPinned?: boolean;

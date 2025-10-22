@@ -53,18 +53,20 @@ export function useNotes() {
   }, []);
 
   // Добавить новую заметку
-  const addNote = useCallback(async (title: string = 'Новая заметка'): Promise<Note | null> => {
+  const addNote = useCallback(async (title: string = 'Новая заметка', folderId?: string | null): Promise<Note | null> => {
     try {
       const newNote: Note = {
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         title,
         content: '',
+        folderId: folderId || null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
 
       const savedNote = await createNote(newNote);
-      setNotes(prev => [...prev, savedNote]);
+      // Не обновляем локальное состояние здесь, так как onChanged слушатель
+      // уже синхронизирует состояние из chrome.storage и предотвращает дублирование
       return savedNote;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create note');

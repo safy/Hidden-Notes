@@ -27,6 +27,7 @@ import { generateNotePreview } from '@/lib/utils';
 
 interface SidebarProps {
   notes?: any[]; // Notes array from parent
+  folders?: any[]; // Folders array from parent
   currentFolderId?: string | null;
   onNoteSelect?: (noteId: string) => void;
   onNotesReorder?: (reorderedNotes: any[]) => void;
@@ -34,10 +35,11 @@ interface SidebarProps {
   onNoteDelete?: (noteId: string) => void;
   onNoteColorChange?: (noteId: string, color: string) => void;
   onMoveToFolder?: (noteId: string) => void;
-  onCreateFolder?: () => void;
   onFolderSelect?: (folderId: string | null) => void;
   onBackToRoot?: () => void;
   onMoveNoteToFolder?: (noteId: string, folderId: string) => void;
+  onMoveFolderToFolder?: (folderId: string, targetFolderId: string | null) => void;
+  onEditFolder?: (folder: any) => void;
   searchQuery?: string;
 }
 
@@ -50,10 +52,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNoteDelete,
   onNoteColorChange,
   onMoveToFolder,
-  onCreateFolder,
   onFolderSelect,
-  // onBackToRoot, // Не используется в Sidebar, только в App
+  onBackToRoot,
   onMoveNoteToFolder,
+  onMoveFolderToFolder,
+  onEditFolder,
   searchQuery = '' 
 }) => {
   const [items, setItems] = useState(notes);
@@ -75,10 +78,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
+    console.log('Drag end:', { active: active.id, over: over?.id, activeData: active.data.current, overData: over?.data.current });
+
+    // Проверяем, если перетаскиваем папку на папку
+    if (active.data.current?.type === 'folder' && over?.data.current?.type === 'folder-drop') {
+      const draggedFolderId = active.data.current.folderId;
+      const targetFolderId = over.data.current.folderId;
+      
+      console.log('Moving folder to folder:', { draggedFolderId, targetFolderId });
+      
+      if (onMoveFolderToFolder && draggedFolderId !== targetFolderId) {
+        onMoveFolderToFolder(draggedFolderId, targetFolderId);
+      }
+      return;
+    }
+
+    // Проверяем, если перетаскиваем папку на другую папку (для сортировки)
+    if (active.data.current?.type === 'folder' && over?.data.current?.type === 'folder') {
+      const draggedFolderId = active.data.current.folderId;
+      const targetFolderId = over.data.current.folderId;
+      
+      console.log('Reordering folders:', { draggedFolderId, targetFolderId });
+      
+      // TODO: Implement folder reordering
+      return;
+    }
+
     // Проверяем, если перетаскиваем заметку на папку
     if (over && typeof over.id === 'string' && over.id.startsWith('folder-')) {
       const folderId = over.id.replace('folder-', '');
       const noteId = active.id as string;
+      
+      console.log('Moving note to folder:', { noteId, folderId });
       
       if (onMoveNoteToFolder) {
         onMoveNoteToFolder(noteId, folderId);
@@ -87,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     // Обычная сортировка заметок
-    if (active.id !== over?.id) {
+    if (active.id !== over?.id && !active.id.toString().startsWith('folder-')) {
       setItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over?.id);
@@ -120,9 +151,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <FolderList
             currentFolderId={currentFolderId}
             onFolderSelect={onFolderSelect || (() => {})}
-            onCreateFolder={onCreateFolder || (() => {})}
-            onEditFolder={() => {}} // TODO: implement folder editing
+            onEditFolder={onEditFolder || (() => {})}
             onDrop={onMoveNoteToFolder}
+            onBackToRoot={onBackToRoot}
+            onMoveFolder={onMoveFolderToFolder}
           />
         </div>
 

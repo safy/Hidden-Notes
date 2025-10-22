@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 
 interface ColorPickerProps {
   currentColor: string;
@@ -39,20 +38,21 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         {children}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
-        <div className="p-2">
-          <div className="text-sm font-medium mb-2">Выберите цвет</div>
-          <div className="grid grid-cols-2 gap-1">
+        <div className="p-3">
+          <div className="text-sm font-medium mb-3">Выберите цвет</div>
+          <div className="flex gap-1.5">
             {noteColors.map((color) => (
-              <Button
+              <button
                 key={color.value}
-                variant={currentColor === color.value ? "default" : "ghost"}
-                size="sm"
+                type="button"
+                className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-1 focus:ring-ring ${
+                  currentColor === color.value
+                    ? 'border-foreground ring-1 ring-ring'
+                    : 'border-muted-foreground/30'
+                } ${color.class}`}
                 onClick={() => onColorChange(color.value)}
-                className="justify-start text-xs"
-              >
-                <div className={`w-3 h-3 rounded-full mr-2 border ${color.class}`} />
-                {color.name}
-              </Button>
+                title={color.name}
+              />
             ))}
           </div>
         </div>

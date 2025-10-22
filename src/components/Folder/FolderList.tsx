@@ -9,25 +9,27 @@ import React, { useEffect, useState } from 'react';
 import { FolderItem } from './FolderItem';
 import { useFolders } from '@/hooks/useFolders';
 import { Folder as FolderType } from '@/types/folder';
-import { FolderPlus, Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface FolderListProps {
   currentFolderId: string | null;
   onFolderSelect: (folderId: string | null) => void;
-  onCreateFolder: () => void;
   onEditFolder: (folder: FolderType) => void;
   onDrop?: (noteId: string, folderId: string) => void;
+  onBackToRoot?: () => void;
+  onMoveFolder?: (folderId: string, targetFolderId: string | null) => void;
   className?: string;
 }
 
 export const FolderList: React.FC<FolderListProps> = ({
   currentFolderId,
   onFolderSelect,
-  onCreateFolder,
   onEditFolder,
   onDrop,
+  onBackToRoot,
+  onMoveFolder,
   className,
 }) => {
   const {
@@ -92,6 +94,33 @@ export const FolderList: React.FC<FolderListProps> = ({
     await updateExistingFolder(folderId, { isExpanded });
   };
 
+  // Получить полный путь папки (включая вложенные)
+  const getFolderPath = () => {
+    const pathSegments: { name: string; id: string | null }[] = [];
+
+    // Добавляем "Корень"
+    pathSegments.push({ name: 'Корень', id: null });
+
+    if (currentFolderId !== null) {
+      // Рекурсивно строим путь от текущей папки до корня
+      const buildPath = (folderId: string): void => {
+        const folder = folders.find(f => f.id === folderId);
+        if (folder) {
+          // Если у папки есть родитель, сначала добавляем родителя
+          if (folder.parentId) {
+            buildPath(folder.parentId);
+          }
+          // Затем добавляем саму папку
+          pathSegments.push({ name: folder.name, id: folder.id });
+        }
+      };
+
+      buildPath(currentFolderId);
+    }
+
+    return pathSegments;
+  };
+
   if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center py-8', className)}>
@@ -110,41 +139,71 @@ export const FolderList: React.FC<FolderListProps> = ({
 
   return (
     <div className={cn('space-y-1', className)}>
-      {/* Заголовок с кнопкой создания */}
-      <div className="flex items-center justify-between px-3 py-2">
-        <span className="text-xs font-semibold text-muted-foreground uppercase">
-          Папки
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0"
-          onClick={onCreateFolder}
-        >
-          <FolderPlus size={14} />
-        </Button>
+      {/* Хлебные крошки пути + иконка назад слева */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        {currentFolderId && onBackToRoot && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={onBackToRoot}
+            title="Назад"
+          >
+            <ArrowLeft size={14} />
+          </Button>
+        )}
+
+        {/* Полный путь папки */}
+        {getFolderPath().map((segment, index, array) => (
+          <React.Fragment key={segment.id || 'root'}>
+            <button
+              className={cn(
+                'text-xs font-semibold text-muted-foreground hover:text-foreground',
+                segment.id === currentFolderId && 'text-foreground cursor-default',
+                index === 0 && 'uppercase' // "Корень" uppercase
+              )}
+              onClick={() => onFolderSelect(segment.id)}
+              disabled={segment.id === currentFolderId}
+            >
+              {segment.name}
+            </button>
+            {index < array.length - 1 && (
+              <span className="text-xs text-muted-foreground mx-0.5">/</span>
+            )}
+          </React.Fragment>
+        ))}
       </div>
 
-      {/* Список папок */}
-      {folders.length === 0 ? (
-        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-          Нет папок. Создайте первую!
-        </div>
-      ) : (
-        folders.map((folder) => (
-          <FolderItem
-            key={folder.id}
-            folder={folder}
-            isActive={currentFolderId === folder.id}
-            notesCount={notesCountMap[folder.id] || 0}
-            onClick={onFolderSelect}
-            onEdit={onEditFolder}
-            onDelete={handleDeleteFolder}
-            onToggleExpanded={handleToggleExpanded}
-            onDrop={onDrop}
-          />
-        ))
-      )}
+      {/* Список папок - показываем папки текущего уровня */}
+      {(() => {
+        // Фильтруем папки по текущему уровню
+        const currentLevelFolders = folders.filter(folder => folder.parentId === currentFolderId);
+        
+        return (
+          <>
+            {currentLevelFolders.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                {currentFolderId === null ? 'Нет папок. Создайте первую!' : 'Нет вложенных папок'}
+              </div>
+            ) : (
+              currentLevelFolders.map((folder) => (
+                <FolderItem
+                  key={folder.id}
+                  folder={folder}
+                  isActive={currentFolderId === folder.id}
+                  notesCount={notesCountMap[folder.id] || 0}
+                  onClick={onFolderSelect}
+                  onEdit={onEditFolder}
+                  onDelete={handleDeleteFolder}
+                  onToggleExpanded={handleToggleExpanded}
+                  onDrop={onDrop}
+                  onMoveFolder={onMoveFolder}
+                />
+              ))
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 };

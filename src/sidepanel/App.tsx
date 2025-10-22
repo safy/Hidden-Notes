@@ -15,12 +15,12 @@ import { useFolders } from '@/hooks/useFolders';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { initDevtoolsHelper } from '@/lib/devtools-helpers';
 import { initDataProtection, verifyDataIntegrity, listBackups, restoreFromBackup } from '@/lib/data-protection';
-import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, Archive, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, Archive, HelpCircle, FolderPlus } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
 import { SearchDropdown } from '@/components/Search';
-import { FolderCreateMenu, MoveToFolderDialog } from '@/components/Folder';
-import { moveNoteToFolder, toggleNoteArchive } from '@/lib/storage';
+import { FolderCreateMenu, MoveToFolderDialog, FolderEditMenu } from '@/components/Folder';
+import { moveNoteToFolder, toggleNoteArchive, moveFolderToFolder, updateFolder } from '@/lib/storage';
 
 type AppView = 'list' | 'note';
 
@@ -36,7 +36,9 @@ const App: React.FC = () => {
   // Dialogs state
   const [isFolderCreateMenuOpen, setIsFolderCreateMenuOpen] = useState(false);
   const [isMoveToFolderDialogOpen, setIsMoveToFolderDialogOpen] = useState(false);
+  const [isFolderEditDialogOpen, setIsFolderEditDialogOpen] = useState(false);
   const [movingNoteId, setMovingNoteId] = useState<string | null>(null);
+  const [editingFolder, setEditingFolder] = useState<any>(null);
   
   // Использование useNotes и useFolders hooks
   const { notes, isLoading, error, addNote, updateNoteContent, removeNote, getNoteById, refreshNotes } = useNotes();
@@ -104,7 +106,7 @@ const App: React.FC = () => {
   };
 
   const handleCreateNote = async () => {
-    const newNote = await addNote('Новая заметка');
+    const newNote = await addNote('Новая заметка', currentFolderId);
     if (newNote) {
       setSelectedNote({ id: newNote.id, title: newNote.title });
       setCurrentView('note');
@@ -198,12 +200,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleNoteColorChange = (_noteId: string, _color: string) => {
+  const handleNoteColorChange = async (noteId: string, color: string) => {
+    try {
+      await updateNoteContent(noteId, { color });
+    } catch (error) {
     toast({
-      title: 'Информация',
-      description: 'Раскраска заметок будет добавлена в следующей версии',
+        title: 'Ошибка',
+        description: 'Не удалось применить цвет',
       duration: 3000,
     });
+    }
   };
 
   const handleCreateFolder = () => {
@@ -215,6 +221,7 @@ const App: React.FC = () => {
       name: data.name,
       color: data.color,
       icon: data.icon,
+      parentId: currentFolderId, // Создаем папку в текущей папке
     });
     
     if (newFolder) {
@@ -231,6 +238,47 @@ const App: React.FC = () => {
   const handleMoveNoteToFolder = (noteId: string) => {
     setMovingNoteId(noteId);
     setIsMoveToFolderDialogOpen(true);
+  };
+
+  const handleEditFolder = (folder: any) => {
+    setEditingFolder(folder);
+    setIsFolderEditDialogOpen(true);
+  };
+
+  const handleFolderEditSubmit = async (data: { name: string; color: string; icon?: string }) => {
+    if (!editingFolder) return;
+    
+    try {
+      const updatedFolder = await updateFolder(editingFolder.id, {
+        name: data.name,
+        color: data.color,
+        icon: data.icon,
+      });
+      
+      if (updatedFolder) {
+        toast({
+          title: 'Папка обновлена',
+          description: `"${data.name}" успешно обновлена`,
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось обновить папку',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating folder:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить папку',
+        duration: 3000,
+      });
+    }
+    
+    setIsFolderEditDialogOpen(false);
+    setEditingFolder(null);
   };
 
   const handleMoveToFolderSubmit = async (folderId: string | null) => {
@@ -262,25 +310,66 @@ const App: React.FC = () => {
 
   const handleMoveNoteToFolderSubmit = async (noteId: string, folderId: string) => {
     const note = getNoteById(noteId);
-    if (!note) return;
+    if (!note) {
+      console.error('Note not found:', noteId);
+      return;
+    }
+    
+    console.log('Moving note:', note.title, 'to folder:', folderId);
+    console.log('Current folder:', currentFolderId);
     
     const success = await moveNoteToFolder(noteId, folderId);
     
     if (success) {
       const folderName = folders.find(f => f.id === folderId)?.name || 'папку';
       
+      console.log('Note moved successfully, refreshing notes...');
+      
       // Обновляем список заметок чтобы заметка исчезла из текущего списка
       await refreshNotes();
+      
+      console.log('Notes refreshed');
       
       toast({
         title: 'Заметка перемещена',
         description: `"${note.title}" перемещена в папку "${folderName}"`,
         duration: 3000,
       });
+    } else {
+      console.error('Failed to move note');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось переместить заметку',
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleMoveFolderToFolder = async (folderId: string, targetFolderId: string | null) => {
+    const success = await moveFolderToFolder(folderId, targetFolderId);
+    
+    if (success) {
+      const folderName = folders.find(f => f.id === folderId)?.name || 'папка';
+      const targetFolderName = targetFolderId 
+        ? folders.find(f => f.id === targetFolderId)?.name || 'папку'
+        : 'корень';
+      
+      toast({
+        title: 'Папка перемещена',
+        description: `"${folderName}" перемещена в ${targetFolderName}`,
+        duration: 3000,
+      });
+    } else {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось переместить папку',
+        duration: 3000,
+      });
     }
   };
 
   const handleFolderSelect = (folderId: string | null) => {
+    console.log('handleFolderSelect called:', folderId);
     setCurrentFolderId(folderId);
     // Сбрасываем поиск при смене папки
     setSearchQuery('');
@@ -427,12 +516,21 @@ const App: React.FC = () => {
   const filteredNotes = React.useMemo(() => {
     let result = notes;
     
+    console.log('Filtering notes:', { 
+      totalNotes: notes.length, 
+      currentFolderId, 
+      searchQuery,
+      notes: notes.map(n => ({ id: n.id, title: n.title, folderId: n.folderId }))
+    });
+    
     // Фильтр по папке
     if (currentFolderId !== null) {
       result = result.filter(note => note.folderId === currentFolderId);
+      console.log('Filtered by folder:', result.length, 'notes');
     } else {
       // Показываем заметки без папки (корень)
       result = result.filter(note => !note.folderId);
+      console.log('Filtered by root (no folder):', result.length, 'notes');
     }
     
     // Фильтр по поиску
@@ -441,7 +539,10 @@ const App: React.FC = () => {
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      console.log('Filtered by search:', result.length, 'notes');
     }
+    
+    console.log('Final filtered notes:', result.map(n => ({ id: n.id, title: n.title, folderId: n.folderId })));
     
     return result;
   }, [notes, currentFolderId, searchQuery]);
@@ -465,13 +566,11 @@ const App: React.FC = () => {
             <header className="border-b border-border px-4 py-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {currentFolderId && (
-                    <Button variant="ghost" size="icon" onClick={handleBackToRoot} title="Назад к корню">
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                  )}
                   <Button variant="ghost" size="icon" onClick={handleCreateNote} title="Новая заметка">
                     <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleCreateFolder} title="Создать папку">
+                    <FolderPlus className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -528,11 +627,25 @@ const App: React.FC = () => {
             />
           )}
 
+          {/* Folder Edit Menu */}
+          {currentView === 'list' && (
+            <FolderEditMenu
+              isOpen={isFolderEditDialogOpen}
+              onClose={() => {
+                setIsFolderEditDialogOpen(false);
+                setEditingFolder(null);
+              }}
+              onSave={handleFolderEditSubmit}
+              folder={editingFolder}
+            />
+          )}
+
           {/* Main Content */}
           <div className="flex-1 overflow-hidden">
             {currentView === 'list' ? (
               <Sidebar 
                 notes={filteredNotes}
+                folders={folders}
                 currentFolderId={currentFolderId}
                 onNoteSelect={handleNoteSelect} 
                 onNotesReorder={handleNotesReorder}
@@ -540,10 +653,11 @@ const App: React.FC = () => {
                 onNoteDelete={handleNoteDelete}
                 onNoteColorChange={handleNoteColorChange}
                 onMoveToFolder={handleMoveNoteToFolder}
-                onCreateFolder={handleCreateFolder}
                 onFolderSelect={handleFolderSelect}
                 onBackToRoot={handleBackToRoot}
                 onMoveNoteToFolder={handleMoveNoteToFolderSubmit}
+                onMoveFolderToFolder={handleMoveFolderToFolder}
+                onEditFolder={handleEditFolder}
                 searchQuery={searchQuery} 
               />
             ) : (
@@ -575,9 +689,10 @@ const App: React.FC = () => {
               setMovingNoteId(null);
             }}
             onMove={handleMoveToFolderSubmit}
-            currentFolderId={movingNoteId ? getNoteById(movingNoteId)?.folderId : null}
-            noteTitle={movingNoteId ? getNoteById(movingNoteId)?.title : undefined}
+            currentFolderId={movingNoteId && !movingNoteId.startsWith('folder-') ? getNoteById(movingNoteId)?.folderId : null}
+            noteTitle={movingNoteId && !movingNoteId.startsWith('folder-') ? getNoteById(movingNoteId)?.title : undefined}
           />
+
 
           {/* Toaster для уведомлений */}
           <Toaster />

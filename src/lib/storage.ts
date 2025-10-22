@@ -118,10 +118,15 @@ export async function updateNote(noteId: string, updates: Partial<Omit<Note, 'id
     id: existingNote.id,
     title: updates.title ?? existingNote.title,
     content: updates.content ?? existingNote.content,
+    color: updates.color ?? existingNote.color,
     createdAt: existingNote.createdAt,
     updatedAt: Date.now(),
     tags: updates.tags ?? existingNote.tags,
     isPinned: updates.isPinned ?? existingNote.isPinned,
+    folderId: updates.folderId ?? existingNote.folderId,
+    isArchived: updates.isArchived ?? existingNote.isArchived,
+    archivedAt: updates.archivedAt ?? existingNote.archivedAt,
+    order: updates.order ?? existingNote.order,
   };
   
   schema.notes[noteIndex] = updatedNote;
@@ -235,8 +240,12 @@ export async function updateFolder(
   folderId: string,
   updates: UpdateFolderInput
 ): Promise<Folder | null> {
+  console.log('updateFolder called:', { folderId, updates });
+  
   const data = await chrome.storage.local.get(STORAGE_KEY);
   const schema = data[STORAGE_KEY] as StorageSchema;
+  
+  console.log('Current schema folders:', schema.folders.map(f => ({ id: f.id, name: f.name })));
   
   const folderIndex = schema.folders.findIndex(f => f.id === folderId);
   if (folderIndex === -1) {
@@ -250,6 +259,8 @@ export async function updateFolder(
     console.error('❌ Folder unexpectedly undefined');
     return null;
   }
+  
+  console.log('Current folder:', currentFolder);
   
   schema.folders[folderIndex] = {
     id: currentFolder.id,
@@ -356,7 +367,24 @@ export async function moveNoteToFolder(
   noteId: string,
   folderId: string | null
 ): Promise<boolean> {
+  console.log('moveNoteToFolder called:', { noteId, folderId });
+  
+  const note = await getNoteById(noteId);
+  if (!note) {
+    console.error('Note not found for move:', noteId);
+    return false;
+  }
+  
+  console.log('Note before move:', { id: note.id, title: note.title, folderId: note.folderId });
+  
   const result = await updateNote(noteId, { folderId });
+  
+  if (result) {
+    console.log('Note after move:', { id: result.id, title: result.title, folderId: result.folderId });
+  } else {
+    console.error('Failed to update note');
+  }
+  
   return result !== null;
 }
 
@@ -400,6 +428,49 @@ export async function getFolderStats(folderId: string): Promise<{
     archivedCount: archivedNotes.length,
     lastUpdated,
   };
+}
+
+/**
+ * Переместить папку в другую папку
+ */
+export async function moveFolderToFolder(
+  folderId: string,
+  targetFolderId: string | null
+): Promise<boolean> {
+  console.log('moveFolderToFolder called:', { folderId, targetFolderId });
+
+  const folder = await getFolderById(folderId);
+  if (!folder) {
+    console.error('Folder not found for move:', folderId);
+    return false;
+  }
+
+  // Проверяем, что не пытаемся переместить папку в саму себя или в свою дочернюю папку
+  if (targetFolderId === folderId) {
+    console.error('Cannot move folder into itself');
+    return false;
+  }
+
+  // Проверяем циклические ссылки (папка не может быть перемещена в свою дочернюю папку)
+  if (targetFolderId) {
+    const targetFolder = await getFolderById(targetFolderId);
+    if (targetFolder && targetFolder.parentId === folderId) {
+      console.error('Cannot move folder into its own child');
+      return false;
+    }
+  }
+
+  console.log('Folder before move:', { id: folder.id, name: folder.name, parentId: folder.parentId });
+
+  const result = await updateFolder(folderId, { parentId: targetFolderId });
+
+  if (result) {
+    console.log('Folder after move:', { id: result.id, name: result.name, parentId: result.parentId });
+  } else {
+    console.error('Failed to update folder');
+  }
+
+  return result !== null;
 }
 
 /**
