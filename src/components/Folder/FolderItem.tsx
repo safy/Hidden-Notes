@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import { Folder as FolderType } from '@/types/folder';
 import { MoreVertical, Trash2, Edit2 } from 'lucide-react';
 import { FolderIcon } from './FolderIcon';
@@ -50,34 +51,14 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   //   onToggleExpanded?.(folder.id, newExpanded);
   // };
 
-  // Временно отключаем drag & drop для отладки кликов
-  // const {
-  //   attributes,
-  //   listeners,
-  //   setNodeRef: setSortableNodeRef,
-  //   transform,
-  //   transition,
-  //   isDragging,
-  // } = useSortable({
-  //   id: `folder-${folder.id}`,
-  //   data: {
-  //     type: 'folder',
-  //     folderId: folder.id,
-  //   },
-  // });
-
-  // const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
-  //   id: `folder-drop-${folder.id}`,
-  //   data: {
-  //     type: 'folder-drop',
-  //     folderId: folder.id,
-  //   },
-  // });
-
-  // const style = {
-  //   transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-  //   transition,
-  // };
+  // Включаем useDroppable для приема заметок
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
+    id: `folder-${folder.id}`,
+    data: {
+      type: 'folder-drop',
+      folderId: folder.id,
+    },
+  });
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,10 +72,12 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
+      ref={setDroppableNodeRef}
       className={cn(
         'group relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
         'hover:bg-accent',
-        isActive && 'bg-accent'
+        isActive && 'bg-accent',
+        isOver && 'ring-2 ring-primary bg-primary/10'
       )}
     >
       {/* Expand/Collapse кнопка (для будущих вложенных папок) */}
