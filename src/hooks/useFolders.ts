@@ -13,6 +13,7 @@ import {
   updateFolder,
   deleteFolder,
   getFolderStats,
+  reorderFolders,
 } from '@/lib/storage';
 import { Folder, CreateFolderInput, UpdateFolderInput } from '@/types/folder';
 
@@ -30,6 +31,9 @@ export interface UseFoldersReturn {
   // Навигация
   setCurrentFolder: (folderId: string | null) => void;
   getFolderDetails: (folderId: string) => Promise<Folder | null>;
+  
+  // Drag & Drop
+  reorderFoldersHandler: (folderId: string, newOrder: number) => Promise<boolean>;
   
   // Утилиты
   refreshFolders: () => Promise<void>;
@@ -166,6 +170,28 @@ export function useFolders(): UseFoldersReturn {
     }
   }, []);
 
+  // Изменить порядок папок (drag & drop)
+  const reorderFoldersHandler = useCallback(
+    async (folderId: string, newOrder: number): Promise<boolean> => {
+      try {
+        setError(null);
+        const success = await reorderFolders(folderId, newOrder);
+        
+        if (success) {
+          await loadFolders();
+        }
+        
+        return success;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to reorder folders';
+        setError(message);
+        console.error('❌ Error reordering folders:', err);
+        return false;
+      }
+    },
+    [loadFolders]
+  );
+
   // Обновить папки вручную
   const refreshFolders = useCallback(async () => {
     await loadFolders();
@@ -181,6 +207,7 @@ export function useFolders(): UseFoldersReturn {
     deleteExistingFolder,
     setCurrentFolder: setCurrentFolderId,
     getFolderDetails,
+    reorderFoldersHandler,
     refreshFolders,
     getFolderNotesCount,
   };

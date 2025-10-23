@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { FolderItem } from './FolderItem';
 import { useFolders } from '@/hooks/useFolders';
 import { Folder as FolderType } from '@/types/folder';
@@ -186,7 +187,11 @@ export const FolderList: React.FC<FolderListProps> = ({
                 {currentFolderId === null ? 'Нет папок. Создайте первую!' : 'Нет вложенных папок'}
               </div>
             ) : (
-              currentLevelFolders.map((folder) => (
+              <SortableContext
+                items={currentLevelFolders.map((folder) => `folder-sortable-${folder.id}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {currentLevelFolders.map((folder) => (
                 <FolderItem
                   key={folder.id}
                   folder={folder}
@@ -199,7 +204,8 @@ export const FolderList: React.FC<FolderListProps> = ({
                   onDrop={onDrop}
                   onMoveFolder={onMoveFolder}
                 />
-              ))
+                ))}
+              </SortableContext>
             )}
           </>
         );

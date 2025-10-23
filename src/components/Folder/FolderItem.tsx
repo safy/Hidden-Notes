@@ -7,8 +7,10 @@
 
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Folder as FolderType } from '@/types/folder';
-import { MoreVertical, Trash2, Edit2 } from 'lucide-react';
+import { MoreVertical, Trash2, Edit2, GripVertical } from 'lucide-react';
 import { FolderIcon } from './FolderIcon';
 import { cn } from '@/lib/utils';
 import {
@@ -51,7 +53,23 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   //   onToggleExpanded?.(folder.id, newExpanded);
   // };
 
-  // Включаем useDroppable для приема заметок
+  // useSortable для перетаскивания папок (изменение порядка)
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `folder-sortable-${folder.id}`,
+    data: {
+      type: 'folder',
+      folderId: folder.id,
+    },
+  });
+
+  // useDroppable для приема заметок и других папок
   const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
     id: `folder-${folder.id}`,
     data: {
@@ -59,6 +77,17 @@ export const FolderItem: React.FC<FolderItemProps> = ({
       folderId: folder.id,
     },
   });
+
+  // Комбинируем оба ref'а
+  const setNodeRef = (node: HTMLElement | null) => {
+    setSortableNodeRef(node);
+    setDroppableNodeRef(node);
+  };
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,34 +101,28 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
-      ref={setDroppableNodeRef}
+      ref={setNodeRef}
+      style={style}
       className={cn(
         'group relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
         'hover:bg-accent',
         isActive && 'bg-accent',
-        isOver && 'ring-2 ring-primary bg-primary/10'
+        isOver && 'ring-2 ring-primary bg-primary/10',
+        isDragging && 'opacity-50 z-50'
       )}
     >
-      {/* Expand/Collapse кнопка (для будущих вложенных папок) */}
-      {/* <button
-        onClick={handleToggleExpand}
-        className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
-      >
-        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-      </button> */}
-
-      {/* Drag handle - временно отключен */}
-      {/* <div
+      {/* Drag handle для перетаскивания папки */}
+      <div
         {...attributes}
         {...listeners}
         className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
         onClick={(e) => {
-          console.log('Drag handle clicked:', folder.id);
           e.stopPropagation();
         }}
+        title="Перетащить для изменения порядка"
       >
         <GripVertical size={12} />
-      </div> */}
+      </div>
 
       {/* Кликабельная область для открытия папки */}
       <div 

@@ -339,6 +339,46 @@ export async function deleteFolder(
 }
 
 /**
+ * Изменить порядок папок (drag & drop)
+ */
+export async function reorderFolders(
+  folderId: string,
+  newOrder: number
+): Promise<boolean> {
+  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const schema = data[STORAGE_KEY] as StorageSchema;
+  
+  const folderIndex = schema.folders.findIndex(f => f.id === folderId);
+  if (folderIndex === -1) {
+    console.error('❌ Folder not found:', folderId);
+    return false;
+  }
+  
+  // Обновляем order у перемещаемой папки
+  schema.folders[folderIndex]!.order = newOrder;
+  schema.folders[folderIndex]!.updatedAt = Date.now();
+  
+  // Пересчитываем order для всех папок того же уровня (parentId)
+  const parentId = schema.folders[folderIndex]!.parentId;
+  const sameLevelFolders = schema.folders
+    .filter(f => f.parentId === parentId)
+    .sort((a, b) => a.order - b.order);
+  
+  // Переназначаем order последовательно
+  sameLevelFolders.forEach((folder, index) => {
+    const idx = schema.folders.findIndex(f => f.id === folder.id);
+    if (idx !== -1) {
+      schema.folders[idx]!.order = index;
+    }
+  });
+  
+  await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+  
+  console.log('📁 Folders reordered');
+  return true;
+}
+
+/**
  * Получить заметки в конкретной папке
  */
 export async function getNotesByFolder(folderId: string | null): Promise<Note[]> {

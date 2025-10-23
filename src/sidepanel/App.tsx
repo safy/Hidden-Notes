@@ -42,7 +42,7 @@ const App: React.FC = () => {
   
   // Использование useNotes и useFolders hooks
   const { notes, isLoading, error, addNote, updateNoteContent, removeNote, getNoteById, refreshNotes } = useNotes();
-  const { folders, createNewFolder } = useFolders();
+  const { folders, createNewFolder, reorderFoldersHandler } = useFolders();
   const { toast } = useToast();
 
   // Enable Alt+hover reveal for hidden text
@@ -368,6 +368,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleReorderFolders = async (folderId: string, newOrder: number) => {
+    const success = await reorderFoldersHandler(folderId, newOrder);
+    
+    if (!success) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось изменить порядок папок',
+        duration: 3000,
+      });
+    }
+  };
+
   const handleFolderSelect = (folderId: string | null) => {
     console.log('handleFolderSelect called:', folderId);
     setCurrentFolderId(folderId);
@@ -657,6 +669,7 @@ const App: React.FC = () => {
                 onBackToRoot={handleBackToRoot}
                 onMoveNoteToFolder={handleMoveNoteToFolderSubmit}
                 onMoveFolderToFolder={handleMoveFolderToFolder}
+                onReorderFolders={handleReorderFolders}
                 onEditFolder={handleEditFolder}
                 searchQuery={searchQuery} 
               />

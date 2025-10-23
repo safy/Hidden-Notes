@@ -25,7 +25,7 @@ import { NoteListItem } from './NoteListItem';
 import { FolderList } from '@/components/Folder';
 import { generateNotePreview } from '@/lib/utils';
 
-interface SidebarProps {
+export interface SidebarProps {
   notes?: any[]; // Notes array from parent
   folders?: any[]; // Folders array from parent
   currentFolderId?: string | null;
@@ -39,12 +39,14 @@ interface SidebarProps {
   onBackToRoot?: () => void;
   onMoveNoteToFolder?: (noteId: string, folderId: string) => void;
   onMoveFolderToFolder?: (folderId: string, targetFolderId: string | null) => void;
+  onReorderFolders?: (folderId: string, newOrder: number) => void;
   onEditFolder?: (folder: any) => void;
   searchQuery?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   notes = [],
+  folders = [],
   currentFolderId = null,
   onNoteSelect, 
   onNotesReorder, 
@@ -56,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onBackToRoot,
   onMoveNoteToFolder,
   onMoveFolderToFolder,
+  onReorderFolders,
   onEditFolder,
   searchQuery = '' 
 }) => {
@@ -80,28 +83,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     console.log('Drag end:', { active: active.id, over: over?.id, activeData: active.data.current, overData: over?.data.current });
 
-    // Проверяем, если перетаскиваем папку на папку
-    if (active.data.current?.type === 'folder' && over?.data.current?.type === 'folder-drop') {
+    // Если перетаскиваем папку
+    if (active.data.current?.type === 'folder') {
       const draggedFolderId = active.data.current.folderId;
-      const targetFolderId = over.data.current.folderId;
       
-      console.log('Moving folder to folder:', { draggedFolderId, targetFolderId });
-      
-      if (onMoveFolderToFolder && draggedFolderId !== targetFolderId) {
-        onMoveFolderToFolder(draggedFolderId, targetFolderId);
+      // Случай 1: Перетаскивание папки на другую папку для сортировки
+      // (оба имеют тип 'folder')
+      if (over?.data.current?.type === 'folder') {
+        const targetFolderId = over.data.current.folderId;
+        
+        console.log('Reordering folders:', { draggedFolderId, targetFolderId });
+        
+        // Находим индексы папок в текущем уровне
+        const currentLevelFolders = folders
+          .filter(f => f.parentId === currentFolderId)
+          .sort((a, b) => a.order - b.order);
+        
+        const oldIndex = currentLevelFolders.findIndex(f => f.id === draggedFolderId);
+        const newIndex = currentLevelFolders.findIndex(f => f.id === targetFolderId);
+        
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex && onReorderFolders) {
+          // Вызываем обработчик с новым order
+          onReorderFolders(draggedFolderId, newIndex);
+        }
+        
+        return;
       }
-      return;
-    }
-
-    // Проверяем, если перетаскиваем папку на другую папку (для сортировки)
-    if (active.data.current?.type === 'folder' && over?.data.current?.type === 'folder') {
-      const draggedFolderId = active.data.current.folderId;
-      const targetFolderId = over.data.current.folderId;
       
-      console.log('Reordering folders:', { draggedFolderId, targetFolderId });
-      
-      // TODO: Implement folder reordering
-      return;
+      // Случай 2: Перетаскивание папки на область папки для вложенности
+      // (over имеет тип 'folder-drop')
+      if (over?.data.current?.type === 'folder-drop') {
+        const targetFolderId = over.data.current.folderId;
+        
+        console.log('Moving folder to folder:', { draggedFolderId, targetFolderId });
+        
+        if (onMoveFolderToFolder && draggedFolderId !== targetFolderId) {
+          onMoveFolderToFolder(draggedFolderId, targetFolderId);
+        }
+        
+        return;
+      }
     }
 
     // Проверяем, если перетаскиваем заметку на папку
