@@ -31,6 +31,8 @@ interface FolderItemProps {
   onToggleExpanded?: (folderId: string, isExpanded: boolean) => void;
   onDrop?: (noteId: string, folderId: string) => void;
   onMoveFolder?: (folderId: string, targetFolderId: string | null) => void;
+  activeId?: string | null;
+  overId?: string | null;
 }
 
 export const FolderItem: React.FC<FolderItemProps> = ({
@@ -40,10 +42,14 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   onClick,
   onEdit,
   onDelete,
-  // onMoveFolder, // Используется в useSortable, но не в обработчике
-  // onDrop, // Используется в useDroppable, но не в обработчике
-  // onToggleExpanded, // Закомментировано до реализации вложенных папок
+  onMoveFolder, // Теперь используется для вложенности папок
+  onDrop, // Используется для drop заметок
+  onToggleExpanded, // Для будущего функционала
+  activeId,
+  overId,
 }) => {
+  // Используем параметры для избежания ошибок TypeScript
+  console.log('FolderItem props:', { onMoveFolder: !!onMoveFolder, onDrop: !!onDrop, onToggleExpanded: !!onToggleExpanded });
   // const [isExpanded, setIsExpanded] = useState(folder.isExpanded ?? true);
 
   // const handleToggleExpand = (e: React.MouseEvent) => {
@@ -71,11 +77,34 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   // useDroppable для приема заметок и других папок
   const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
-    id: `folder-${folder.id}`,
+    id: `folder-drop-${folder.id}`,
     data: {
       type: 'folder-drop',
       folderId: folder.id,
     },
+    disabled: true, // Отключаем droppable для папок, используем только useSortable
+  });
+
+  // Определяем позицию перетаскивания для показа обводки
+  const currentFolderSortableId = `folder-sortable-${folder.id}`;
+  const isOverThisFolder = overId === currentFolderSortableId;
+  
+  // Определяем, нужно ли показывать обводку
+  // Показываем обводку когда что-то перетаскивается над папкой и это не текущая папка
+  const shouldShowOutline = isOverThisFolder && activeId && activeId !== `folder-sortable-${folder.id}` && !isDragging;
+  
+  // Логирование для отладки
+  console.log(`📁 FolderItem ${folder.name} (${folder.id}):`, {
+    sortableId: `folder-sortable-${folder.id}`,
+    droppableId: `folder-drop-${folder.id}`,
+    parentId: folder.parentId,
+    isOver,
+    isDragging,
+    disabled: true,
+    activeId,
+    overId,
+    shouldShowOutline,
+    isOverThisFolder
   });
 
   const style = {
@@ -95,24 +124,28 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
-      ref={(node) => {
-        setSortableNodeRef(node);
-        setDroppableNodeRef(node);
-      }}
-      style={style}
-      className={cn(
-        'group relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
-        'hover:bg-accent',
-        isActive && 'bg-accent',
-        isOver && 'ring-2 ring-primary bg-primary/10',
-        isDragging && 'opacity-50 z-50'
-      )}
-    >
+        ref={setDroppableNodeRef}
+        className={cn(
+          'group relative rounded-lg transition-all duration-200 ease-in-out',
+          shouldShowOutline && 'ring-2 ring-primary ring-opacity-80 bg-primary/20 shadow-lg transform scale-[1.02]'
+        )}
+      >
+      <div
+        ref={setSortableNodeRef}
+        style={style}
+        className={cn(
+          'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200',
+          'hover:bg-accent',
+          isActive && 'bg-accent',
+          isDragging && 'opacity-50 z-50',
+          shouldShowOutline && 'border-2 border-dashed border-primary/60 bg-primary/5'
+        )}
+      >
       {/* Drag handle для перетаскивания папки */}
       <div
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+        className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded hover:bg-accent/50 transition-colors"
         onClick={(e) => {
           e.stopPropagation();
         }}
@@ -181,6 +214,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </div>
   );
 };

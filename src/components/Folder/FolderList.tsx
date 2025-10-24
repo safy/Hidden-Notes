@@ -21,6 +21,8 @@ interface FolderListProps {
   onDrop?: (noteId: string, folderId: string) => void;
   onBackToRoot?: () => void;
   onMoveFolder?: (folderId: string, targetFolderId: string | null) => void;
+  activeId?: string | null;
+  overId?: string | null;
   className?: string;
 }
 
@@ -31,6 +33,8 @@ export const FolderList: React.FC<FolderListProps> = ({
   onDrop,
   onBackToRoot,
   onMoveFolder,
+  activeId,
+  overId,
   className,
 }) => {
   const {
@@ -203,6 +207,8 @@ export const FolderList: React.FC<FolderListProps> = ({
                   onToggleExpanded={handleToggleExpanded}
                   onDrop={onDrop}
                   onMoveFolder={onMoveFolder}
+                  activeId={activeId}
+                  overId={overId}
                 />
                 ))}
               </SortableContext>

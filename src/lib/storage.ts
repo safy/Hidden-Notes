@@ -498,14 +498,51 @@ export async function moveFolderToFolder(
       console.error('Cannot move folder into its own child');
       return false;
     }
+    
+    // Проверяем, что не пытаемся переместить папку в саму себя
+    if (targetFolderId === folderId) {
+      console.error('Cannot move folder into itself');
+      return false;
+    }
+    
+    // Проверяем более глубокие циклические ссылки (рекурсивно)
+    const checkCircularReference = async (checkFolderId: string): Promise<boolean> => {
+      const checkFolder = await getFolderById(checkFolderId);
+      if (!checkFolder) return false;
+      
+      if (checkFolder.parentId === folderId) {
+        return true; // Найдена циклическая ссылка
+      }
+      
+      if (checkFolder.parentId) {
+        return await checkCircularReference(checkFolder.parentId);
+      }
+      
+      return false;
+    };
+    
+    if (await checkCircularReference(targetFolderId)) {
+      console.error('Cannot move folder: would create circular reference');
+      return false;
+    }
   }
 
   console.log('Folder before move:', { id: folder.id, name: folder.name, parentId: folder.parentId });
 
-  const result = await updateFolder(folderId, { parentId: targetFolderId });
+  // При перемещении папки в новую родительскую папку, устанавливаем order в конец
+  let newOrder = folder.order;
+  if (folder.parentId !== targetFolderId) {
+    // Получаем максимальный order среди папок в целевой родительской папке
+    const data = await chrome.storage.local.get(STORAGE_KEY);
+    const schema = data[STORAGE_KEY] as StorageSchema;
+    const targetLevelFolders = schema.folders.filter(f => f.parentId === targetFolderId);
+    newOrder = targetLevelFolders.length > 0 ? Math.max(...targetLevelFolders.map(f => f.order)) + 1 : 0;
+  }
+
+  const result = await updateFolder(folderId, { parentId: targetFolderId, order: newOrder });
 
   if (result) {
-    console.log('Folder after move:', { id: result.id, name: result.name, parentId: result.parentId });
+    console.log('Folder after move:', { id: result.id, name: result.name, parentId: result.parentId, order: result.order });
   } else {
     console.error('Failed to update folder');
   }
