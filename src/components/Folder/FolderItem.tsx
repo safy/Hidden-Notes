@@ -53,7 +53,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   //   onToggleExpanded?.(folder.id, newExpanded);
   // };
 
-  // useSortable для перетаскивания папок (изменение порядка)
+  // useSortable для перетаскивания папок (изменение порядка) - только через drag handle
   const {
     attributes,
     listeners,
@@ -64,7 +64,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   } = useSortable({
     id: `folder-sortable-${folder.id}`,
     data: {
-      type: 'folder',
+      type: 'folder-sortable',
       folderId: folder.id,
     },
   });

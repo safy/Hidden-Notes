@@ -83,14 +83,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     console.log('Drag end:', { active: active.id, over: over?.id, activeData: active.data.current, overData: over?.data.current });
 
-    // Если перетаскиваем папку
-    if (active.data.current?.type === 'folder') {
+    // Если перетаскиваем папку для сортировки (через drag handle)
+    if (active.data.current?.type === 'folder-sortable') {
       const draggedFolderId = active.data.current.folderId;
       
-      // Случай 1: Перетаскивание папки на другую папку для сортировки
-      // (оба имеют тип 'folder')
-      if (over?.data.current?.type === 'folder') {
+      // Проверяем, если перетаскиваем папку на другую папку для сортировки
+      if (over?.data.current?.type === 'folder-sortable') {
         const targetFolderId = over.data.current.folderId;
+        
+        // Проверяем, что это не перетаскивание на саму себя
+        if (draggedFolderId === targetFolderId) {
+          return;
+        }
         
         console.log('Reordering folders:', { draggedFolderId, targetFolderId });
         
@@ -109,20 +113,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         return;
       }
+    }
+    
+    // Если перетаскиваем папку на область папки для вложенности
+    if (active.data.current?.type === 'folder-sortable' && over?.data.current?.type === 'folder-drop') {
+      const draggedFolderId = active.data.current.folderId;
+      const targetFolderId = over.data.current.folderId;
       
-      // Случай 2: Перетаскивание папки на область папки для вложенности
-      // (over имеет тип 'folder-drop')
-      if (over?.data.current?.type === 'folder-drop') {
-        const targetFolderId = over.data.current.folderId;
-        
-        console.log('Moving folder to folder:', { draggedFolderId, targetFolderId });
-        
-        if (onMoveFolderToFolder && draggedFolderId !== targetFolderId) {
-          onMoveFolderToFolder(draggedFolderId, targetFolderId);
-        }
-        
-        return;
+      console.log('Moving folder to folder (nesting):', { draggedFolderId, targetFolderId });
+      
+      if (onMoveFolderToFolder && draggedFolderId !== targetFolderId) {
+        onMoveFolderToFolder(draggedFolderId, targetFolderId);
       }
+      
+      return;
     }
 
     // Проверяем, если перетаскиваем заметку на папку
