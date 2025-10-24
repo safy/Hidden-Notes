@@ -95,7 +95,11 @@ export const FolderItem: React.FC<FolderItemProps> = ({
 
   return (
     <div
-      ref={setDroppableNodeRef}
+      ref={(node) => {
+        setSortableNodeRef(node);
+        setDroppableNodeRef(node);
+      }}
+      style={style}
       className={cn(
         'group relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
         'hover:bg-accent',
@@ -106,8 +110,6 @@ export const FolderItem: React.FC<FolderItemProps> = ({
     >
       {/* Drag handle для перетаскивания папки */}
       <div
-        ref={setSortableNodeRef}
-        style={style}
         {...attributes}
         {...listeners}
         className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
