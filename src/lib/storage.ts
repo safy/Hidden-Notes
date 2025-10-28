@@ -354,21 +354,36 @@ export async function reorderFolders(
     return false;
   }
   
-  // Обновляем order у перемещаемой папки
-  schema.folders[folderIndex]!.order = newOrder;
-  schema.folders[folderIndex]!.updatedAt = Date.now();
+  const folder = schema.folders[folderIndex]!;
+  const parentId = folder.parentId;
   
-  // Пересчитываем order для всех папок того же уровня (parentId)
-  const parentId = schema.folders[folderIndex]!.parentId;
+  // Получаем все папки того же уровня, отсортированные по order
   const sameLevelFolders = schema.folders
     .filter(f => f.parentId === parentId)
     .sort((a, b) => a.order - b.order);
   
-  // Переназначаем order последовательно
-  sameLevelFolders.forEach((folder, index) => {
-    const idx = schema.folders.findIndex(f => f.id === folder.id);
+  console.log('📦 Before reorder:', sameLevelFolders.map(f => ({ id: f.id.slice(-6), order: f.order })));
+  
+  // Находим текущую позицию папки в отсортированном массиве
+  const currentIndex = sameLevelFolders.findIndex(f => f.id === folderId);
+  
+  if (currentIndex === -1 || newOrder < 0 || newOrder >= sameLevelFolders.length) {
+    console.error('❌ Invalid reorder parameters:', { currentIndex, newOrder, length: sameLevelFolders.length });
+    return false;
+  }
+  
+  // Переставляем папку в новую позицию (arrayMove logic)
+  const [movedFolder] = sameLevelFolders.splice(currentIndex, 1);
+  sameLevelFolders.splice(newOrder, 0, movedFolder!);
+  
+  console.log('📦 After reorder:', sameLevelFolders.map(f => ({ id: f.id.slice(-6), order: f.order })));
+  
+  // Обновляем order для всех папок в новом порядке
+  sameLevelFolders.forEach((f, index) => {
+    const idx = schema.folders.findIndex(folder => folder.id === f.id);
     if (idx !== -1) {
       schema.folders[idx]!.order = index;
+      schema.folders[idx]!.updatedAt = Date.now();
     }
   });
   

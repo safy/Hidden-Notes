@@ -42,7 +42,7 @@ const App: React.FC = () => {
   
   // Использование useNotes и useFolders hooks
   const { notes, isLoading, error, addNote, updateNoteContent, removeNote, getNoteById, refreshNotes } = useNotes();
-  const { folders, createNewFolder, reorderFoldersHandler } = useFolders();
+  const { folders, createNewFolder, reorderFoldersHandler, refreshFolders } = useFolders();
   const { toast } = useToast();
 
   // Enable Alt+hover reveal for hidden text
@@ -349,6 +349,9 @@ const App: React.FC = () => {
     const success = await moveFolderToFolder(folderId, targetFolderId);
     
     if (success) {
+      // Обновляем список папок после перемещения
+      await refreshFolders();
+      
       const folderName = folders.find(f => f.id === folderId)?.name || 'папка';
       const targetFolderName = targetFolderId 
         ? folders.find(f => f.id === targetFolderId)?.name || 'папку'
