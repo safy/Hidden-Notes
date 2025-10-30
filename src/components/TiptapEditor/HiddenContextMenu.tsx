@@ -51,24 +51,38 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
     return result;
   };
 
-  // Поиск изображения
+  // Поиск изображения по позиции (точно попадаем в узел)
   const findImageAtPos = (pos: number): { pos: number; node: any; isHidden: boolean } | null => {
     if (!editor) return null;
 
-    let result: { pos: number; node: any; isHidden: boolean } | null = null;
+    const tryAt = (p: number) => {
+      if (p < 0 || p > editor.state.doc.content.size) return null;
+      const node = editor.state.doc.nodeAt(p);
+      if (node && node.type.name === 'imageResize') {
+        return { pos: p, node, isHidden: node.attrs.isHidden || false };
+      }
+      return null;
+    };
 
-    editor.state.doc.nodesBetween(Math.max(0, pos - 5), Math.min(editor.state.doc.content.size, pos + 5), (node, nodePos) => {
+    // Пробуем точную позицию и позицию перед ней (для блочных узлов)
+    return tryAt(pos) || tryAt(pos - 1);
+  };
+
+  // Поиск изображения по DOM-элементу (надёжный способ для NodeView)
+  const findImageByElement = (el: Element): { pos: number; node: any; isHidden: boolean } | null => {
+    if (!editor) return null;
+    let result: { pos: number; node: any; isHidden: boolean } | null = null;
+    const { view, state } = editor;
+    state.doc.descendants((node, pos) => {
       if (node.type.name === 'imageResize') {
-        result = {
-          pos: nodePos,
-          node,
-          isHidden: node.attrs.isHidden || false,
-        };
-        return false;
+        const nodeDom = view.nodeDOM(pos) as Element | null;
+        if (nodeDom && nodeDom.contains(el)) {
+          result = { pos, node, isHidden: node.attrs.isHidden || false };
+          return false; // остановить обход
+        }
       }
       return true;
     });
-
     return result;
   };
 
@@ -78,14 +92,38 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       
+      // 1) Пытаемся получить позицию по DOM-элементу изображения под курсором
+      const target = e.target as HTMLElement;
+      const imgEl = target.closest('img');
+      let posFromEvent: number | null = null;
+      let imageInfoByDom: { pos: number; node: any; isHidden: boolean } | null = null;
+      if (imgEl) {
+        // Сначала пытаемся найти узел по DOM-элементу полностью (надёжно)
+        imageInfoByDom = findImageByElement(imgEl);
+        if (!imageInfoByDom) {
+          // Фолбек: получить позицию от DOM, затем искать по позиции
+          try {
+            posFromEvent = editor.view.posAtDOM(imgEl, 0);
+          } catch {
+            posFromEvent = null;
+          }
+        }
+      }
+      // 2) Фолбек — позиция по координатам клика
+      if (posFromEvent == null) {
+        const coords = { left: e.clientX, top: e.clientY };
+        posFromEvent = editor.view.posAtCoords(coords)?.pos ?? null;
+      }
+      
       const { selection } = editor.state;
       const { $from, $to } = selection;
       
       let foundType: ElementType = 'none';
       let foundIsHidden = false;
 
-      // 1. Проверяем клик по изображению
-      const imageInfo = findImageAtPos($from.pos);
+      // 1. Проверяем клик по изображению (сначала DOM-метод, затем позиция)
+      const imageInfo = imageInfoByDom
+        || (posFromEvent !== null ? findImageAtPos(posFromEvent) : null);
       if (imageInfo) {
         foundType = 'image';
         foundIsHidden = imageInfo.isHidden;
@@ -109,9 +147,9 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
             foundIsHidden = hasHiddenMark;
             setCurrentHiddenSpan(null);
           }
-        } else {
-          // Нет выделения - ищем скрытый текст в позиции курсора
-          const hiddenSpan = findHiddenTextAtPos($from.pos);
+        } else if (posFromEvent !== null) {
+          // Нет выделения - ищем скрытый текст в позиции клика
+          const hiddenSpan = findHiddenTextAtPos(posFromEvent);
           if (hiddenSpan) {
             foundType = 'text';
             foundIsHidden = true;
