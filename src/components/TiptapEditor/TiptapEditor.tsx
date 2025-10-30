@@ -25,6 +25,7 @@ import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
 import { HiddenContextMenu } from './HiddenContextMenu';
 import { DragHandle as DragHandleComponent } from './DragHandle';
+import { ImageFloatingMenu } from './ImageFloatingMenu';
 
 interface TiptapEditorProps {
   content?: string;
@@ -285,6 +286,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
             isCreatingLink={isCreatingLink}
             onLinkCreated={onLinkCreated}
           />
+          <ImageFloatingMenu editor={editor} />
           <HiddenContextMenu editor={editor} />
         </>
       )}

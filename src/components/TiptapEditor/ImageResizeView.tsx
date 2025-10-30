@@ -13,7 +13,7 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
   updateAttributes,
   selected,
 }) => {
-  const { src, alt, width, height, isHidden } = node.attrs;
+  const { src, alt, width, height, isHidden, align } = node.attrs;
   const [currentWidth, setCurrentWidth] = useState(width || 300);
   const [currentHeight, setCurrentHeight] = useState(height || 200);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -25,14 +25,10 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
 
   // Синхронизируем локальный state с node.attrs при изменении
   useEffect(() => {
-    console.log('📥 ImageResizeView mounted/updated, node.attrs:', { width, height, src: src?.substring(0, 50) });
     if (width && height) {
-      console.log('✅ Setting size from node.attrs:', width, 'x', height);
       setCurrentWidth(width);
       setCurrentHeight(height);
       isInitialized.current = true;
-    } else {
-      console.log('⚠️ No width/height in node.attrs, will use defaults or auto-detect');
     }
   }, [width, height, src]);
 
@@ -61,12 +57,10 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
     };
 
     const handleMouseUp = () => {
-      console.log('🖼️ Image resized to:', finalWidth, 'x', finalHeight);
       updateAttributes({
         width: finalWidth,
         height: finalHeight,
       });
-      console.log('✅ updateAttributes called with:', { width: finalWidth, height: finalHeight });
       
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -102,8 +96,13 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
     isInitialized.current = true;
   };
 
+  const currentAlign = align || 'left';
+
   return (
-    <NodeViewWrapper className="image-resize-wrapper">
+    <NodeViewWrapper 
+      className={`image-resize-wrapper image-align-${currentAlign}`}
+      data-align={currentAlign}
+    >
       <div
         className={`image-resizer ${selected ? 'selected' : ''} ${isHidden ? 'hidden-image' : ''}`}
         data-hidden={isHidden ? 'true' : 'false'}
@@ -130,6 +129,7 @@ export const ImageResizeView: React.FC<NodeViewProps> = ({
           draggable={false}
         />
         
+        {/* Показываем resize handle когда selected */}
         {selected && (
           <div
             className="resize-handle"

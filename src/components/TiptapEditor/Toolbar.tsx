@@ -5,7 +5,7 @@
  * @created: 2025-10-15
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -47,6 +47,8 @@ interface ToolbarProps {
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   if (!editor) {
     // Render empty toolbar structure while editor is loading
     return (
@@ -78,10 +80,46 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
   };
 
   const addImage = () => {
-    const url = window.prompt('Введите URL изображения:');
-    if (url) {
-      editor.chain().focus().setImage({ src: url, alt: 'Вставленное изображение' }).run();
+    // Открываем диалог выбора файла
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const imageFile = files[0];
+    
+    // Проверяем что файл существует и это изображение
+    if (!imageFile || !imageFile.type.startsWith('image/')) {
+      console.warn('Выбранный файл не является изображением');
+      return;
     }
+
+    // Создаем FileReader для чтения файла
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const imageUrl = e.target?.result as string;
+      
+      if (imageUrl) {
+        // Вставляем изображение в редактор
+        editor.chain().focus().setImage({ 
+          src: imageUrl, 
+          alt: imageFile.name || 'Загруженное изображение'
+        }).run();
+      }
+    };
+    
+    reader.onerror = () => {
+      console.error('Ошибка чтения файла изображения');
+    };
+    
+    // Читаем файл как data URL (base64)
+    reader.readAsDataURL(imageFile);
+    
+    // Сбрасываем значение input чтобы можно было выбрать тот же файл снова
+    event.target.value = '';
   };
 
   const addLink = () => {
@@ -355,6 +393,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
           <Table className="h-4 w-4" />
         </Button>
       </div>
+      
+      {/* Скрытый input для загрузки изображений */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+        aria-label="Загрузить изображение"
+      />
     </div>
   );
 };

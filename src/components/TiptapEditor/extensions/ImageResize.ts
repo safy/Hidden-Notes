@@ -13,12 +13,14 @@ export interface ImageResizeOptions {
   inline: boolean;
   allowBase64: boolean;
   HTMLAttributes: Record<string, any>;
+  editor?: any; // Добавляем editor в options
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     imageResize: {
-      setImage: (options: { src: string; alt?: string; width?: number; height?: number }) => ReturnType;
+      setImage: (options: { src: string; alt?: string; width?: number; height?: number; align?: 'left' | 'center' | 'right' }) => ReturnType;
+      setImageAlign: (align: 'left' | 'center' | 'right') => ReturnType;
       toggleImageHidden: () => ReturnType;
       setImageHidden: (isHidden: boolean) => ReturnType;
     };
@@ -101,6 +103,21 @@ export const ImageResize = Node.create<ImageResizeOptions>({
           };
         },
       },
+      align: {
+        default: 'left',
+        parseHTML: element => {
+          const align = element.getAttribute('data-align') || element.style.textAlign || 'left';
+          return ['left', 'center', 'right'].includes(align) ? align : 'left';
+        },
+        renderHTML: attributes => {
+          if (!attributes.align || attributes.align === 'left') {
+            return {};
+          }
+          return {
+            'data-align': attributes.align,
+          };
+        },
+      },
     };
   },
 
@@ -110,6 +127,11 @@ export const ImageResize = Node.create<ImageResizeOptions>({
         tag: 'img[src]',
         getAttrs: (element) => {
           const img = element as HTMLImageElement;
+          const parent = img.parentElement;
+          const align = parent?.getAttribute('data-align') || 
+                       parent?.style.textAlign || 
+                       img.getAttribute('data-align') || 
+                       'left';
           return {
             src: img.getAttribute('src'),
             alt: img.getAttribute('alt'),
@@ -117,6 +139,7 @@ export const ImageResize = Node.create<ImageResizeOptions>({
             width: img.getAttribute('width') ? parseInt(img.getAttribute('width')!, 10) : null,
             height: img.getAttribute('height') ? parseInt(img.getAttribute('height')!, 10) : null,
             isHidden: img.getAttribute('data-hidden') === 'true',
+            align: ['left', 'center', 'right'].includes(align) ? align : 'left',
           };
         },
       },
@@ -147,11 +170,21 @@ export const ImageResize = Node.create<ImageResizeOptions>({
       attrs.class = (attrs.class || '') + ' hidden-image';
     }
     
+    // Добавляем выравнивание
+    const align = node.attrs.align || 'left';
+    if (align !== 'left') {
+      attrs['data-align'] = align;
+    }
+    
     return ['img', attrs];
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ImageResizeView);
+    return ReactNodeViewRenderer(ImageResizeView, {
+      contentDOMElementTag: 'div',
+      // Передаем editor через as prop
+      as: 'div',
+    });
   },
 
   addCommands() {
@@ -159,8 +192,39 @@ export const ImageResize = Node.create<ImageResizeOptions>({
       setImage: (options) => ({ commands }) => {
         return commands.insertContent({
           type: this.name,
-          attrs: options,
+          attrs: {
+            ...options,
+            align: options.align || 'left',
+          },
         });
+      },
+      setImageAlign: (align: 'left' | 'center' | 'right') => ({ state, tr, dispatch }) => {
+        const { selection } = state;
+        const { $from } = selection;
+        
+        // Найти изображение в текущей позиции
+        let imageNode: any = null;
+        let imagePos = -1;
+        
+        state.doc.nodesBetween($from.pos - 1, $from.pos + 1, (node, pos) => {
+          if (node.type.name === 'imageResize') {
+            imageNode = node;
+            imagePos = pos;
+            return false;
+          }
+          return true;
+        });
+        
+        if (imageNode && imagePos >= 0 && dispatch) {
+          tr.setNodeMarkup(imagePos, undefined, {
+            ...imageNode.attrs,
+            align,
+          });
+          dispatch(tr);
+          return true;
+        }
+        
+        return false;
       },
       toggleImageHidden: () => ({ state, tr, dispatch }) => {
         const { selection } = state;

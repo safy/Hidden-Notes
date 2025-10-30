@@ -544,11 +544,25 @@
   margin: 0.5rem 0;
 }
 
+/* Выравнивание изображений */
+.image-resize-wrapper.image-align-left {
+  text-align: left;
+}
+
+.image-resize-wrapper.image-align-center {
+  text-align: center;
+  width: 100%;
+}
+
+.image-resize-wrapper.image-align-right {
+  text-align: right;
+}
+
 .image-resizer {
   position: relative;
   display: inline-block;
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .image-resizer.selected {
@@ -568,6 +582,27 @@
   cursor: se-resize;
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Floating Toolbar для изображений */
+.image-floating-toolbar-container {
+  position: absolute;
+  top: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.image-floating-toolbar {
+  pointer-events: auto;
+}
+
+.image-floating-toolbar > div {
+  backdrop-filter: blur(8px);
+  background: hsl(var(--background) / 0.95);
+  border: 1px solid hsl(var(--border));
 }
 
 .resize-handle::after {
