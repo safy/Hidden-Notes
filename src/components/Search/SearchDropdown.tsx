@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SearchDropdownProps {
   isOpen: boolean;
@@ -22,8 +23,9 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
   isOpen,
   onClose,
   onSearch,
-  placeholder = 'Поиск заметок...',
+  placeholder = '',
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -77,7 +79,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
+              placeholder={placeholder || t('search.placeholder', { defaultValue: 'Search notes...' })}
               className="pl-9 pr-9"
             />
             {searchQuery && (
@@ -86,7 +88,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
                 size="icon"
                 onClick={handleClear}
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                title="Очистить поиск"
+                title={t('search.clear', { defaultValue: 'Clear search' })}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -97,7 +99,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            title="Закрыть поиск"
+            title={t('search.close', { defaultValue: 'Close search' })}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -106,6 +108,9 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
     </div>
   );
 };
+
+
+
 
 
 

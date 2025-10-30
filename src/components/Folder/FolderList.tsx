@@ -13,6 +13,7 @@ import { Folder as FolderType } from '@/types/folder';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface FolderListProps {
   currentFolderId: string | null;
@@ -37,6 +38,7 @@ export const FolderList: React.FC<FolderListProps> = ({
   overId,
   className,
 }) => {
+  const { t } = useTranslation();
   const {
     folders,
     isLoading,
@@ -74,7 +76,7 @@ export const FolderList: React.FC<FolderListProps> = ({
 
     if (notesCount > 0) {
       const confirmed = confirm(
-        `В папке "${folder.name}" находится ${notesCount} заметок. Переместить их в корень или удалить вместе с папкой?\n\nОК - переместить в корень\nОтмена - удалить`
+        t('folders.deleteConfirm', { defaultValue: `Folder "${folder.name}" contains ${notesCount} notes. Move them to root or delete with the folder?\n\nOK - move to root\nCancel - delete` })
       );
 
       if (confirmed) {
@@ -83,7 +85,7 @@ export const FolderList: React.FC<FolderListProps> = ({
       } else {
         // Удаляем заметки вместе с папкой
         const doubleConfirm = confirm(
-          `Вы уверены? Все заметки будут перемещены в корзину!`
+          t('folders.doubleConfirm', { defaultValue: 'Are you sure? All notes will be moved to trash!' })
         );
         if (doubleConfirm) {
           await deleteExistingFolder(folderId);
@@ -104,7 +106,7 @@ export const FolderList: React.FC<FolderListProps> = ({
     const pathSegments: { name: string; id: string | null }[] = [];
 
     // Добавляем "Корень"
-    pathSegments.push({ name: 'Корень', id: null });
+    pathSegments.push({ name: t('folders.root', { defaultValue: 'Root' }), id: null });
 
     if (currentFolderId !== null) {
       // Рекурсивно строим путь от текущей папки до корня
@@ -137,7 +139,7 @@ export const FolderList: React.FC<FolderListProps> = ({
   if (error) {
     return (
       <div className={cn('px-3 py-4 text-sm text-destructive', className)}>
-        Ошибка: {error}
+        {t('common.error', { defaultValue: 'Error' })}: {error}
       </div>
     );
   }
@@ -152,7 +154,7 @@ export const FolderList: React.FC<FolderListProps> = ({
             size="sm"
             className="h-6 w-6 p-0"
             onClick={onBackToRoot}
-            title="Назад"
+            title={t('common.back', { defaultValue: 'Back' })}
           >
             <ArrowLeft size={14} />
           </Button>
@@ -188,7 +190,7 @@ export const FolderList: React.FC<FolderListProps> = ({
           <>
             {currentLevelFolders.length === 0 ? (
               <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                {currentFolderId === null ? 'Нет папок. Создайте первую!' : 'Нет вложенных папок'}
+                {currentFolderId === null ? t('folders.emptyRoot', { defaultValue: 'No folders. Create the first one!' }) : t('folders.emptyNested', { defaultValue: 'No subfolders' })}
               </div>
             ) : (
               <SortableContext

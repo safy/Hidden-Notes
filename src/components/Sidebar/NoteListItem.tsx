@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ColorPicker';
+import { useTranslation } from 'react-i18next';
 
 interface NoteListItemProps {
   id: string;
@@ -56,6 +57,7 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
   onColorChange,
   onMoveToFolder,
 }) => {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -113,7 +115,7 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
             'flex-shrink-0 p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing',
             'text-muted-foreground hover:text-foreground transition-colors'
           )}
-          title="Перетащить для изменения порядка"
+          title={t('notes.reorder', { defaultValue: 'Drag to reorder' })}
         >
           <GripVertical className="h-3 w-3" />
         </div>
@@ -139,7 +141,7 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
               variant="ghost"
               size="icon"
               className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Меню заметки"
+              title={t('notes.menu', { defaultValue: 'Note menu' })}
             >
               <MoreVertical className="h-3 w-3" />
             </Button>
@@ -151,21 +153,21 @@ export const NoteListItem: React.FC<NoteListItemProps> = ({
             >
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <Palette className="mr-2 h-4 w-4" />
-                Цвет заметки
+                {t('notes.color', { defaultValue: 'Note color' })}
               </DropdownMenuItem>
             </ColorPicker>
             <DropdownMenuItem onClick={handleMoveToFolder}>
               <FolderInput className="mr-2 h-4 w-4" />
-              Переместить в папку
+              {t('notes.moveToFolder', { defaultValue: 'Move to folder' })}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleArchive}>
               <Archive className="mr-2 h-4 w-4" />
-              Архивировать
+              {t('notes.archive', { defaultValue: 'Archive' })}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDelete} className="text-destructive">
               <Trash2 className="mr-2 h-4 w-4" />
-              Удалить
+              {t('notes.delete', { defaultValue: 'Delete' })}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

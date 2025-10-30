@@ -6,25 +6,49 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { KeyboardShortcutsDialog } from '@/components/ui/keyboard-shortcuts-dialog';
+import { SettingsDialog } from '@/components/ui/settings-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useNotes } from '@/hooks/useNotes';
 import { useFolders } from '@/hooks/useFolders';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { initDevtoolsHelper } from '@/lib/devtools-helpers';
 import { initDataProtection, verifyDataIntegrity, listBackups, restoreFromBackup } from '@/lib/data-protection';
-import { Moon, Sun, Settings, Plus, Search, ArrowUpDown, Archive, HelpCircle, FolderPlus } from 'lucide-react';
+import { Settings, Plus, Search, ArrowUpDown, Archive, FolderPlus } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
 import { SearchDropdown } from '@/components/Search';
 import { FolderCreateMenu, MoveToFolderDialog, FolderEditMenu } from '@/components/Folder';
 import { moveNoteToFolder, toggleNoteArchive, moveFolderToFolder, updateFolder } from '@/lib/storage';
+import '@/i18n'; // Инициализация i18n
+
+// Рантайм-диагностика источника сборки
+if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+  // Путь к загруженному manifest.json у текущего экземпляра
+  // Поможет проверить, что поднята именно папка dist, а не старый crx
+  // Пример: file:///G:/Hidden%20Notes/dist/manifest.json
+  // Также выведем список основных ассетов, видимых браузером
+  // Эти логи видны в Console side panel
+  try {
+    // eslint-disable-next-line no-console
+    console.info('HN runtime manifest URL:', chrome.runtime.getURL('manifest.json'));
+  } catch {}
+}
+
+// Проставим маркер сборки (хеш основного бандла из dist)
+// Этот импорт отсутствует в рантайме, поэтому используем инлайновую константу
+// Обновляется при каждой сборке через изменение комментария ниже.
+const HN_BUILD_MARK = 'mark-2025-10-30-15-00'; // <- имя/маркер билда для проверки обновления
+// eslint-disable-next-line no-console
+console.info('HN build marker:', HN_BUILD_MARK);
 
 type AppView = 'list' | 'note';
 
 const App: React.FC = () => {
+  const { t } = useTranslation(); // TODO: Используется для переводов
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentView, setCurrentView] = useState<AppView>('list');
   const [selectedNote, setSelectedNote] = useState<{id: string, title: string} | null>(null);
@@ -37,6 +61,7 @@ const App: React.FC = () => {
   const [isFolderCreateMenuOpen, setIsFolderCreateMenuOpen] = useState(false);
   const [isMoveToFolderDialogOpen, setIsMoveToFolderDialogOpen] = useState(false);
   const [isFolderEditDialogOpen, setIsFolderEditDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [movingNoteId, setMovingNoteId] = useState<string | null>(null);
   const [editingFolder, setEditingFolder] = useState<any>(null);
   
@@ -58,8 +83,8 @@ const App: React.FC = () => {
       verifyDataIntegrity().then(result => {
         if (!result.isValid) {
           toast({
-            title: '⚠️ Проблемы с данными обнаружены',
-            description: `Ошибок: ${result.errors.length}. Нажмите Ctrl+Shift+R для восстановления.`,
+            title: t('common.dataIssues', { defaultValue: 'Data issues detected' }),
+            description: t('common.dataIssuesDesc', { defaultValue: `Errors: ${result.errors.length}. Press Ctrl+Shift+R to restore.` }),
             duration: 10000,
           });
         } else if (result.warnings.length > 0) {
@@ -73,7 +98,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (error) {
       toast({
-        title: 'Ошибка',
+        title: t('common.error', { defaultValue: 'Error' }),
         description: error,
         duration: 5000,
       });
@@ -86,8 +111,8 @@ const App: React.FC = () => {
     document.documentElement.classList.toggle('dark');
     
     toast({
-      title: 'Тема изменена',
-      description: `Переключено на ${newTheme === 'dark' ? 'темную' : 'светлую'} тему`,
+      title: t('toast.themeChanged.title', { defaultValue: 'Theme changed' }),
+      description: t('toast.themeChanged.desc', { defaultValue: `Switched to ${newTheme === 'dark' ? 'dark' : 'light'} theme` }),
       duration: 3000,
     });
   };
@@ -106,13 +131,13 @@ const App: React.FC = () => {
   };
 
   const handleCreateNote = async () => {
-    const newNote = await addNote('Новая заметка', currentFolderId);
+    const newNote = await addNote(t('header.newNote', { defaultValue: 'New note' }), currentFolderId);
     if (newNote) {
       setSelectedNote({ id: newNote.id, title: newNote.title });
       setCurrentView('note');
       toast({
-        title: 'Заметка создана',
-        description: 'Новая заметка готова к редактированию',
+        title: t('toast.noteCreated', { defaultValue: 'Note created' }),
+        description: t('toast.noteReady', { defaultValue: 'New note is ready to edit' }),
         duration: 3000,
       });
     }
@@ -120,8 +145,8 @@ const App: React.FC = () => {
 
   const handleNoteSave = () => {
     toast({
-      title: 'Заметка сохранена',
-      description: `"${selectedNote?.title}" успешно сохранена`,
+      title: t('toast.noteSaved', { defaultValue: 'Note saved' }),
+      description: t('toast.noteSavedDesc', { defaultValue: selectedNote?.title ? `"${selectedNote.title}" saved` : 'Saved successfully' }),
       duration: 3000,
     });
   };
@@ -131,8 +156,8 @@ const App: React.FC = () => {
       const success = await removeNote(selectedNote.id);
       if (success) {
         toast({
-          title: 'Заметка удалена',
-          description: `"${selectedNote.title}" удалена`,
+          title: t('toast.noteDeleted', { defaultValue: 'Note deleted' }),
+          description: t('toast.noteDeletedDesc', { defaultValue: selectedNote ? `"${selectedNote.title}" deleted` : 'Deleted' }),
           duration: 3000,
         });
         handleBackToList();
@@ -146,8 +171,8 @@ const App: React.FC = () => {
       if (updated) {
         setSelectedNote({ ...selectedNote, title: newTitle });
         toast({
-          title: 'Название изменено',
-          description: `Заметка переименована в "${newTitle}"`,
+          title: t('toast.noteTitleChanged', { defaultValue: 'Title changed' }),
+          description: t('toast.noteRenamedTo', { defaultValue: `Renamed to "${newTitle}"` }),
           duration: 2000,
         });
       }
@@ -161,8 +186,8 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Auto-save failed:', error);
       toast({
-        title: 'Ошибка сохранения',
-        description: 'Не удалось сохранить заметку',
+        title: t('common.error', { defaultValue: 'Save error' }),
+        description: t('toast.saveFailed', { defaultValue: 'Failed to save note' }),
         duration: 3000,
       });
     }
@@ -181,10 +206,9 @@ const App: React.FC = () => {
   };
 
   const handleNotesReorder = (_reorderedNotes: any[]) => {
-    // TODO: Реализовать переупорядочение заметок
     toast({
-      title: 'Информация',
-      description: 'Переупорядочение будет добавлено в следующей версии',
+      title: t('info.soon.title', { defaultValue: 'Info' }),
+      description: t('info.soon.reorder', { defaultValue: 'Reordering will be added in the next version' }),
       duration: 3000,
     });
   };
@@ -193,8 +217,8 @@ const App: React.FC = () => {
     const success = await removeNote(noteId);
     if (success) {
       toast({
-        title: 'Заметка удалена',
-        description: 'Заметка удалена из списка',
+        title: t('note.deleted.title', { defaultValue: 'Note deleted' }),
+        description: t('note.deleted.desc', { defaultValue: 'The note has been removed from the list' }),
         duration: 3000,
       });
     }
@@ -205,8 +229,8 @@ const App: React.FC = () => {
       await updateNoteContent(noteId, { color });
     } catch (error) {
     toast({
-        title: 'Ошибка',
-        description: 'Не удалось применить цвет',
+        title: t('error.title', { defaultValue: 'Error' }),
+        description: t('error.applyColor', { defaultValue: 'Failed to apply color' }),
       duration: 3000,
     });
     }
@@ -226,8 +250,8 @@ const App: React.FC = () => {
     
     if (newFolder) {
       toast({
-        title: 'Папка создана',
-        description: `"${data.name}" успешно создана`,
+        title: t('folder.created.title', { defaultValue: 'Folder created' }),
+        description: t('folder.created.desc', { defaultValue: 'Folder created successfully' }),
         duration: 3000,
       });
     }
@@ -257,22 +281,22 @@ const App: React.FC = () => {
       
       if (updatedFolder) {
         toast({
-          title: 'Папка обновлена',
-          description: `"${data.name}" успешно обновлена`,
+          title: t('folder.updated.title', { defaultValue: 'Folder updated' }),
+          description: t('folder.updated.desc', { defaultValue: 'Folder updated successfully' }),
           duration: 3000,
         });
       } else {
         toast({
-          title: 'Ошибка',
-          description: 'Не удалось обновить папку',
+          title: t('error.title', { defaultValue: 'Error' }),
+          description: t('folder.updateFailed', { defaultValue: 'Failed to update folder' }),
           duration: 3000,
         });
       }
     } catch (error) {
       console.error('Error updating folder:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить папку',
+        title: t('error.title', { defaultValue: 'Error' }),
+        description: t('folder.updateFailed', { defaultValue: 'Failed to update folder' }),
         duration: 3000,
       });
     }
@@ -290,16 +314,12 @@ const App: React.FC = () => {
     const success = await moveNoteToFolder(movingNoteId, folderId);
     
     if (success) {
-      const folderName = folderId 
-        ? folders.find(f => f.id === folderId)?.name || 'папку'
-        : 'корень';
-      
       // Обновляем список заметок
       await refreshNotes();
       
       toast({
-        title: 'Заметка перемещена',
-        description: `"${note.title}" перемещена в ${folderName}`,
+        title: t('note.moved.title', { defaultValue: 'Note moved' }),
+        description: t('note.moved.desc', { defaultValue: 'Note has been moved' }),
         duration: 3000,
       });
     }
@@ -321,8 +341,6 @@ const App: React.FC = () => {
     const success = await moveNoteToFolder(noteId, folderId);
     
     if (success) {
-      const folderName = folders.find(f => f.id === folderId)?.name || 'папку';
-      
       console.log('Note moved successfully, refreshing notes...');
       
       // Обновляем список заметок чтобы заметка исчезла из текущего списка
@@ -331,15 +349,15 @@ const App: React.FC = () => {
       console.log('Notes refreshed');
       
       toast({
-        title: 'Заметка перемещена',
-        description: `"${note.title}" перемещена в папку "${folderName}"`,
+        title: t('note.moved.title', { defaultValue: 'Note moved' }),
+        description: t('note.moved.desc', { defaultValue: 'Note has been moved' }),
         duration: 3000,
       });
     } else {
       console.error('Failed to move note');
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось переместить заметку',
+        title: t('error.title', { defaultValue: 'Error' }),
+        description: t('note.moveFailed', { defaultValue: 'Failed to move note' }),
         duration: 3000,
       });
     }
@@ -352,20 +370,15 @@ const App: React.FC = () => {
       // Обновляем список папок после перемещения
       await refreshFolders();
       
-      const folderName = folders.find(f => f.id === folderId)?.name || 'папка';
-      const targetFolderName = targetFolderId 
-        ? folders.find(f => f.id === targetFolderId)?.name || 'папку'
-        : 'корень';
-      
       toast({
-        title: 'Папка перемещена',
-        description: `"${folderName}" перемещена в ${targetFolderName}`,
+        title: t('folder.moved.title', { defaultValue: 'Folder moved' }),
+        description: t('folder.moved.desc', { defaultValue: 'Folder moved successfully' }),
         duration: 3000,
       });
     } else {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось переместить папку',
+        title: t('error.title', { defaultValue: 'Error' }),
+        description: t('folder.moveFailed', { defaultValue: 'Failed to move folder' }),
         duration: 3000,
       });
     }
@@ -376,8 +389,8 @@ const App: React.FC = () => {
     
     if (!success) {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось изменить порядок папок',
+        title: t('error.title', { defaultValue: 'Error' }),
+        description: t('toast.reorderFailed', { defaultValue: 'Failed to change folder order' }),
         duration: 3000,
       });
     }
@@ -392,7 +405,20 @@ const App: React.FC = () => {
   };
 
   const handleBackToRoot = () => {
-    setCurrentFolderId(null);
+    if (!currentFolderId) {
+      // Уже в корне, некуда возвращаться
+      return;
+    }
+    
+    // Находим текущую папку и переходим к её родителю
+    const currentFolder = folders.find(f => f.id === currentFolderId);
+    if (currentFolder) {
+      // Переходим к родительской папке (или в корень если parentId === null)
+      setCurrentFolderId(currentFolder.parentId ?? null);
+    } else {
+      // Если папка не найдена, возвращаемся в корень
+      setCurrentFolderId(null);
+    }
   };
 
   const handleNoteArchive = async (noteId: string) => {
@@ -403,8 +429,8 @@ const App: React.FC = () => {
     
     if (success) {
     toast({
-        title: note.isArchived ? 'Заметка восстановлена' : 'Заметка архивирована',
-        description: `"${note.title}" ${note.isArchived ? 'восстановлена из архива' : 'перемещена в архив'}`,
+        title: note.isArchived ? t('note.restored.title', { defaultValue: 'Note restored' }) : t('note.archived.title', { defaultValue: 'Note archived' }),
+        description: note.isArchived ? t('note.restored.desc', { defaultValue: 'Restored from archive' }) : t('note.archived.desc', { defaultValue: 'Moved to archive' }),
       duration: 3000,
     });
     }
@@ -412,16 +438,16 @@ const App: React.FC = () => {
 
   const handleArchive = () => {
     toast({
-      title: 'Архив',
-      description: 'Просмотр архива будет добавлен в следующей версии',
+      title: t('archive.title', { defaultValue: 'Archive' }),
+      description: t('archive.soon', { defaultValue: 'Archive view will be added in the next version' }),
       duration: 3000,
     });
   };
 
   const handleSort = () => {
     toast({
-      title: 'Сортировка',
-      description: 'Функция сортировки будет добавлена в следующей версии',
+      title: t('sort.title', { defaultValue: 'Sorting' }),
+      description: t('sort.soon', { defaultValue: 'Sorting will be added in the next version' }),
       duration: 3000,
     });
   };
@@ -447,28 +473,21 @@ const App: React.FC = () => {
       URL.revokeObjectURL(url);
       
       toast({
-        title: 'Экспорт завершен',
-        description: `Экспортировано заметок: ${notes.length}`,
+        title: t('export.done', { defaultValue: 'Export completed' }),
+        description: t('export.count', { defaultValue: `Exported notes: ${notes.length}` }),
         duration: 3000,
       });
     } catch (error) {
       console.error('Export failed:', error);
       toast({
-        title: 'Ошибка экспорта',
-        description: 'Не удалось экспортировать заметки',
+        title: t('export.error', { defaultValue: 'Export error' }),
+        description: t('export.failed', { defaultValue: 'Failed to export notes' }),
         duration: 3000,
       });
     }
   };
 
-  const handleSettings = () => {
-    // TODO: Открыть модальное окно настроек
-    toast({
-      title: 'Настройки',
-      description: 'Окно настроек будет добавлено в следующей версии. Нажмите Ctrl+E для экспорта заметок.',
-      duration: 4000,
-    });
-  };
+  // Settings dialog теперь открывается через кнопку в header
 
   // Функция восстановления из бэкапа
   const handleRestoreFromBackup = async () => {
@@ -476,8 +495,8 @@ const App: React.FC = () => {
     
     if (backups.length === 0) {
       toast({
-        title: 'Нет бэкапов',
-        description: 'Автоматические бэкапы еще не созданы',
+        title: t('backup.none', { defaultValue: 'No backups' }),
+        description: t('backup.autoNotCreated', { defaultValue: 'Auto backups are not created yet' }),
         duration: 3000,
       });
       return;
@@ -487,7 +506,7 @@ const App: React.FC = () => {
     const lastBackup = backups[backups.length - 1];
     if (!lastBackup) return;
     
-    if (confirm(`Восстановить данные из бэкапа?\n\nДата: ${lastBackup.date}\nЗаметок: ${lastBackup.notesCount}\n\nТекущие несохраненные изменения будут потеряны!`)) {
+    if (confirm(t('backup.confirmRestore', { defaultValue: `Restore data from backup?\n\nDate: ${lastBackup.date}\nNotes: ${lastBackup.notesCount}\n\nUnsaved changes will be lost!` }))) {
       const success = await restoreFromBackup();
       
       if (success) {
@@ -495,8 +514,8 @@ const App: React.FC = () => {
         window.location.reload();
       } else {
         toast({
-          title: 'Ошибка восстановления',
-          description: 'Не удалось восстановить данные из бэкапа',
+          title: t('backup.restoreError', { defaultValue: 'Restore error' }),
+          description: t('backup.restoreFailed', { defaultValue: 'Failed to restore from backup' }),
           duration: 5000,
         });
       }
@@ -569,7 +588,7 @@ const App: React.FC = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin mb-4">⏳</div>
-            <p>Загрузка заметок...</p>
+            <p>{t('loading.notes', { defaultValue: 'Loading notes...' })}</p>
           </div>
         </div>
       )}
@@ -581,25 +600,25 @@ const App: React.FC = () => {
             <header className="border-b border-border px-4 py-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={handleCreateNote} title="Новая заметка">
+                  <Button variant="ghost" size="icon" onClick={handleCreateNote} title={t('header.newNote', { defaultValue: 'New note' })}>
                     <Plus className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleCreateFolder} title="Создать папку">
+                  <Button variant="ghost" size="icon" onClick={handleCreateFolder} title={t('header.createFolder', { defaultValue: 'Create folder' })}>
                     <FolderPlus className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     onClick={handleSearchToggle}
-                    title="Поиск"
+                    title={t('header.search', { defaultValue: 'Search' })}
                     className={isSearchOpen ? 'bg-accent text-accent-foreground' : ''}
                   >
                     <Search className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleSort} title="Сортировка">
+                  <Button variant="ghost" size="icon" onClick={handleSort} title={t('header.sort', { defaultValue: 'Sort' })}>
                     <ArrowUpDown className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleArchive} title="Архив">
+                  <Button variant="ghost" size="icon" onClick={handleArchive} title={t('header.archive', { defaultValue: 'Archive' })}>
                     <Archive className="h-4 w-4" />
                   </Button>
                 </div>
@@ -608,17 +627,13 @@ const App: React.FC = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={() => setIsShortcutsOpen(true)}
-                    title="Горячие клавиши"
+                    onClick={() => setIsSettingsOpen(true)}
+                    title={t('header.settings', { defaultValue: 'Settings' })}
                   >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
-                    {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={handleSettings} title="Settings (Ctrl+E для экспорта)">
                     <Settings className="h-4 w-4" />
                   </Button>
+                  
+                   {/* Иконки горячих клавиш и темы перенесены в настройки */}
                 </div>
               </div>
             </header>
@@ -693,6 +708,14 @@ const App: React.FC = () => {
           </div>
 
           {/* Dialogs */}
+          <SettingsDialog 
+            open={isSettingsOpen}
+            onOpenChange={setIsSettingsOpen}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          />
+          
           <KeyboardShortcutsDialog 
             open={isShortcutsOpen} 
             onOpenChange={setIsShortcutsOpen}

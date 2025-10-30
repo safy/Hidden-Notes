@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useTranslation } from 'react-i18next';
 
 interface FolderItemProps {
   folder: FolderType;
@@ -47,6 +48,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   activeId: _activeId,
   overId: _overId,
 }) => {
+  const { t } = useTranslation();
   // const [isExpanded, setIsExpanded] = useState(folder.isExpanded ?? true);
 
   // const handleToggleExpand = (e: React.MouseEvent) => {
@@ -89,12 +91,15 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   };
 
   return (
-    <div
-      className={cn(
-        'group relative rounded-lg transition-all duration-200 ease-in-out',
-        isOver && 'ring-2 ring-primary ring-opacity-80 bg-primary/20 shadow-lg transform scale-[1.02]'
+    <div className="group relative">
+      {/* Drop indicator line - показывается СНИЗУ целевой папки */}
+      {isOver && !isDragging && (
+        <div className="absolute left-0 right-0 -bottom-[2px] h-[2px] bg-primary z-50 rounded-full">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full" />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full" />
+        </div>
       )}
-    >
+      
       <div
         ref={setNodeRef}
         style={style}
@@ -102,8 +107,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
           'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
           'hover:bg-accent',
           isActive && 'bg-accent',
-          isDragging && 'opacity-50 z-50',
-          isOver && 'border-2 border-dashed border-primary/60 bg-primary/5'
+          isDragging && 'opacity-40 cursor-grabbing'
         )}
       >
       {/* Drag handle for dragging folder (prevents click conflicts) */}
@@ -112,7 +116,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
         {...listeners}
         onClick={(e) => e.stopPropagation()}
         className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded hover:bg-accent/50"
-        title="Перетащить папку"
+        title={t('folders.drag', { defaultValue: 'Drag folder' })}
       >
         <GripVertical size={12} />
       </div>
@@ -144,7 +148,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate">{folder.name}</span>
           {notesCount > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium rounded border bg-muted/50 text-muted-foreground border-border/40 min-w-[20px]">
               {notesCount}
             </span>
           )}
@@ -169,7 +173,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleEdit}>
             <Edit2 size={14} className="mr-2" />
-            Редактировать
+            {t('folders.edit', { defaultValue: 'Edit' })}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -177,7 +181,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
             className="text-destructive focus:text-destructive"
           >
             <Trash2 size={14} className="mr-2" />
-            Удалить
+            {t('folders.delete', { defaultValue: 'Delete' })}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

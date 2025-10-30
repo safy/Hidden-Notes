@@ -24,6 +24,7 @@ import {
 import { NoteListItem } from './NoteListItem';
 import { FolderList } from '@/components/Folder';
 import { generateNotePreview } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
   notes?: any[]; // Notes array from parent
@@ -64,6 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditFolder,
   searchQuery = '' 
 }) => {
+  const { t } = useTranslation();
   const [items, setItems] = useState(notes);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
 
@@ -175,8 +177,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               const oldIndex = sortedCurrentLevel.findIndex((f: any) => f.id === draggedFolderId);
               const newIndex = sortedCurrentLevel.findIndex((f: any) => f.id === targetFolderId);
               
-              console.log('Old index:', oldIndex, 'New index:', newIndex);
-              
+            console.log('Old index:', oldIndex, 'New index:', newIndex);
+            
               if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
                 // Используем arrayMove для правильного вычисления порядка
                 const reorderedFolders = arrayMove(sortedCurrentLevel, oldIndex, newIndex);
@@ -283,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto">
           {filteredNotes.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              {searchQuery ? 'Заметки не найдены' : 'Нет заметок'}
+              {searchQuery ? t('notes.notFound', { defaultValue: 'No notes found' }) : t('notes.empty', { defaultValue: 'No notes' })}
             </div>
           ) : (
             <SortableContext
@@ -317,10 +319,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="text-xs text-muted-foreground text-center">
             {searchQuery && (
               <div className="mb-1">
-                Найдено: {filteredNotes.length} из {items.length}
+                {t('notes.foundOf', { defaultValue: 'Found' })}: {filteredNotes.length} {t('common.of', { defaultValue: 'of' })} {items.length}
               </div>
             )}
-            {filteredNotes.length} {filteredNotes.length === 1 ? 'заметка' : 'заметок'}
+            {filteredNotes.length} {filteredNotes.length === 1 ? t('notes.one', { defaultValue: 'note' }) : t('notes.many', { defaultValue: 'notes' })}
           </div>
         </div>
       </div>
