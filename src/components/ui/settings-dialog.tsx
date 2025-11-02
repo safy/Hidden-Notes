@@ -48,7 +48,11 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
       await i18n.changeLanguage(lang);
       try {
         await chrome.storage.local.set({ language: lang });
-      } catch {}
+        // Принудительно обновляем все компоненты через событие storage
+        window.dispatchEvent(new Event('storage'));
+      } catch (error) {
+        console.error('Error saving language to storage:', error);
+      }
     }
   };
 

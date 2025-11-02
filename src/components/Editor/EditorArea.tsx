@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { TiptapEditor } from '@/components/TiptapEditor/TiptapEditor';
 import { Toolbar } from '@/components/TiptapEditor/Toolbar';
+import { TableToolbar } from '@/components/TiptapEditor/TableToolbar';
 import { Editor } from '@tiptap/react';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
   const [content, setContent] = useState(initialContent);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [isInTable, setIsInTable] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const savedIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -102,6 +104,43 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
     setEditor(editorInstance);
   };
 
+  // Отслеживаем позицию курсора для определения нахождения в таблице
+  useEffect(() => {
+    if (!editor) return;
+
+    const checkIfInTable = () => {
+      const { selection } = editor.state;
+      const { $from } = selection;
+      
+      // Проверяем родительские узлы на наличие таблицы
+      for (let i = $from.depth; i > 0; i--) {
+        const node = $from.node(i);
+        if (node.type.name === 'table') {
+          setIsInTable(true);
+          return;
+        }
+      }
+      
+      setIsInTable(false);
+    };
+
+    // Проверяем при инициализации
+    checkIfInTable();
+
+    // Подписываемся на обновления транзакций
+    const handleTransaction = () => {
+      checkIfInTable();
+    };
+
+    editor.on('transaction', handleTransaction);
+    editor.on('selectionUpdate', handleTransaction);
+
+    return () => {
+      editor.off('transaction', handleTransaction);
+      editor.off('selectionUpdate', handleTransaction);
+    };
+  }, [editor]);
+
   if (!hasNote) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -118,11 +157,15 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
 
   return (
     <div className={`flex-1 flex flex-col ${isInModal ? 'h-full' : 'h-full'}`}>
-      {/* Toolbar */}
-      <Toolbar 
-        editor={editor} 
-        onAddLink={() => setIsCreatingLink(true)}
-      />
+      {/* Conditional Toolbar - показываем TableToolbar когда курсор в таблице */}
+      {isInTable ? (
+        <TableToolbar editor={editor} />
+      ) : (
+        <Toolbar 
+          editor={editor} 
+          onAddLink={() => setIsCreatingLink(true)}
+        />
+      )}
 
       {/* Editor Content */}
       <div className={`flex-1 overflow-y-auto ${isInModal ? 'p-4' : 'p-6'}`}>

@@ -10,6 +10,7 @@ import { Editor } from '@tiptap/react';
 import { Eye, EyeOff, Image as ImageIcon, Type } from 'lucide-react';
 import { TextSelection } from '@tiptap/pm/state';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface HiddenContextMenuProps {
   editor: Editor | null;
@@ -25,6 +26,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
   const [currentHiddenSpan, setCurrentHiddenSpan] = useState<{ start: number; end: number } | null>(null);
   const [currentImagePos, setCurrentImagePos] = useState<number | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Поиск hidden text span
   const findHiddenTextAtPos = (pos: number): { start: number; end: number } | null => {
@@ -200,7 +202,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
           if (text) {
             navigator.clipboard.writeText(text).then(() => {
               toast({
-                title: "Текст скопирован",
+                title: t('toast.textCopied', { defaultValue: 'Text copied' }),
                 duration: 2000,
               });
             });
@@ -243,7 +245,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       }).run();
       
       toast({
-        title: hide ? "Изображение скрыто" : "Изображение раскрыто",
+        title: hide ? t('toast.imageHidden', { defaultValue: 'Image hidden' }) : t('toast.imageRevealed', { defaultValue: 'Image revealed' }),
         duration: 2000,
       });
     } else if (elementType === 'text') {
@@ -263,7 +265,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       }
       
       toast({
-        title: hide ? "Текст скрыт" : "Текст раскрыт",
+        title: hide ? t('toast.textHidden', { defaultValue: 'Text hidden' }) : t('toast.textRevealed', { defaultValue: 'Text revealed' }),
         duration: 2000,
       });
     }
@@ -286,12 +288,12 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
         {elementType === 'image' ? (
           <>
             <ImageIcon className="h-3 w-3" />
-            <span>Изображение</span>
+            <span>{t('editor.image', { defaultValue: 'Image' })}</span>
           </>
         ) : (
           <>
             <Type className="h-3 w-3" />
-            <span>Текст</span>
+            <span>{t('editor.text', { defaultValue: 'Text' })}</span>
           </>
         )}
       </div>
@@ -301,19 +303,19 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
         <button
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
           onClick={() => toggleHidden(false)}
-          title="Раскрыть"
+          title={t('editor.unhideText', { defaultValue: 'Show Text' })}
         >
           <EyeOff className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          <span className="text-sm text-gray-700 dark:text-gray-300">Раскрыть</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{t('editor.unhideText', { defaultValue: 'Show Text' })}</span>
         </button>
       ) : (
         <button
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
           onClick={() => toggleHidden(true)}
-          title="Скрыть"
+          title={t('editor.hideText', { defaultValue: 'Hide Text' })}
         >
           <Eye className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          <span className="text-sm text-gray-700 dark:text-gray-300">Скрыть</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{t('editor.hideText', { defaultValue: 'Hide Text' })}</span>
         </button>
       )}
     </div>

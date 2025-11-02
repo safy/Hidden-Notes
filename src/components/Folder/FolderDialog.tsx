@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Folder as FolderType, FOLDER_COLORS, FOLDER_ICONS } from '@/types/folder';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface FolderDialogProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
   onSubmit,
   folder,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(FOLDER_COLORS[0].value);
   const [icon, setIcon] = useState<string>(FOLDER_ICONS[0]);
@@ -85,22 +87,22 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
-              {isEditMode ? 'Редактировать папку' : 'Новая папка'}
+              {isEditMode ? t('folder.editFolder', { defaultValue: 'Edit Folder' }) : t('folder.newFolder', { defaultValue: 'New Folder' })}
             </DialogTitle>
             <DialogDescription>
               {isEditMode
-                ? 'Измените название, цвет или иконку папки'
-                : 'Создайте папку для организации заметок'}
+                ? t('folder.editFolderDesc', { defaultValue: 'Change folder name, color or icon' })
+                : t('folder.createFolderDesc', { defaultValue: 'Create a folder to organize notes' })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             {/* Название */}
             <div className="grid gap-2">
-              <Label htmlFor="folder-name">Название</Label>
+              <Label htmlFor="folder-name">{t('folder.folderName', { defaultValue: 'Name' })}</Label>
               <Input
                 id="folder-name"
-                placeholder="Моя папка"
+                placeholder={t('folder.folderNamePlaceholder', { defaultValue: 'My Folder' })}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -109,7 +111,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
 
             {/* Цвет */}
             <div className="grid gap-2">
-              <Label>Цвет</Label>
+              <Label>{t('folder.color', { defaultValue: 'Color' })}</Label>
               <div className="flex flex-wrap gap-2">
                 {FOLDER_COLORS.map((colorOption) => (
                   <button
@@ -130,7 +132,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
 
             {/* Иконка */}
             <div className="grid gap-2">
-              <Label>Иконка</Label>
+              <Label>{t('folder.icon', { defaultValue: 'Icon' })}</Label>
               <div className="flex flex-wrap gap-2">
                 {FOLDER_ICONS.map((iconOption) => (
                   <button
@@ -152,7 +154,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
 
             {/* Предпросмотр */}
             <div className="grid gap-2">
-              <Label>Предпросмотр</Label>
+              <Label>{t('folder.preview', { defaultValue: 'Preview' })}</Label>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-accent">
                 <div
                   className="w-10 h-10 rounded-md flex items-center justify-center text-white text-xl"
@@ -161,7 +163,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
                   {icon}
                 </div>
                 <span className="font-medium">
-                  {name || 'Название папки'}
+                  {name || t('folder.folderNamePreview', { defaultValue: 'Folder name' })}
                 </span>
               </div>
             </div>
@@ -169,10 +171,10 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Отмена
+              {t('folder.cancel', { defaultValue: 'Cancel' })}
             </Button>
             <Button type="submit" disabled={!name.trim()}>
-              {isEditMode ? 'Сохранить' : 'Создать'}
+              {isEditMode ? t('folder.save', { defaultValue: 'Save' }) : t('folder.create', { defaultValue: 'Create' })}
             </Button>
           </DialogFooter>
         </form>

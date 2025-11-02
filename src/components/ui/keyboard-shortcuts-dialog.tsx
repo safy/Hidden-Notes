@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { KEYBOARD_SHORTCUTS } from '@/lib/utils';
 import { Keyboard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface KeyboardShortcutsDialogProps {
   open: boolean;
@@ -25,16 +26,18 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
   open,
   onOpenChange,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="h-5 w-5" />
-            Горячие клавиши
+            {t('shortcuts.title', { defaultValue: 'Keyboard Shortcuts' })}
           </DialogTitle>
           <DialogDescription>
-            Все доступные горячие клавиши для редактора
+            {t('shortcuts.description', { defaultValue: 'All available keyboard shortcuts for the editor' })}
           </DialogDescription>
         </DialogHeader>
 

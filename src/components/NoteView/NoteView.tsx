@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EditorArea } from '@/components/Editor';
 import { ArrowLeft, Trash2, Save } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface NoteViewProps {
   noteId: string;
@@ -32,6 +33,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
   onTitleChange,
   onContentChange,
 }) => {
+  const { t } = useTranslation();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(noteTitle);
   
@@ -49,7 +51,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
 
   const handleTitleSave = () => {
     const trimmedTitle = editedTitle.trim();
-    const finalTitle = trimmedTitle || 'Без названия';
+    const finalTitle = trimmedTitle || t('note.untitled', { defaultValue: 'Untitled' });
     
     if (finalTitle !== noteTitle) {
       onTitleChange?.(finalTitle);
@@ -57,7 +59,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
     
     // Обновляем отображаемый title если было пусто
     if (!trimmedTitle) {
-      setEditedTitle('Без названия');
+      setEditedTitle(t('note.untitled', { defaultValue: 'Untitled' }));
     }
     
     setIsEditingTitle(false);
@@ -87,7 +89,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
               variant="ghost" 
               size="icon" 
               onClick={onBack}
-              title="Вернуться к списку заметок"
+              title={t('note.backToList', { defaultValue: 'Back to notes list' })}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -105,7 +107,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
               <h1 
                 className="text-lg font-semibold cursor-pointer hover:text-muted-foreground transition-colors"
                 onClick={handleTitleClick}
-                title="Кликните для редактирования названия"
+                title={t('note.editTitle', { defaultValue: 'Click to edit title' })}
               >
                 {noteTitle}
               </h1>
@@ -117,7 +119,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
               variant="ghost" 
               size="icon" 
               onClick={handleSave}
-              title="Сохранить заметку"
+              title={t('note.save', { defaultValue: 'Save note' })}
             >
               <Save className="h-4 w-4" />
             </Button>
@@ -126,7 +128,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
               variant="ghost" 
               size="icon" 
               onClick={handleDelete}
-              title="Удалить заметку"
+              title={t('note.deleteNote', { defaultValue: 'Delete note' })}
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4" />

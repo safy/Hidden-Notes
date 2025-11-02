@@ -285,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto">
           {filteredNotes.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              {searchQuery ? t('notes.notFound', { defaultValue: 'No notes found' }) : t('notes.empty', { defaultValue: 'No notes' })}
+              {searchQuery ? t('notes.notFound', { defaultValue: 'Notes not found' }) : t('notes.empty', { defaultValue: 'No notes' })}
             </div>
           ) : (
             <SortableContext

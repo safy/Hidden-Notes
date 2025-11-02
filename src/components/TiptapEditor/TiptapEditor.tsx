@@ -18,8 +18,8 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import { TableCellEnhanced } from './extensions/TableCellEnhanced';
+import { TableHeaderEnhanced } from './extensions/TableHeaderEnhanced';
 import { ImageResize } from './extensions/ImageResize';
 import { LinkBubbleMenu } from './LinkBubbleMenu';
 import { HiddenText } from '@/extensions/HiddenText';
@@ -99,8 +99,8 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
         resizable: true,
       }),
       TableRow,
-      TableHeader,
-      TableCell,
+      TableHeaderEnhanced,
+      TableCellEnhanced,
       HiddenText,
       // NOTE: DragHandle НЕ добавляется! DragHandleComponent его регистрирует автоматически
     ],

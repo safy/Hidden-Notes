@@ -471,22 +471,163 @@
   text-decoration: line-through !important;
 }
 
+/* Таблицы */
 .ProseMirror table {
-  border-collapse: collapse;
-  margin: 1em 0;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed;
   width: 100%;
+  margin: 1.25rem 0;
+  overflow: visible;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--background));
+  /* Внешние границы таблицы - все стороны */
+  border: 2px solid hsl(var(--border));
 }
 
 .ProseMirror table td,
 .ProseMirror table th {
+  min-width: 1em;
+  padding: 0.5rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  /* Границы ячеек - все стороны */
   border: 1px solid hsl(var(--border));
-  padding: 0.5em;
-  text-align: left;
+}
+
+/* Первая строка (заголовки) */
+.ProseMirror table tr:first-child th {
+  border-top: 2px solid hsl(var(--border));
+}
+
+/* Последняя строка */
+.ProseMirror table tr:last-child td,
+.ProseMirror table tr:last-child th {
+  border-bottom: 2px solid hsl(var(--border));
+}
+
+/* Первая колонка */
+.ProseMirror table th:first-child,
+.ProseMirror table td:first-child {
+  border-left: 2px solid hsl(var(--border));
+}
+
+/* Последняя колонка */
+.ProseMirror table th:last-child,
+.ProseMirror table td:last-child {
+  border-right: 2px solid hsl(var(--border));
 }
 
 .ProseMirror table th {
-  background-color: hsl(var(--muted));
   font-weight: 600;
+  text-align: left;
+  background-color: hsl(var(--muted));
+}
+
+/* Таблица должна быть relative для абсолютного позиционирования */
+.ProseMirror table {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Ручка для изменения ширины колонок - на всю высоту таблицы */
+.ProseMirror table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0; /* Растягиваем от верха до низа родительского элемента (таблицы) */
+  width: 6px; /* Активная область клика */
+  background-color: transparent;
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M12 5v14"/></svg>') 12 12, col-resize !important;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Визуальная линия при наведении - тонкая и синяя */
+.ProseMirror table .column-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.ProseMirror table .column-resize-handle:hover::after {
+  background-color: #3b82f6;
+}
+
+/* Курсор при активном изменении размера */
+.ProseMirror.resize-cursor {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M12 5v14"/></svg>') 12 12, col-resize !important;
+}
+
+.ProseMirror.resize-cursor * {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M12 5v14"/></svg>') 12 12, col-resize !important;
+}
+
+/* Курсор на границах ячеек */
+.ProseMirror table th,
+.ProseMirror table td {
+  cursor: text;
+  position: static !important; /* Убираем position чтобы handle мог выйти за пределы */
+  overflow: visible !important;
+}
+
+.ProseMirror table th:hover,
+.ProseMirror table td:hover {
+  cursor: text;
+}
+
+.ProseMirror table p {
+  margin: 0;
+}
+
+.ProseMirror table p + p {
+  margin-top: 0.5rem;
+}
+
+/* Маркеры для манипулирования таблицами */
+.table-handle-row,
+.table-handle-col {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.table-handle-row:hover,
+.table-handle-col:hover {
+  background-color: hsl(var(--accent));
+  opacity: 1 !important;
+}
+
+.table-extend-row-before,
+.table-extend-row-after,
+.table-extend-row-end,
+.table-extend-col-before,
+.table-extend-col-after,
+.table-extend-col-end {
+  transition: opacity 0.2s ease;
+}
+
+/* Выравнивание ячеек таблицы */
+.ProseMirror table td[align="left"],
+.ProseMirror table th[align="left"] {
+  text-align: left;
+}
+
+.ProseMirror table td[align="center"],
+.ProseMirror table th[align="center"] {
+  text-align: center;
+}
+
+.ProseMirror table td[align="right"],
+.ProseMirror table th[align="right"] {
+  text-align: right;
 }
 
 .ProseMirror blockquote {

@@ -19,6 +19,7 @@ import { useFolders } from '@/hooks/useFolders';
 import { Home } from 'lucide-react';
 import { FolderIcon } from './FolderIcon';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface MoveToFolderDialogProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
   noteTitle,
 }) => {
   const { folders } = useFolders();
+  const { t } = useTranslation();
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(
     currentFolderId || null
   );
@@ -54,11 +56,11 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[350px]">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-base">Переместить заметку</DialogTitle>
+          <DialogTitle className="text-base">{t('folder.moveNote', { defaultValue: 'Move Note' })}</DialogTitle>
           <DialogDescription className="text-sm">
             {noteTitle
-              ? `Выберите папку для заметки "${noteTitle}"`
-              : 'Выберите папку для заметки'}
+              ? t('folder.moveNoteToFolder', { defaultValue: `Select folder for note "${noteTitle}"`, title: noteTitle })
+              : t('folder.moveNoteDesc', { defaultValue: 'Select folder for note' })}
           </DialogDescription>
         </DialogHeader>
 
@@ -77,9 +79,9 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
               <Home size={16} className="text-muted-foreground" />
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-sm">Без папки</div>
+              <div className="font-medium text-sm">{t('folder.noFolder', { defaultValue: 'No Folder' })}</div>
               <div className="text-xs text-muted-foreground">
-                Корень
+                {t('folder.root', { defaultValue: 'Root' })}
               </div>
             </div>
           </button>
@@ -115,7 +117,7 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
                       <div className="font-medium text-sm">{folder.name}</div>
                       {currentFolderId === folder.id && (
                         <div className="text-xs text-muted-foreground">
-                          Текущая папка
+                          {t('folder.currentFolder', { defaultValue: 'Current folder' })}
                         </div>
                       )}
                     </div>
@@ -131,14 +133,14 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
 
           {folders.length === 0 && (
             <div className="text-center py-6 text-sm text-muted-foreground">
-              Нет доступных папок
+              {t('folder.noFoldersAvailable', { defaultValue: 'No folders available' })}
             </div>
           )}
         </div>
 
         <DialogFooter className="pt-2">
           <Button type="button" variant="outline" size="sm" onClick={handleClose}>
-            Отмена
+            {t('folder.cancel', { defaultValue: 'Cancel' })}
           </Button>
           <Button
             type="button"
@@ -146,7 +148,7 @@ export const MoveToFolderDialog: React.FC<MoveToFolderDialogProps> = ({
             onClick={handleMove}
             disabled={selectedFolderId === currentFolderId}
           >
-            Переместить
+            {t('folder.move', { defaultValue: 'Move' })}
           </Button>
         </DialogFooter>
       </DialogContent>

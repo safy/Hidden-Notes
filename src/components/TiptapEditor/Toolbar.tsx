@@ -33,13 +33,13 @@ import {
   AlignRight,
   AlignJustify,
   Link,
-  Image,
-  Table,
+  Image as ImageIcon,
   Undo,
   Redo,
   Highlighter,
   RotateCcw,
 } from 'lucide-react';
+import { TableTriggerButton } from './TableTriggerButton';
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -130,9 +130,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
     onAddLink?.();
   };
 
-  const addTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-  };
 
   const clearFormatting = () => {
     editor.chain().focus().clearNodes().unsetAllMarks().run();
@@ -382,16 +379,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
           onClick={addImage}
           title="Добавить изображение"
         >
-          <Image className="h-4 w-4" />
+          <ImageIcon className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={addTable}
-          title="Добавить таблицу"
-        >
-          <Table className="h-4 w-4" />
-        </Button>
+        <TableTriggerButton editor={editor} />
       </div>
       
       {/* Скрытый input для загрузки изображений */}

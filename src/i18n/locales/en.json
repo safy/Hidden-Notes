@@ -6,6 +6,7 @@
   "header": {
     "newNote": "New Note",
     "newFolder": "New Folder",
+    "createFolder": "Create folder",
     "search": "Search",
     "sort": "Sort",
     "archive": "Archive",
@@ -25,6 +26,39 @@
     "notes_2": "notes",
     "notes_5": "notes"
   },
+  "notes": {
+    "notFound": "Notes not found",
+    "empty": "No notes",
+    "foundOf": "Found",
+    "one": "note",
+    "many": "notes",
+    "reorder": "Drag to reorder",
+    "menu": "Note menu",
+    "color": "Note color",
+    "moveToFolder": "Move to folder",
+    "archive": "Archive",
+    "delete": "Delete"
+  },
+  "search": {
+    "placeholder": "Search notes...",
+    "clear": "Clear search",
+    "close": "Close search"
+  },
+  "common": {
+    "error": "Error",
+    "back": "Back",
+    "of": "of"
+  },
+  "loading": {
+    "notes": "Loading notes..."
+  },
+  "folders": {
+    "deleteConfirm": "Folder \"{{name}}\" contains {{count}} notes. Move them to root or delete with folder?\n\nOK - move to root\nCancel - delete",
+    "doubleConfirm": "Are you sure? All notes will be moved to trash!",
+    "root": "Root",
+    "emptyRoot": "No folders. Create the first one!",
+    "emptyNested": "No subfolders"
+  },
   "folder": {
     "create": "Create Folder",
     "edit": "Edit Folder",
@@ -43,7 +77,24 @@
     "moveToRoot": "Move to Root",
     "deleteAll": "Delete All",
     "dragToReorder": "Drag to reorder",
-    "shiftToNest": "Shift + drag to nest"
+    "shiftToNest": "Shift + drag to nest",
+    "editFolder": "Edit Folder",
+    "newFolder": "New Folder",
+    "editFolderDesc": "Change folder name, color or icon",
+    "createFolderDesc": "Create a folder to organize notes",
+    "folderName": "Name",
+    "folderNamePlaceholder": "My Folder",
+    "preview": "Preview",
+    "folderNamePreview": "Folder name",
+    "moveNote": "Move Note",
+    "moveNoteDesc": "Select folder for note",
+    "moveNoteToFolder": "Select folder for note \"{{title}}\"",
+    "noFolder": "No Folder",
+    "root": "Root",
+    "currentFolder": "Current folder",
+    "noFoldersAvailable": "No folders available",
+    "move": "Move",
+    "create": "Create"
   },
   "note": {
     "newNote": "New Note",
@@ -56,7 +107,11 @@
     "deleteConfirm": "Are you sure you want to delete this note?",
     "saved": "Saved",
     "saving": "Saving...",
-    "ago": "ago"
+    "ago": "ago",
+    "backToList": "Back to notes list",
+    "editTitle": "Click to edit title",
+    "save": "Save note",
+    "deleteNote": "Delete note"
   },
   "editor": {
     "placeholder": "Start typing...",
@@ -86,7 +141,32 @@
     "redo": "Redo",
     "hideText": "Hide Text",
     "unhideText": "Show Text",
-    "copyHidden": "Copy Hidden Text"
+    "copyHidden": "Copy Hidden Text",
+    "alignLeft": "Align left",
+    "alignCenter": "Align center",
+    "alignRight": "Align right",
+    "downloadImage": "Download image",
+    "deleteImage": "Delete image",
+    "text": "Text",
+    "selectTableSize": "Select table size"
+  },
+  "table": {
+    "addRowBefore": "Add row before",
+    "addRowAfter": "Add row after",
+    "deleteRow": "Delete row",
+    "addColumnBefore": "Add column before",
+    "addColumnAfter": "Add column after",
+    "deleteColumn": "Delete column",
+    "deleteTable": "Delete table",
+    "alignLeft": "Align left",
+    "alignCenter": "Align center",
+    "alignRight": "Align right",
+    "mergeCells": "Merge cells",
+    "splitCell": "Split cell",
+    "clearCell": "Clear cell",
+    "cellColor": "Color",
+    "cellAlignment": "Alignment",
+    "clearContents": "Clear contents"
   },
   "settings": {
     "title": "Settings",
@@ -102,7 +182,12 @@
     "about": "About",
     "version": "Version",
     "author": "Author",
-    "close": "Close"
+    "close": "Close",
+    "interface": "Interface",
+    "shortcuts": "Keyboard shortcuts",
+    "open": "Open",
+    "light": "Light",
+    "dark": "Dark"
   },
   "toast": {
     "noteCreated": "Note created",
@@ -115,10 +200,20 @@
     "folderRenamed": "Folder renamed",
     "folderMoved": "Folder moved",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "imageDownloaded": "Image downloaded",
+    "imageDownloadError": "Download error",
+    "imageDownloadFailed": "Failed to download image",
+    "imageDeleted": "Image deleted",
+    "textCopied": "Text copied",
+    "imageHidden": "Image hidden",
+    "imageRevealed": "Image revealed",
+    "textHidden": "Text hidden",
+    "textRevealed": "Text revealed"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
+    "description": "All available keyboard shortcuts for the editor",
     "general": "General",
     "newNote": "Create Note",
     "search": "Open Search",

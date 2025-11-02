@@ -11,6 +11,7 @@ import { BubbleMenu, Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { AlignLeft, AlignCenter, AlignRight, Download, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ImageFloatingMenuProps {
   editor: Editor;
@@ -18,6 +19,7 @@ interface ImageFloatingMenuProps {
 
 export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Логируем что компонент загружен
   useEffect(() => {
@@ -95,7 +97,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
         link.click();
         document.body.removeChild(link);
         toast({
-          title: 'Изображение скачано',
+          title: t('toast.imageDownloaded', { defaultValue: 'Image downloaded' }),
           duration: 2000,
         });
       } else {
@@ -111,15 +113,15 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         toast({
-          title: 'Изображение скачано',
+          title: t('toast.imageDownloaded', { defaultValue: 'Image downloaded' }),
           duration: 2000,
         });
       }
     } catch (error) {
       console.error('Ошибка скачивания изображения:', error);
       toast({
-        title: 'Ошибка скачивания',
-        description: 'Не удалось скачать изображение',
+        title: t('toast.imageDownloadError', { defaultValue: 'Download error' }),
+        description: t('toast.imageDownloadFailed', { defaultValue: 'Failed to download image' }),
         variant: 'destructive',
         duration: 3000,
       });
@@ -134,7 +136,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
     editor.view.dispatch(tr);
     
     toast({
-      title: 'Изображение удалено',
+      title: t('toast.imageDeleted', { defaultValue: 'Image deleted' }),
       duration: 2000,
     });
   };
@@ -200,7 +202,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
           size="icon"
           className="h-8 w-8"
           onClick={() => handleAlignChange('left')}
-          title="Выровнять по левому краю"
+          title={t('editor.alignLeft', { defaultValue: 'Align left' })}
         >
           <AlignLeft className="h-4 w-4" />
         </Button>
@@ -209,7 +211,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
           size="icon"
           className="h-8 w-8"
           onClick={() => handleAlignChange('center')}
-          title="Выровнять по центру"
+          title={t('editor.alignCenter', { defaultValue: 'Align center' })}
         >
           <AlignCenter className="h-4 w-4" />
         </Button>
@@ -218,7 +220,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
           size="icon"
           className="h-8 w-8"
           onClick={() => handleAlignChange('right')}
-          title="Выровнять по правому краю"
+          title={t('editor.alignRight', { defaultValue: 'Align right' })}
         >
           <AlignRight className="h-4 w-4" />
         </Button>
@@ -231,7 +233,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
           size="icon"
           className="h-8 w-8"
           onClick={handleDownload}
-          title="Скачать изображение"
+          title={t('editor.downloadImage', { defaultValue: 'Download image' })}
         >
           <Download className="h-4 w-4" />
         </Button>
@@ -242,7 +244,7 @@ export const ImageFloatingMenu: React.FC<ImageFloatingMenuProps> = ({ editor }) 
           size="icon"
           className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={handleDelete}
-          title="Удалить изображение"
+          title={t('editor.deleteImage', { defaultValue: 'Delete image' })}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
