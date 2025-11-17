@@ -44,9 +44,10 @@ import { TableTriggerButton } from './TableTriggerButton';
 interface ToolbarProps {
   editor: Editor | null;
   onAddLink?: () => void;
+  noteId?: string; // ID текущей заметки для сохранения изображений
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink, noteId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!editor) {
@@ -84,7 +85,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
     fileInputRef.current?.click();
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -96,27 +97,45 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor, onAddLink }) => {
       return;
     }
 
-    // Создаем FileReader для чтения файла
-    const reader = new FileReader();
+    // Импортируем утилиты для обработки изображений
+    const { processImageForStorage } = await import('@/lib/image-storage');
     
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
+    try {
+      // Используем noteId или генерируем временный
+      const currentNoteId = noteId || `temp-${Date.now()}`;
       
-      if (imageUrl) {
-        // Вставляем изображение в редактор
-        editor.chain().focus().setImage({ 
-          src: imageUrl, 
-          alt: imageFile.name || 'Загруженное изображение'
-        }).run();
+      // Обрабатываем изображение (сжатие + сохранение)
+      const { dataUrl, useIndexedDB, imageId } = await processImageForStorage(imageFile, currentNoteId);
+      
+      // Вставляем изображение в редактор
+      const imageAttrs: any = {
+        src: dataUrl,
+        alt: imageFile.name || 'Загруженное изображение',
+      };
+      
+      // Добавляем атрибуты для IndexedDB если нужно
+      if (useIndexedDB && imageId) {
+        imageAttrs['data-image-id'] = imageId;
+        imageAttrs['data-use-indexeddb'] = 'true';
+        imageAttrs['data-note-id'] = currentNoteId;
       }
-    };
-    
-    reader.onerror = () => {
-      console.error('Ошибка чтения файла изображения');
-    };
-    
-    // Читаем файл как data URL (base64)
-    reader.readAsDataURL(imageFile);
+      
+      editor.chain().focus().setImage(imageAttrs).run();
+    } catch (error) {
+      console.error('Ошибка обработки изображения:', error);
+      // Fallback: используем старый метод если сжатие не удалось
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        if (imageUrl) {
+          editor.chain().focus().setImage({ 
+            src: imageUrl, 
+            alt: imageFile.name || 'Загруженное изображение'
+          }).run();
+        }
+      };
+      reader.readAsDataURL(imageFile);
+    }
     
     // Сбрасываем значение input чтобы можно было выбрать тот же файл снова
     event.target.value = '';

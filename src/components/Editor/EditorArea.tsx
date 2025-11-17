@@ -18,6 +18,7 @@ interface EditorAreaProps {
   isInModal?: boolean; // Renamed from isInModal to better reflect its use in NoteView
   onContentChange?: (content: string) => void;
   initialContent?: string;
+  noteId?: string; // ID текущей заметки для сохранения изображений
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -27,6 +28,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
   isInModal = false, // Default to false, meaning it's not in a modal/NoteView context
   onContentChange,
   initialContent = '',
+  noteId,
 }) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [content, setContent] = useState(initialContent);
@@ -164,6 +166,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
         <Toolbar 
           editor={editor} 
           onAddLink={() => setIsCreatingLink(true)}
+          noteId={noteId}
         />
       )}
 
@@ -178,6 +181,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({
             className="min-h-[400px]"
             isCreatingLink={isCreatingLink}
             onLinkCreated={() => setIsCreatingLink(false)}
+            noteId={noteId}
           />
         </div>
       </div>

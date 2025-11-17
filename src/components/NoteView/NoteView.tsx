@@ -145,6 +145,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           isInModal={false}
           initialContent={noteContent}
           onContentChange={(content) => onContentChange?.(_noteId, content)}
+          noteId={_noteId}
         />
       </div>
     </div>

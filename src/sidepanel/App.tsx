@@ -48,7 +48,7 @@ console.info('HN build marker:', HN_BUILD_MARK);
 type AppView = 'list' | 'note';
 
 const App: React.FC = () => {
-  const { t } = useTranslation(); // TODO: Используется для переводов
+  const { t, i18n } = useTranslation(); // TODO: Используется для переводов
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentView, setCurrentView] = useState<AppView>('list');
   const [selectedNote, setSelectedNote] = useState<{id: string, title: string} | null>(null);
@@ -84,7 +84,7 @@ const App: React.FC = () => {
         if (!result.isValid) {
           toast({
             title: t('common.dataIssues', { defaultValue: 'Data issues detected' }),
-            description: t('common.dataIssuesDesc', { defaultValue: `Errors: ${result.errors.length}. Press Ctrl+Shift+R to restore.` }),
+            description: t('common.dataIssuesDesc', { count: result.errors.length, defaultValue: `Errors: ${result.errors.length}. Press Ctrl+Shift+R to restore.` }),
             duration: 10000,
           });
         } else if (result.warnings.length > 0) {
@@ -92,18 +92,29 @@ const App: React.FC = () => {
         }
       });
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [t, i18n.language]); // Зависимость от языка для корректного перевода
 
   // Обработка ошибок storage
   useEffect(() => {
     if (error) {
-      toast({
-        title: t('common.error', { defaultValue: 'Error' }),
-        description: error,
-        duration: 5000,
-      });
+      // Проверяем, является ли это ошибкой квоты хранилища
+      const isQuotaError = error.includes('quota') || error.includes('QUOTA_BYTES') || error.includes('kQuotaBytes');
+      
+      if (isQuotaError) {
+        toast({
+          title: t('common.quotaExceeded', { defaultValue: 'Storage quota exceeded' }),
+          description: t('common.quotaExceededDesc', { defaultValue: 'Extension storage is full (10 MB). Delete old notes or images to free up space.' }),
+          duration: 10000,
+        });
+      } else {
+        toast({
+          title: t('common.error', { defaultValue: 'Error' }),
+          description: error,
+          duration: 5000,
+        });
+      }
     }
-  }, [error, toast]);
+  }, [error, toast, t]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';

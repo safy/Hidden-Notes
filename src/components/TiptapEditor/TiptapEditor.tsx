@@ -36,6 +36,7 @@ interface TiptapEditorProps {
   className?: string;
   isCreatingLink?: boolean;
   onLinkCreated?: () => void;
+  noteId?: string; // ID текущей заметки для сохранения изображений
 }
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({
@@ -47,6 +48,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   className = '',
   isCreatingLink = false,
   onLinkCreated,
+  noteId,
 }) => {
   const editor = useEditor({
     extensions: [
@@ -204,7 +206,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       }
     };
 
-    const handleDrop = (event: DragEvent) => {
+    const handleDrop = async (event: DragEvent) => {
       event.preventDefault();
       editorElement.classList.remove('drag-over');
       
@@ -218,27 +220,45 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       
       if (!imageFile) return;
       
-      // Создаем FileReader для чтения файла
-      const reader = new FileReader();
+      // Импортируем утилиты для обработки изображений
+      const { processImageForStorage } = await import('@/lib/image-storage');
       
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
+      try {
+        // Используем noteId или генерируем временный
+        const currentNoteId = noteId || `temp-${Date.now()}`;
         
-        if (imageUrl) {
-          // Вставляем изображение
-          editor.chain().focus().setImage({ 
-            src: imageUrl, 
-            alt: imageFile.name || 'Вставленное изображение'
-          }).run();
+        // Обрабатываем изображение (сжатие + сохранение)
+        const { dataUrl, useIndexedDB, imageId } = await processImageForStorage(imageFile, currentNoteId);
+        
+        // Вставляем изображение в редактор
+        const imageAttrs: any = {
+          src: dataUrl,
+          alt: imageFile.name || 'Вставленное изображение',
+        };
+        
+        // Добавляем атрибуты для IndexedDB если нужно
+        if (useIndexedDB && imageId) {
+          imageAttrs['data-image-id'] = imageId;
+          imageAttrs['data-use-indexeddb'] = 'true';
+          imageAttrs['data-note-id'] = currentNoteId;
         }
-      };
-      
-      reader.onerror = () => {
-        console.error('Ошибка чтения файла изображения');
-      };
-      
-      // Читаем файл как data URL
-      reader.readAsDataURL(imageFile);
+        
+        editor.chain().focus().setImage(imageAttrs).run();
+      } catch (error) {
+        console.error('Ошибка обработки изображения:', error);
+        // Fallback: используем старый метод если сжатие не удалось
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imageUrl = e.target?.result as string;
+          if (imageUrl) {
+            editor.chain().focus().setImage({ 
+              src: imageUrl, 
+              alt: imageFile.name || 'Вставленное изображение'
+            }).run();
+          }
+        };
+        reader.readAsDataURL(imageFile);
+      }
     };
 
     // Добавляем обработчики событий
@@ -251,7 +271,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       editorElement.removeEventListener('dragleave', handleDragLeave);
       editorElement.removeEventListener('drop', handleDrop);
     };
-  }, [editor]);
+  }, [editor, noteId]);
 
   // Обновляем контент при изменении props
   useEffect(() => {

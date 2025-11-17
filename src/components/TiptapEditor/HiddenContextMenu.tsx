@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
-import { Eye, EyeOff, Image as ImageIcon, Type } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { TextSelection } from '@tiptap/pm/state';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -277,45 +277,43 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
 
   if (!showMenu) return null;
 
+  // Определяем текст кнопки в зависимости от типа элемента
+  const getButtonText = (hidden: boolean) => {
+    if (elementType === 'image') {
+      return hidden 
+        ? t('editor.unhideImage', { defaultValue: 'Show Image' })
+        : t('editor.hideImage', { defaultValue: 'Hide Image' });
+    } else {
+      return hidden 
+        ? t('editor.unhideText', { defaultValue: 'Show Text' })
+        : t('editor.hideText', { defaultValue: 'Hide Text' });
+    }
+  };
+
   return (
     <div
-      className="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 z-50 flex gap-2"
+      className="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 z-50"
       style={{ top: `${menuPos.y}px`, left: `${menuPos.x}px` }}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Индикатор типа элемента */}
-      <div className="flex items-center gap-1 px-2 text-xs text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600">
-        {elementType === 'image' ? (
-          <>
-            <ImageIcon className="h-3 w-3" />
-            <span>{t('editor.image', { defaultValue: 'Image' })}</span>
-          </>
-        ) : (
-          <>
-            <Type className="h-3 w-3" />
-            <span>{t('editor.text', { defaultValue: 'Text' })}</span>
-          </>
-        )}
-      </div>
-      
       {/* Кнопка действия */}
       {isHidden ? (
         <button
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
           onClick={() => toggleHidden(false)}
-          title={t('editor.unhideText', { defaultValue: 'Show Text' })}
+          title={getButtonText(true)}
         >
           <EyeOff className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          <span className="text-sm text-gray-700 dark:text-gray-300">{t('editor.unhideText', { defaultValue: 'Show Text' })}</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{getButtonText(true)}</span>
         </button>
       ) : (
         <button
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
           onClick={() => toggleHidden(true)}
-          title={t('editor.hideText', { defaultValue: 'Hide Text' })}
+          title={getButtonText(false)}
         >
           <Eye className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          <span className="text-sm text-gray-700 dark:text-gray-300">{t('editor.hideText', { defaultValue: 'Hide Text' })}</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{getButtonText(false)}</span>
         </button>
       )}
     </div>

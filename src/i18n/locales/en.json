@@ -47,7 +47,11 @@
   "common": {
     "error": "Error",
     "back": "Back",
-    "of": "of"
+    "of": "of",
+    "dataIssues": "Data issues detected",
+    "dataIssuesDesc": "Errors: {{count}}. Press Ctrl+Shift+R to restore.",
+    "quotaExceeded": "Storage quota exceeded",
+    "quotaExceededDesc": "Extension storage is full (10 MB). Delete old notes or images to free up space."
   },
   "loading": {
     "notes": "Loading notes..."
@@ -141,6 +145,8 @@
     "redo": "Redo",
     "hideText": "Hide Text",
     "unhideText": "Show Text",
+    "hideImage": "Hide Image",
+    "unhideImage": "Show Image",
     "copyHidden": "Copy Hidden Text",
     "alignLeft": "Align left",
     "alignCenter": "Align center",
