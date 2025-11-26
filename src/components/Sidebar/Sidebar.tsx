@@ -43,6 +43,8 @@ interface SidebarProps {
   onMoveFolderToFolder?: (folderId: string, targetFolderId: string | null) => void;
   onReorderFolders?: (folderId: string, newOrder: number) => void;
   onEditFolder?: (folder: any) => void;
+  onOpenArchive?: () => void;
+  onOpenTrash?: () => void;
   searchQuery?: string;
 }
 
@@ -63,6 +65,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveFolderToFolder,
   onReorderFolders: _onReorderFolders,
   onEditFolder,
+  onOpenArchive,
+  onOpenTrash,
   searchQuery = '' 
 }) => {
   const { t } = useTranslation();
