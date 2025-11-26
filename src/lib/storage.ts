@@ -178,7 +178,15 @@ async function migrateStorageSchema(schema: any): Promise<void> {
 export async function getAllNotes(): Promise<Note[]> {
   const data = await chrome.storage.local.get(STORAGE_KEY);
   const schema = data[STORAGE_KEY] as StorageSchema;
-  return schema?.notes || [];
+  const notes = schema?.notes || [];
+  
+  // Сортируем по order (если есть), затем по updatedAt
+  return notes.sort((a, b) => {
+    const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return b.updatedAt - a.updatedAt; // Новые сверху если order одинаковый
+  });
 }
 
 /**

@@ -311,8 +311,7 @@
     "success": "Sorted successfully",
     "successDesc": "Items have been sorted",
     "error": "Sort failed",
-    "errorDesc": "Failed to sort items",
-    "soon": "Sorting will be added in the next version"
+    "errorDesc": "Failed to sort items"
   }
 }
 
