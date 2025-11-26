@@ -953,3 +953,119 @@ export async function importNotes(jsonString: string): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Сортировать папки
+ */
+export async function sortFolders(
+  field: 'name' | 'createdAt' | 'updatedAt',
+  order: 'asc' | 'desc'
+): Promise<boolean> {
+  return storageLock.acquire(async () => {
+    try {
+      const data = await chrome.storage.local.get(STORAGE_KEY);
+      const schema = data[STORAGE_KEY] as StorageSchema;
+      
+      // Сортируем папки
+      schema.folders.sort((a, b) => {
+        let comparison = 0;
+        
+        if (field === 'name') {
+          comparison = a.name.localeCompare(b.name, 'ru');
+        } else {
+          comparison = a[field] - b[field];
+        }
+        
+        return order === 'asc' ? comparison : -comparison;
+      });
+      
+      // Обновляем order для каждой папки
+      schema.folders.forEach((folder, index) => {
+        folder.order = index;
+        folder.updatedAt = Date.now();
+      });
+      
+      await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+      
+      if (chrome.runtime.lastError) {
+        console.error('❌ Failed to sort folders:', chrome.runtime.lastError.message);
+        return false;
+      }
+      
+      console.log(`✅ Folders sorted by ${field} (${order})`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error sorting folders:', error);
+      return false;
+    }
+  });
+}
+
+/**
+ * Сортировать заметки
+ */
+export async function sortNotes(
+  field: 'title' | 'createdAt' | 'updatedAt',
+  order: 'asc' | 'desc'
+): Promise<boolean> {
+  return storageLock.acquire(async () => {
+    try {
+      const data = await chrome.storage.local.get(STORAGE_KEY);
+      const schema = data[STORAGE_KEY] as StorageSchema;
+      
+      // Сортируем заметки
+      schema.notes.sort((a, b) => {
+        let comparison = 0;
+        
+        if (field === 'title') {
+          comparison = a.title.localeCompare(b.title, 'ru');
+        } else {
+          comparison = a[field] - b[field];
+        }
+        
+        return order === 'asc' ? comparison : -comparison;
+      });
+      
+      // Обновляем order для каждой заметки
+      schema.notes.forEach((note, index) => {
+        if (!note.order) note.order = 0;
+        note.order = index;
+        note.updatedAt = Date.now();
+      });
+      
+      await chrome.storage.local.set({ [STORAGE_KEY]: schema });
+      
+      if (chrome.runtime.lastError) {
+        console.error('❌ Failed to sort notes:', chrome.runtime.lastError.message);
+        return false;
+      }
+      
+      console.log(`✅ Notes sorted by ${field} (${order})`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error sorting notes:', error);
+      return false;
+    }
+  });
+}
+
+/**
+ * Сортировать и папки и заметки
+ */
+export async function sortBoth(
+  field: 'name' | 'createdAt' | 'updatedAt',
+  order: 'asc' | 'desc'
+): Promise<boolean> {
+  try {
+    // Для заметок используем 'title' вместо 'name'
+    const noteField = field === 'name' ? 'title' : field;
+    
+    const foldersResult = await sortFolders(field, order);
+    const notesResult = await sortNotes(noteField as 'title' | 'createdAt' | 'updatedAt', order);
+    
+    return foldersResult && notesResult;
+  } catch (error) {
+    console.error('❌ Error sorting both:', error);
+    return false;
+  }
+}

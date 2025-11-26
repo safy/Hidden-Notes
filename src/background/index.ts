@@ -51,6 +51,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 async function checkStorageUsage() {
   try {
     const bytesInUse = await chrome.storage.local.getBytesInUse(null);
+    
+    // Проверяем наличие разрешения unlimitedStorage
+    const hasUnlimited = await new Promise<boolean>((resolve) => {
+      chrome.permissions.contains({ permissions: ['unlimitedStorage'] }, (result) => {
+        resolve(result);
+      });
+    });
+
+    if (hasUnlimited) {
+      console.log(`Storage usage: ${(bytesInUse / 1024 / 1024).toFixed(2)} MB (Unlimited storage active)`);
+      return;
+    }
+
     const maxBytes = chrome.storage.local.QUOTA_BYTES || 10485760; // 10MB
     const usagePercent = (bytesInUse / maxBytes) * 100;
 

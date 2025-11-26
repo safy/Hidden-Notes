@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Folder as FolderType } from '@/types/folder';
-import { MoreVertical, Trash2, Edit2, GripVertical } from 'lucide-react';
+import { MoreVertical, Trash2, Edit2, GripVertical, Archive } from 'lucide-react';
 import { FolderIcon } from './FolderIcon';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
@@ -28,6 +28,7 @@ interface FolderItemProps {
   onClick: (folderId: string) => void;
   onEdit: (folder: FolderType) => void;
   onDelete: (folderId: string) => void;
+  onArchive?: (folderId: string) => void;
   onToggleExpanded?: (folderId: string, isExpanded: boolean) => void;
   onDrop?: (noteId: string, folderId: string) => void;
   onMoveFolder?: (folderId: string, targetFolderId: string | null) => void;
@@ -42,6 +43,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   onClick,
   onEdit,
   onDelete,
+  onArchive,
   onToggleExpanded: _onToggleExpanded,
   onDrop: _onDrop,
   onMoveFolder: _onMoveFolder,
@@ -88,6 +90,11 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete(folder.id);
+  };
+
+  const handleArchive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onArchive?.(folder.id);
   };
 
   return (
@@ -175,6 +182,18 @@ export const FolderItem: React.FC<FolderItemProps> = ({
             <Edit2 size={14} className="mr-2" />
             {t('folders.edit', { defaultValue: 'Edit' })}
           </DropdownMenuItem>
+          {onArchive && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleArchive}>
+                <Archive size={14} className="mr-2" />
+                {folder.isArchived 
+                  ? t('folders.unarchive', { defaultValue: 'Unarchive' })
+                  : t('folders.archive', { defaultValue: 'Archive' })
+                }
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={handleDelete}

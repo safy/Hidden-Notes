@@ -10,6 +10,7 @@
     "search": "Search",
     "sort": "Sort",
     "archive": "Archive",
+    "trash": "Trash",
     "darkMode": "Dark Mode",
     "settings": "Settings",
     "help": "Help"
@@ -61,7 +62,11 @@
     "doubleConfirm": "Are you sure? All notes will be moved to trash!",
     "root": "Root",
     "emptyRoot": "No folders. Create the first one!",
-    "emptyNested": "No subfolders"
+    "emptyNested": "No subfolders",
+    "edit": "Edit",
+    "delete": "Delete",
+    "archive": "Archive",
+    "unarchive": "Unarchive"
   },
   "folder": {
     "create": "Create Folder",
@@ -232,6 +237,82 @@
     "nextNote": "Next Note",
     "prevNote": "Previous Note",
     "close": "Close"
+  },
+  "archive": {
+    "title": "Archive",
+    "all": "All",
+    "notes": "Notes",
+    "folders": "Folders",
+    "empty": "Archive is empty",
+    "restore": "Restore",
+    "delete": "Delete",
+    "archivedAt": "Archived",
+    "items": "items"
+  },
+  "trash": {
+    "title": "Trash",
+    "all": "All",
+    "notes": "Notes",
+    "folders": "Folders",
+    "empty": "Trash is empty",
+    "restore": "Restore",
+    "deletePermanently": "Delete permanently",
+    "deletedAt": "Deleted",
+    "daysLeft": "{{days}} days until permanent deletion",
+    "warning": "Some items will be permanently deleted in {{days}} days",
+    "items": "items",
+    "noteRestored": "Note restored",
+    "noteRestoredDesc": "Note has been restored from trash",
+    "folderRestored": "Folder restored",
+    "folderRestoredDesc": "Folder has been restored from trash"
+  },
+  "common": {
+    "error": "Error",
+    "back": "Back",
+    "of": "of",
+    "loading": "Loading...",
+    "dataIssues": "Data issues detected",
+    "dataIssuesDesc": "Errors: {{count}}. Press Ctrl+Shift+R to restore.",
+    "quotaExceeded": "Storage quota exceeded",
+    "quotaExceededDesc": "Extension storage is full (10 MB). Delete old notes or images to free up space."
+  },
+  "notes": {
+    "notFound": "Notes not found",
+    "empty": "No notes",
+    "foundOf": "Found",
+    "one": "note",
+    "many": "notes",
+    "reorder": "Drag to reorder",
+    "menu": "Note menu",
+    "color": "Note color",
+    "moveToFolder": "Move to folder",
+    "archive": "Archive",
+    "delete": "Delete",
+    "untitled": "Untitled"
+  },
+  "sort": {
+    "title": "Sort",
+    "description": "Choose how to sort folders and notes",
+    "target": "What to sort",
+    "both": "Folders and Notes",
+    "foldersOnly": "Folders only",
+    "notesOnly": "Notes only",
+    "field": "Sort by",
+    "byName": "Name",
+    "byCreated": "Date created",
+    "byUpdated": "Date modified",
+    "order": "Order",
+    "ascending": "A → Z",
+    "descending": "Z → A",
+    "oldestFirst": "Oldest first",
+    "newestFirst": "Newest first",
+    "reset": "Reset",
+    "apply": "Apply",
+    "success": "Sorted successfully",
+    "successDesc": "Items have been sorted",
+    "error": "Sort failed",
+    "errorDesc": "Failed to sort items",
+    "soon": "Sorting will be added in the next version"
   }
 }
 

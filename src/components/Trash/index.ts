@@ -1,0 +1,3 @@
+export { TrashView } from './TrashView';
+
+

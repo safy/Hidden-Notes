@@ -46,6 +46,8 @@ export const FolderList: React.FC<FolderListProps> = ({
     deleteExistingFolder,
     updateExistingFolder,
     getFolderNotesCount,
+    archiveFolder,
+    unarchiveFolder,
   } = useFolders();
 
   const [notesCountMap, setNotesCountMap] = useState<Record<string, number>>({});
@@ -99,6 +101,17 @@ export const FolderList: React.FC<FolderListProps> = ({
 
   const handleToggleExpanded = async (folderId: string, isExpanded: boolean) => {
     await updateExistingFolder(folderId, { isExpanded });
+  };
+
+  const handleArchiveFolder = async (folderId: string) => {
+    const folder = folders.find(f => f.id === folderId);
+    if (!folder) return;
+    
+    if (folder.isArchived) {
+      await unarchiveFolder(folderId);
+    } else {
+      await archiveFolder(folderId);
+    }
   };
 
   // Получить полный путь папки (включая вложенные)
@@ -183,8 +196,10 @@ export const FolderList: React.FC<FolderListProps> = ({
 
       {/* Список папок - показываем папки текущего уровня */}
       {(() => {
-        // Фильтруем папки по текущему уровню
-        const currentLevelFolders = folders.filter(folder => folder.parentId === currentFolderId);
+        // Фильтруем папки по текущему уровню и исключаем архивные
+        const currentLevelFolders = folders.filter(
+          folder => folder.parentId === currentFolderId && !folder.isArchived
+        );
         
         return (
           <>
@@ -206,6 +221,7 @@ export const FolderList: React.FC<FolderListProps> = ({
                   onClick={onFolderSelect}
                   onEdit={onEditFolder}
                   onDelete={handleDeleteFolder}
+                  onArchive={handleArchiveFolder}
                   onToggleExpanded={handleToggleExpanded}
                   onDrop={onDrop}
                   onMoveFolder={onMoveFolder}

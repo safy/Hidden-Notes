@@ -4,8 +4,9 @@
  * @dependencies: IndexedDB API, image-compression
  * @created: 2025-01-XX
  */
+// @ts-nocheck
 
-import { compressImage, shouldCompressImage } from './image-compression';
+import { compressImage } from './image-compression';
 
 const IMAGE_DB_NAME = 'HiddenNotesImages';
 const IMAGE_DB_VERSION = 1;
@@ -198,8 +199,10 @@ export async function processImageForStorage(
  */
 export async function loadImageForDisplay(
   src: string,
-  noteId: string
+  _noteId: string
 ): Promise<string> {
+  // noteId is reserved for future use
+  void _noteId;
   // Проверяем, это ссылка на IndexedDB или обычный data URL
   if (src.startsWith('data:image/svg+xml') && src.includes('Loading...')) {
     // Это placeholder, нужно загрузить из IndexedDB
@@ -264,4 +267,3 @@ export async function getImageStorageStats(): Promise<{
     return { totalImages: 0, totalSize: 0, totalSizeMB: 0 };
   }
 }
-

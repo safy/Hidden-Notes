@@ -18,6 +18,10 @@ export interface Folder {
   order: number;           // порядок отображения
   createdAt: number;
   updatedAt: number;
+  /** Папка в архиве (скрыта из основного списка) */
+  isArchived?: boolean;
+  /** Timestamp архивирования */
+  archivedAt?: number;
 }
 
 /**

@@ -7,7 +7,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Note } from '@/types/note';
-import { getAllNotes, createNote, updateNote, deleteNote, initializeStorage } from '@/lib/storage';
+import { getAllNotes, createNote, updateNote, deleteNote, initializeStorage, restoreNote } from '@/lib/storage';
+import { restoreFromTrash, listTrashedNotes } from '@/lib/data-protection';
 import { htmlToText } from '@/lib/utils';
 
 export function useNotes() {
@@ -135,6 +136,51 @@ export function useNotes() {
     }
   }, []);
 
+  // Восстановить заметку из корзины
+  const restoreNoteFromTrash = useCallback(async (noteId: string): Promise<boolean> => {
+    try {
+      setError(null);
+      const restoredNote = await restoreFromTrash(noteId);
+      
+      if (restoredNote) {
+        // Восстанавливаем заметку в storage используя storageLock
+        const success = await restoreNote(restoredNote);
+        if (success) {
+          await refreshNotes();
+        }
+        return success;
+      }
+      return false;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore note from trash');
+      console.error('❌ Error restoring note from trash:', err);
+      return false;
+    }
+  }, [refreshNotes]);
+
+  // Окончательно удалить заметку из корзины
+  const permanentlyDeleteNote = useCallback(async (noteId: string): Promise<boolean> => {
+    try {
+      setError(null);
+      const trashedNotes = await listTrashedNotes();
+      const noteToDelete = trashedNotes.find(n => n.id === noteId);
+      
+      if (!noteToDelete) return false;
+      
+      // Удаляем из корзины
+      const deletedData = await chrome.storage.local.get('hidden_notes_deleted');
+      const deletedNotes = deletedData.hidden_notes_deleted || [];
+      const filteredNotes = deletedNotes.filter((n: any) => n.id !== noteId);
+      await chrome.storage.local.set({ hidden_notes_deleted: filteredNotes });
+      
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to permanently delete note');
+      console.error('❌ Error permanently deleting note:', err);
+      return false;
+    }
+  }, []);
+
   return {
     notes,
     isLoading,
@@ -145,5 +191,7 @@ export function useNotes() {
     searchNotes,
     getNoteById,
     refreshNotes,
+    restoreNoteFromTrash,
+    permanentlyDeleteNote,
   };
 }

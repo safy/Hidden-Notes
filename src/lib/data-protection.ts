@@ -6,10 +6,12 @@
  */
 
 import { Note, StorageSchema } from '@/types/note';
+import { Folder } from '@/types/folder';
 import { syncToIndexedDB, checkAndRestoreFromIndexedDB, initExternalBackups } from './external-backup';
 
 const BACKUP_KEY = 'hidden_notes_backup';
 const DELETED_NOTES_KEY = 'hidden_notes_deleted';
+const DELETED_FOLDERS_KEY = 'hidden_notes_deleted_folders';
 const VERSION_HISTORY_KEY = 'hidden_notes_versions';
 
 /**
@@ -40,8 +42,8 @@ export async function createAutoBackup(): Promise<void> {
     // Добавляем новый бэкап
     backups.push(backup);
     
-    // Храним только последние 10 бэкапов (защита от переполнения)
-    const recentBackups = backups.slice(-10);
+    // Храним только последние 3 бэкапа (защита от переполнения)
+    const recentBackups = backups.slice(-3);
     
     await chrome.storage.local.set({ [BACKUP_KEY]: recentBackups });
     
@@ -187,6 +189,90 @@ export async function listTrashedNotes(): Promise<Array<Note & {
       }));
   } catch (error) {
     console.error('❌ Failed to list trashed notes:', error);
+    return [];
+  }
+}
+
+/**
+ * Уровень 3: Корзина удаленных папок (soft delete)
+ * Папки хранятся 30 дней перед окончательным удалением
+ * При удалении папки в корзину перемещаются все заметки внутри
+ */
+export async function moveFolderToTrash(folder: Folder): Promise<void> {
+  try {
+    const deletedData = await chrome.storage.local.get(DELETED_FOLDERS_KEY);
+    const deletedFolders = deletedData[DELETED_FOLDERS_KEY] || [];
+    
+    // Добавляем метаданные удаления
+    const trashedFolder = {
+      ...folder,
+      deletedAt: Date.now(),
+      canRestoreUntil: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 дней
+    };
+    
+    deletedFolders.push(trashedFolder);
+    
+    // Очищаем старые удаленные папки (> 30 дней)
+    const now = Date.now();
+    const validDeleted = deletedFolders.filter((f: any) => f.canRestoreUntil > now);
+    
+    await chrome.storage.local.set({ [DELETED_FOLDERS_KEY]: validDeleted });
+    
+    console.log(`🗑️ Folder moved to trash: "${folder.name}"`);
+  } catch (error) {
+    console.error('❌ Failed to move folder to trash:', error);
+  }
+}
+
+/**
+ * Восстановить папку из корзины
+ */
+export async function restoreFolderFromTrash(folderId: string): Promise<Folder | null> {
+  try {
+    const deletedData = await chrome.storage.local.get(DELETED_FOLDERS_KEY);
+    const deletedFolders = deletedData[DELETED_FOLDERS_KEY] || [];
+    
+    const folderIndex = deletedFolders.findIndex((f: any) => f.id === folderId);
+    if (folderIndex === -1) return null;
+    
+    const restoredFolder = deletedFolders[folderIndex];
+    
+    // Удаляем из корзины
+    deletedFolders.splice(folderIndex, 1);
+    await chrome.storage.local.set({ [DELETED_FOLDERS_KEY]: deletedFolders });
+    
+    // Очищаем метаданные удаления
+    const { deletedAt, canRestoreUntil, ...cleanFolder } = restoredFolder;
+    
+    console.log(`♻️ Folder restored from trash: "${cleanFolder.name}"`);
+    return cleanFolder as Folder;
+  } catch (error) {
+    console.error('❌ Failed to restore folder from trash:', error);
+    return null;
+  }
+}
+
+/**
+ * Получить список удаленных папок
+ */
+export async function listTrashedFolders(): Promise<Array<Folder & {
+  deletedAt: number;
+  canRestoreUntil: number;
+  daysUntilPermanentDelete: number;
+}>> {
+  try {
+    const deletedData = await chrome.storage.local.get(DELETED_FOLDERS_KEY);
+    const deletedFolders = deletedData[DELETED_FOLDERS_KEY] || [];
+    
+    const now = Date.now();
+    return deletedFolders
+      .filter((f: any) => f.canRestoreUntil > now)
+      .map((f: any) => ({
+        ...f,
+        daysUntilPermanentDelete: Math.ceil((f.canRestoreUntil - now) / (24 * 60 * 60 * 1000)),
+      }));
+  } catch (error) {
+    console.error('❌ Failed to list trashed folders:', error);
     return [];
   }
 }
@@ -436,6 +522,50 @@ export async function restoreFromEmergencyBackup(): Promise<boolean> {
   } catch (error) {
     console.error('❌ Emergency restore failed:', error);
     return false;
+  }
+}
+
+/**
+ * Принудительная очистка старых бэкапов для освобождения места
+ */
+export async function cleanupBackups(): Promise<void> {
+  try {
+    const bytesBefore = await chrome.storage.local.getBytesInUse(null);
+    
+    const backupData = await chrome.storage.local.get(BACKUP_KEY);
+    const backups = backupData[BACKUP_KEY] || [];
+    
+    if (backups.length > 0) {
+      // Удаляем ВСЕ бэкапы для максимального освобождения места
+      await chrome.storage.local.remove(BACKUP_KEY);
+      console.log(`🧹 Removed ${backups.length} backups to free space`);
+    }
+    
+    // Также очищаем историю версий если она слишком большая
+    const versionData = await chrome.storage.local.get(VERSION_HISTORY_KEY);
+    const versions = versionData[VERSION_HISTORY_KEY];
+    if (versions && Object.keys(versions).length > 0) {
+       // Очищаем версии, оставляем только пустой объект или минимальный набор
+       // Для экономии места при критической ситуации удаляем всю историю версий
+       await chrome.storage.local.remove(VERSION_HISTORY_KEY);
+       console.log('🧹 Removed version history to free space');
+    }
+
+    // Очищаем корзину
+    try {
+      await chrome.storage.local.remove([DELETED_NOTES_KEY, DELETED_FOLDERS_KEY]);
+      console.log('🧹 Cleared trash to free space');
+    } catch (trashError) {
+      // Игнорируем ошибки очистки корзины (может быть уже пуста)
+      console.log('⚠️ Could not clear trash (may be empty)');
+    }
+    
+    const bytesAfter = await chrome.storage.local.getBytesInUse(null);
+    const freed = bytesBefore - bytesAfter;
+    console.log(`✅ Cleanup freed ${freed} bytes (${(freed / 1024).toFixed(2)} KB)`);
+    
+  } catch (error) {
+    console.error('❌ Failed to cleanup backups:', error);
   }
 }
 
