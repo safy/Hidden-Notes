@@ -1,6 +1,6 @@
 /**
  * @file: App.tsx
- * @description: Главный компонент приложения Hidden Notes
+ * @description: Р“Р»Р°РІРЅС‹Р№ РєРѕРјРїРѕРЅРµРЅС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ Hidden Notes
  * @dependencies: React, shadcn/ui components, useNotes hook
  * @created: 2025-10-15
  */
@@ -17,59 +17,61 @@ import { useFolders } from '@/hooks/useFolders';
 import { useHiddenTextReveal } from '@/hooks/useHiddenTextReveal';
 import { initDevtoolsHelper } from '@/lib/devtools-helpers';
 import { initDataProtection, verifyDataIntegrity, listBackups, restoreFromBackup } from '@/lib/data-protection';
-import { Settings, Plus, Search, ArrowUpDown, Archive, FolderPlus } from 'lucide-react';
+import { Settings, Plus, Search, ArrowUpDown, Archive, FolderPlus, Trash2 } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { NoteView } from '@/components/NoteView';
 import { SearchDropdown } from '@/components/Search';
-import { FolderCreateMenu, MoveToFolderDialog, FolderEditMenu } from '@/components/Folder';
-import { SortDialog, SortOptions } from '@/components/Sort';
 import { ArchiveView } from '@/components/Archive';
 import { TrashView } from '@/components/Trash';
+import { FolderCreateMenu, MoveToFolderDialog, FolderEditMenu } from '@/components/Folder';
+import { SortDialog, SortOptions } from '@/components/Sort';
 import { moveNoteToFolder, toggleNoteArchive, moveFolderToFolder, updateFolder, sortFolders, sortNotes, sortBoth } from '@/lib/storage';
-import '@/i18n'; // Инициализация i18n
+import '@/i18n'; // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ i18n
 
-// Рантайм-диагностика источника сборки
+// Р Р°РЅС‚Р°Р№Рј-РґРёР°РіРЅРѕСЃС‚РёРєР° РёСЃС‚РѕС‡РЅРёРєР° СЃР±РѕСЂРєРё
 if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
-  // Путь к загруженному manifest.json у текущего экземпляра
-  // Поможет проверить, что поднята именно папка dist, а не старый crx
-  // Пример: file:///G:/Hidden%20Notes/dist/manifest.json
-  // Также выведем список основных ассетов, видимых браузером
-  // Эти логи видны в Console side panel
+  // РџСѓС‚СЊ Рє Р·Р°РіСЂСѓР¶РµРЅРЅРѕРјСѓ manifest.json Сѓ С‚РµРєСѓС‰РµРіРѕ СЌРєР·РµРјРїР»СЏСЂР°
+  // РџРѕРјРѕР¶РµС‚ РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ РїРѕРґРЅСЏС‚Р° РёРјРµРЅРЅРѕ РїР°РїРєР° dist, Р° РЅРµ СЃС‚Р°СЂС‹Р№ crx
+  // РџСЂРёРјРµСЂ: file:///G:/Hidden%20Notes/dist/manifest.json
+  // РўР°РєР¶Рµ РІС‹РІРµРґРµРј СЃРїРёСЃРѕРє РѕСЃРЅРѕРІРЅС‹С… Р°СЃСЃРµС‚РѕРІ, РІРёРґРёРјС‹С… Р±СЂР°СѓР·РµСЂРѕРј
+  // Р­С‚Рё Р»РѕРіРё РІРёРґРЅС‹ РІ Console side panel
   try {
     // eslint-disable-next-line no-console
     console.info('HN runtime manifest URL:', chrome.runtime.getURL('manifest.json'));
-  } catch {}
+  } catch { }
 }
 
-// Проставим маркер сборки (хеш основного бандла из dist)
-// Этот импорт отсутствует в рантайме, поэтому используем инлайновую константу
-// Обновляется при каждой сборке через изменение комментария ниже.
-const HN_BUILD_MARK = 'mark-2025-11-26-sort-v6'; // <- имя/маркер билда для проверки обновления
+// РџСЂРѕСЃС‚Р°РІРёРј РјР°СЂРєРµСЂ СЃР±РѕСЂРєРё (С…РµС€ РѕСЃРЅРѕРІРЅРѕРіРѕ Р±Р°РЅРґР»Р° РёР· dist)
+// Р­С‚РѕС‚ РёРјРїРѕСЂС‚ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РІ СЂР°РЅС‚Р°Р№РјРµ, РїРѕСЌС‚РѕРјСѓ РёСЃРїРѕР»СЊР·СѓРµРј РёРЅР»Р°Р№РЅРѕРІСѓСЋ РєРѕРЅСЃС‚Р°РЅС‚Сѓ
+// РћР±РЅРѕРІР»СЏРµС‚СЃСЏ РїСЂРё РєР°Р¶РґРѕР№ СЃР±РѕСЂРєРµ С‡РµСЂРµР· РёР·РјРµРЅРµРЅРёРµ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ РЅРёР¶Рµ.
+const HN_BUILD_MARK = 'mark-2025-11-26-sort-v4'; // <- РёРјСЏ/РјР°СЂРєРµСЂ Р±РёР»РґР° РґР»СЏ РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёСЏ
 // eslint-disable-next-line no-console
 console.info('HN build marker:', HN_BUILD_MARK);
 
 type AppView = 'list' | 'note';
+type SidebarView = 'notes' | 'archive' | 'trash';
 
 const App: React.FC = () => {
-  const { t, i18n } = useTranslation(); // TODO: Используется для переводов
+  const { t, i18n } = useTranslation(); // TODO: РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РїРµСЂРµРІРѕРґРѕРІ
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentView, setCurrentView] = useState<AppView>('list');
-  const [selectedNote, setSelectedNote] = useState<{id: string, title: string} | null>(null);
+  const [sidebarView, setSidebarView] = useState<SidebarView>('notes');
+  const [selectedNote, setSelectedNote] = useState<{ id: string, title: string } | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  
+
   // Dialogs state
   const [isFolderCreateMenuOpen, setIsFolderCreateMenuOpen] = useState(false);
   const [isMoveToFolderDialogOpen, setIsMoveToFolderDialogOpen] = useState(false);
   const [isFolderEditDialogOpen, setIsFolderEditDialogOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSortDialogOpen, setIsSortDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [movingNoteId, setMovingNoteId] = useState<string | null>(null);
   const [editingFolder, setEditingFolder] = useState<any>(null);
-  
-  // Использование useNotes и useFolders hooks
+
+  // РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ useNotes Рё useFolders hooks
   const { notes, isLoading, error, addNote, updateNoteContent, removeNote, getNoteById, refreshNotes } = useNotes();
   const { folders, createNewFolder, reorderFoldersHandler, refreshFolders } = useFolders();
   const { toast } = useToast();
@@ -77,13 +79,13 @@ const App: React.FC = () => {
   // Enable Alt+hover reveal for hidden text
   useHiddenTextReveal();
 
-  // ?? Инициализировать DevTools Helper и систему защиты данных
+  // рџ”§ РРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ DevTools Helper Рё СЃРёСЃС‚РµРјСѓ Р·Р°С‰РёС‚С‹ РґР°РЅРЅС‹С…
   useEffect(() => {
     initDevtoolsHelper();
-    
-    // Инициализируем защиту данных (async)
+
+    // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј Р·Р°С‰РёС‚Сѓ РґР°РЅРЅС‹С… (async)
     initDataProtection().then(() => {
-      // Проверяем целостность данных при запуске
+      // РџСЂРѕРІРµСЂСЏРµРј С†РµР»РѕСЃС‚РЅРѕСЃС‚СЊ РґР°РЅРЅС‹С… РїСЂРё Р·Р°РїСѓСЃРєРµ
       verifyDataIntegrity().then(result => {
         if (!result.isValid) {
           toast({
@@ -96,14 +98,14 @@ const App: React.FC = () => {
         }
       });
     });
-  }, [t, i18n.language]); // Зависимость от языка для корректного перевода
+  }, [t, i18n.language]); // Р—Р°РІРёСЃРёРјРѕСЃС‚СЊ РѕС‚ СЏР·С‹РєР° РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕРіРѕ РїРµСЂРµРІРѕРґР°
 
-  // Обработка ошибок storage
+  // РћР±СЂР°Р±РѕС‚РєР° РѕС€РёР±РѕРє storage
   useEffect(() => {
     if (error) {
-      // Проверяем, является ли это ошибкой квоты хранилища
+      // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЌС‚Рѕ РѕС€РёР±РєРѕР№ РєРІРѕС‚С‹ С…СЂР°РЅРёР»РёС‰Р°
       const isQuotaError = error.includes('quota') || error.includes('QUOTA_BYTES') || error.includes('kQuotaBytes');
-      
+
       if (isQuotaError) {
         toast({
           title: t('common.quotaExceeded', { defaultValue: 'Storage quota exceeded' }),
@@ -124,7 +126,7 @@ const App: React.FC = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark');
-    
+
     toast({
       title: t('toast.themeChanged.title', { defaultValue: 'Theme changed' }),
       description: t('toast.themeChanged.desc', { defaultValue: `Switched to ${newTheme === 'dark' ? 'dark' : 'light'} theme` }),
@@ -243,11 +245,11 @@ const App: React.FC = () => {
     try {
       await updateNoteContent(noteId, { color });
     } catch (error) {
-    toast({
+      toast({
         title: t('error.title', { defaultValue: 'Error' }),
         description: t('error.applyColor', { defaultValue: 'Failed to apply color' }),
-      duration: 3000,
-    });
+        duration: 3000,
+      });
     }
   };
 
@@ -260,9 +262,9 @@ const App: React.FC = () => {
       name: data.name,
       color: data.color,
       icon: data.icon,
-      parentId: currentFolderId, // Создаем папку в текущей папке
+      parentId: currentFolderId, // РЎРѕР·РґР°РµРј РїР°РїРєСѓ РІ С‚РµРєСѓС‰РµР№ РїР°РїРєРµ
     });
-    
+
     if (newFolder) {
       toast({
         title: t('folder.created.title', { defaultValue: 'Folder created' }),
@@ -270,7 +272,7 @@ const App: React.FC = () => {
         duration: 3000,
       });
     }
-    
+
     setIsFolderCreateMenuOpen(false);
   };
 
@@ -286,14 +288,14 @@ const App: React.FC = () => {
 
   const handleFolderEditSubmit = async (data: { name: string; color: string; icon?: string }) => {
     if (!editingFolder) return;
-    
+
     try {
       const updatedFolder = await updateFolder(editingFolder.id, {
         name: data.name,
         color: data.color,
         icon: data.icon,
       });
-      
+
       if (updatedFolder) {
         toast({
           title: t('folder.updated.title', { defaultValue: 'Folder updated' }),
@@ -315,30 +317,30 @@ const App: React.FC = () => {
         duration: 3000,
       });
     }
-    
+
     setIsFolderEditDialogOpen(false);
     setEditingFolder(null);
   };
 
   const handleMoveToFolderSubmit = async (folderId: string | null) => {
     if (!movingNoteId) return;
-    
+
     const note = getNoteById(movingNoteId);
     if (!note) return;
-    
+
     const success = await moveNoteToFolder(movingNoteId, folderId);
-    
+
     if (success) {
-      // Обновляем список заметок
+      // РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє Р·Р°РјРµС‚РѕРє
       await refreshNotes();
-      
+
       toast({
         title: t('note.moved.title', { defaultValue: 'Note moved' }),
         description: t('note.moved.desc', { defaultValue: 'Note has been moved' }),
         duration: 3000,
       });
     }
-    
+
     setIsMoveToFolderDialogOpen(false);
     setMovingNoteId(null);
   };
@@ -349,20 +351,20 @@ const App: React.FC = () => {
       console.error('Note not found:', noteId);
       return;
     }
-    
+
     console.log('Moving note:', note.title, 'to folder:', folderId);
     console.log('Current folder:', currentFolderId);
-    
+
     const success = await moveNoteToFolder(noteId, folderId);
-    
+
     if (success) {
       console.log('Note moved successfully, refreshing notes...');
-      
-      // Обновляем список заметок чтобы заметка исчезла из текущего списка
+
+      // РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє Р·Р°РјРµС‚РѕРє С‡С‚РѕР±С‹ Р·Р°РјРµС‚РєР° РёСЃС‡РµР·Р»Р° РёР· С‚РµРєСѓС‰РµРіРѕ СЃРїРёСЃРєР°
       await refreshNotes();
-      
+
       console.log('Notes refreshed');
-      
+
       toast({
         title: t('note.moved.title', { defaultValue: 'Note moved' }),
         description: t('note.moved.desc', { defaultValue: 'Note has been moved' }),
@@ -380,11 +382,11 @@ const App: React.FC = () => {
 
   const handleMoveFolderToFolder = async (folderId: string, targetFolderId: string | null) => {
     const success = await moveFolderToFolder(folderId, targetFolderId);
-    
+
     if (success) {
-      // Обновляем список папок после перемещения
+      // РћР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРѕРє РїР°РїРѕРє РїРѕСЃР»Рµ РїРµСЂРµРјРµС‰РµРЅРёСЏ
       await refreshFolders();
-      
+
       toast({
         title: t('folder.moved.title', { defaultValue: 'Folder moved' }),
         description: t('folder.moved.desc', { defaultValue: 'Folder moved successfully' }),
@@ -401,7 +403,7 @@ const App: React.FC = () => {
 
   const handleReorderFolders = async (folderId: string, newOrder: number) => {
     const success = await reorderFoldersHandler(folderId, newOrder);
-    
+
     if (!success) {
       toast({
         title: t('error.title', { defaultValue: 'Error' }),
@@ -414,24 +416,24 @@ const App: React.FC = () => {
   const handleFolderSelect = (folderId: string | null) => {
     console.log('handleFolderSelect called:', folderId);
     setCurrentFolderId(folderId);
-    // Сбрасываем поиск при смене папки
+    // РЎР±СЂР°СЃС‹РІР°РµРј РїРѕРёСЃРє РїСЂРё СЃРјРµРЅРµ РїР°РїРєРё
     setSearchQuery('');
     setIsSearchOpen(false);
   };
 
   const handleBackToRoot = () => {
     if (!currentFolderId) {
-      // Уже в корне, некуда возвращаться
+      // РЈР¶Рµ РІ РєРѕСЂРЅРµ, РЅРµРєСѓРґР° РІРѕР·РІСЂР°С‰Р°С‚СЊСЃСЏ
       return;
     }
-    
-    // Находим текущую папку и переходим к её родителю
+
+    // РќР°С…РѕРґРёРј С‚РµРєСѓС‰СѓСЋ РїР°РїРєСѓ Рё РїРµСЂРµС…РѕРґРёРј Рє РµС‘ СЂРѕРґРёС‚РµР»СЋ
     const currentFolder = folders.find(f => f.id === currentFolderId);
     if (currentFolder) {
-      // Переходим к родительской папке (или в корень если parentId === null)
+      // РџРµСЂРµС…РѕРґРёРј Рє СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ РїР°РїРєРµ (РёР»Рё РІ РєРѕСЂРµРЅСЊ РµСЃР»Рё parentId === null)
       setCurrentFolderId(currentFolder.parentId ?? null);
     } else {
-      // Если папка не найдена, возвращаемся в корень
+      // Р•СЃР»Рё РїР°РїРєР° РЅРµ РЅР°Р№РґРµРЅР°, РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ РІ РєРѕСЂРµРЅСЊ
       setCurrentFolderId(null);
     }
   };
@@ -439,48 +441,85 @@ const App: React.FC = () => {
   const handleNoteArchive = async (noteId: string) => {
     const note = getNoteById(noteId);
     if (!note) return;
-    
+
     const success = await toggleNoteArchive(noteId);
-    
+
     if (success) {
-    toast({
+      toast({
         title: note.isArchived ? t('note.restored.title', { defaultValue: 'Note restored' }) : t('note.archived.title', { defaultValue: 'Note archived' }),
         description: note.isArchived ? t('note.restored.desc', { defaultValue: 'Restored from archive' }) : t('note.archived.desc', { defaultValue: 'Moved to archive' }),
-      duration: 3000,
-    });
+        duration: 3000,
+      });
     }
   };
 
   const handleArchive = () => {
+    // РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РІ СЂРµР¶РёРј СЃРїРёСЃРєР° Рё РѕС‚РєСЂС‹РІР°РµРј Р°СЂС…РёРІ
+    setCurrentView('list');
+    setSelectedNote(null);
+    setSidebarView('archive');
+  };
+
+  const handleTrash = () => {
+    // РџРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РІ СЂРµР¶РёРј СЃРїРёСЃРєР° Рё РѕС‚РєСЂС‹РІР°РµРј РєРѕСЂР·РёРЅСѓ
+    setCurrentView('list');
+    setSelectedNote(null);
+    setSidebarView('trash');
+  };
+
+  const handleBackToNotes = () => {
+    setSidebarView('notes');
+  };
+
+  const handleNoteRestore = async (_noteId: string) => {
+    await refreshNotes();
     toast({
-      title: t('archive.title', { defaultValue: 'Archive' }),
-      description: t('archive.soon', { defaultValue: 'Archive view will be added in the next version' }),
+      title: t('trash.noteRestored', { defaultValue: 'Note restored' }),
+      description: t('trash.noteRestoredDesc', { defaultValue: 'Note has been restored from trash' }),
+      duration: 3000,
+    });
+  };
+
+  const handleFolderRestore = async (_folderId: string) => {
+    await refreshFolders();
+    toast({
+      title: t('trash.folderRestored', { defaultValue: 'Folder restored' }),
+      description: t('trash.folderRestoredDesc', { defaultValue: 'Folder has been restored from trash' }),
       duration: 3000,
     });
   };
 
   const handleSort = () => {
-    console.log('Opening sort dialog');
+    console.log('рџ”„ Opening sort dialog');
     setIsSortDialogOpen(true);
   };
 
   const handleApplySort = async (options: SortOptions) => {
-    console.log('Applying sort:', options);
+    console.log('рџ”„ Applying sort:', options);
     try {
       let success = false;
 
       if (options.target === 'folders') {
+        console.log('Sorting folders...');
         success = await sortFolders(options.field, options.order);
       } else if (options.target === 'notes') {
         const noteField = options.field === 'name' ? 'title' : options.field;
+        console.log('Sorting notes by:', noteField);
         success = await sortNotes(noteField as 'title' | 'createdAt' | 'updatedAt', options.order);
       } else {
+        console.log('Sorting both...');
         success = await sortBoth(options.field, options.order);
       }
 
+      console.log('Sort result:', success);
+
       if (success) {
+        // РћР±РЅРѕРІР»СЏРµРј РґР°РЅРЅС‹Рµ
+        console.log('Refreshing data...');
         await refreshNotes();
         await refreshFolders();
+        console.log('Data refreshed');
+
         toast({
           title: t('sort.success', { defaultValue: 'Sorted successfully' }),
           description: t('sort.successDesc', { defaultValue: 'Items have been sorted' }),
@@ -504,22 +543,22 @@ const App: React.FC = () => {
     try {
       const { exportNotes } = await import('@/lib/storage');
       const jsonData = await exportNotes();
-      
-      // Создаем blob и скачиваем файл
+
+      // РЎРѕР·РґР°РµРј blob Рё СЃРєР°С‡РёРІР°РµРј С„Р°Р№Р»
       const blob = new Blob([jsonData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
-      // Форматируем имя файла с временной меткой
+
+      // Р¤РѕСЂРјР°С‚РёСЂСѓРµРј РёРјСЏ С„Р°Р№Р»Р° СЃ РІСЂРµРјРµРЅРЅРѕР№ РјРµС‚РєРѕР№
       const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
       link.download = `hidden-notes-backup-${timestamp}.json`;
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       toast({
         title: t('export.done', { defaultValue: 'Export completed' }),
         description: t('export.count', { defaultValue: `Exported notes: ${notes.length}` }),
@@ -535,12 +574,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Settings dialog теперь открывается через кнопку в header
+  // Settings dialog С‚РµРїРµСЂСЊ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ С‡РµСЂРµР· РєРЅРѕРїРєСѓ РІ header
 
-  // Функция восстановления из бэкапа
+  // Р¤СѓРЅРєС†РёСЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РёР· Р±СЌРєР°РїР°
   const handleRestoreFromBackup = async () => {
     const backups = await listBackups();
-    
+
     if (backups.length === 0) {
       toast({
         title: t('backup.none', { defaultValue: 'No backups' }),
@@ -549,16 +588,16 @@ const App: React.FC = () => {
       });
       return;
     }
-    
-    // Показываем информацию о последнем бэкапе
+
+    // РџРѕРєР°Р·С‹РІР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїРѕСЃР»РµРґРЅРµРј Р±СЌРєР°РїРµ
     const lastBackup = backups[backups.length - 1];
     if (!lastBackup) return;
-    
+
     if (confirm(t('backup.confirmRestore', { defaultValue: `Restore data from backup?\n\nDate: ${lastBackup.date}\nNotes: ${lastBackup.notesCount}\n\nUnsaved changes will be lost!` }))) {
       const success = await restoreFromBackup();
-      
+
       if (success) {
-        // Перезагружаем страницу для обновления данных
+        // РџРµСЂРµР·Р°РіСЂСѓР¶Р°РµРј СЃС‚СЂР°РЅРёС†Сѓ РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ РґР°РЅРЅС‹С…
         window.location.reload();
       } else {
         toast({
@@ -570,20 +609,20 @@ const App: React.FC = () => {
     }
   };
 
-  // Глобальные горячие клавиши
+  // Р“Р»РѕР±Р°Р»СЊРЅС‹Рµ РіРѕСЂСЏС‡РёРµ РєР»Р°РІРёС€Рё
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+E - Экспорт заметок
+      // Ctrl+E - Р­РєСЃРїРѕСЂС‚ Р·Р°РјРµС‚РѕРє
       if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();
         handleExportNotes();
       }
-      // Ctrl+/ - Помощь по горячим клавишам
+      // Ctrl+/ - РџРѕРјРѕС‰СЊ РїРѕ РіРѕСЂСЏС‡РёРј РєР»Р°РІРёС€Р°Рј
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
         setIsShortcutsOpen(true);
       }
-      // Ctrl+Shift+R - Восстановление из бэкапа
+      // Ctrl+Shift+R - Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РёР· Р±СЌРєР°РїР°
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
         e.preventDefault();
         handleRestoreFromBackup();
@@ -594,28 +633,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [notes.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Фильтрованный список заметок на основе поиска и папки
+  // Р¤РёР»СЊС‚СЂРѕРІР°РЅРЅС‹Р№ СЃРїРёСЃРѕРє Р·Р°РјРµС‚РѕРє РЅР° РѕСЃРЅРѕРІРµ РїРѕРёСЃРєР° Рё РїР°РїРєРё
   const filteredNotes = React.useMemo(() => {
     let result = notes;
-    
-    console.log('Filtering notes:', { 
-      totalNotes: notes.length, 
-      currentFolderId, 
+
+    console.log('Filtering notes:', {
+      totalNotes: notes.length,
+      currentFolderId,
       searchQuery,
       notes: notes.map(n => ({ id: n.id, title: n.title, folderId: n.folderId }))
     });
-    
-    // Фильтр по папке
+
+    // Р¤РёР»СЊС‚СЂ РїРѕ РїР°РїРєРµ
     if (currentFolderId !== null) {
-      result = result.filter(note => note.folderId === currentFolderId);
+      result = result.filter(note => note.folderId === currentFolderId && !note.isArchived);
       console.log('Filtered by folder:', result.length, 'notes');
     } else {
-      // Показываем заметки без папки (корень)
-      result = result.filter(note => !note.folderId);
+      // РџРѕРєР°Р·С‹РІР°РµРј Р·Р°РјРµС‚РєРё Р±РµР· РїР°РїРєРё (РєРѕСЂРµРЅСЊ), РёСЃРєР»СЋС‡Р°СЏ Р°СЂС…РёРІРЅС‹Рµ Рё СѓРґР°Р»РµРЅРЅС‹Рµ
+      result = result.filter(note => !note.folderId && !note.isArchived);
       console.log('Filtered by root (no folder):', result.length, 'notes');
     }
-    
-    // Фильтр по поиску
+
+    // Р¤РёР»СЊС‚СЂ РїРѕ РїРѕРёСЃРєСѓ
     if (searchQuery) {
       result = result.filter(note =>
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -623,9 +662,9 @@ const App: React.FC = () => {
       );
       console.log('Filtered by search:', result.length, 'notes');
     }
-    
+
     console.log('Final filtered notes:', result.map(n => ({ id: n.id, title: n.title, folderId: n.folderId })));
-    
+
     return result;
   }, [notes, currentFolderId, searchQuery]);
 
@@ -635,7 +674,7 @@ const App: React.FC = () => {
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin mb-4">?</div>
+            <div className="animate-spin mb-4">вЏі</div>
             <p>{t('loading.notes', { defaultValue: 'Loading notes...' })}</p>
           </div>
         </div>
@@ -645,7 +684,7 @@ const App: React.FC = () => {
         <>
           {/* Conditional Header */}
           {currentView === 'list' && (
-            <header className="border-b border-border px-4 py-3 flex-shrink-0">
+            <header className="border-b border-border px-4 py-3 flex-shrink-0" style={{ position: 'relative', zIndex: 100 }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={handleCreateNote} title={t('header.newNote', { defaultValue: 'New note' })}>
@@ -654,9 +693,9 @@ const App: React.FC = () => {
                   <Button variant="ghost" size="icon" onClick={handleCreateFolder} title={t('header.createFolder', { defaultValue: 'Create folder' })}>
                     <FolderPlus className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={handleSearchToggle}
                     title={t('header.search', { defaultValue: 'Search' })}
                     className={isSearchOpen ? 'bg-accent text-accent-foreground' : ''}
@@ -666,22 +705,37 @@ const App: React.FC = () => {
                   <Button variant="ghost" size="icon" onClick={handleSort} title={t('header.sort', { defaultValue: 'Sort' })}>
                     <ArrowUpDown className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleArchive} title={t('header.archive', { defaultValue: 'Archive' })}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleArchive}
+                    title={t('header.archive', { defaultValue: 'Archive' })}
+                    className={sidebarView === 'archive' ? 'bg-accent text-accent-foreground' : ''}
+                  >
                     <Archive className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleTrash}
+                    title={t('header.trash', { defaultValue: 'Trash' })}
+                    className={sidebarView === 'trash' ? 'bg-accent text-accent-foreground' : ''}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsSettingsOpen(true)}
                     title={t('header.settings', { defaultValue: 'Settings' })}
                   >
                     <Settings className="h-4 w-4" />
                   </Button>
-                  
-                   {/* Иконки горячих клавиш и темы перенесены в настройки */}
+
+                  {/* РРєРѕРЅРєРё РіРѕСЂСЏС‡РёС… РєР»Р°РІРёС€ Рё С‚РµРјС‹ РїРµСЂРµРЅРµСЃРµРЅС‹ РІ РЅР°СЃС‚СЂРѕР№РєРё */}
                 </div>
               </div>
             </header>
@@ -728,24 +782,44 @@ const App: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1 overflow-hidden">
             {currentView === 'list' ? (
-              <Sidebar 
-                notes={filteredNotes}
-                folders={folders}
-                currentFolderId={currentFolderId}
-                onNoteSelect={handleNoteSelect} 
-                onNotesReorder={handleNotesReorder}
-                onNoteArchive={handleNoteArchive}
-                onNoteDelete={handleNoteDelete}
-                onNoteColorChange={handleNoteColorChange}
-                onMoveToFolder={handleMoveNoteToFolder}
-                onFolderSelect={handleFolderSelect}
-                onBackToRoot={handleBackToRoot}
-                onMoveNoteToFolder={handleMoveNoteToFolderSubmit}
-                onMoveFolderToFolder={handleMoveFolderToFolder}
-                onReorderFolders={handleReorderFolders}
-                onEditFolder={handleEditFolder}
-                searchQuery={searchQuery} 
-              />
+              <>
+                {sidebarView === 'notes' && (
+                  <Sidebar
+                    notes={filteredNotes}
+                    folders={folders}
+                    currentFolderId={currentFolderId}
+                    onNoteSelect={handleNoteSelect}
+                    onNotesReorder={handleNotesReorder}
+                    onNoteArchive={handleNoteArchive}
+                    onNoteDelete={handleNoteDelete}
+                    onNoteColorChange={handleNoteColorChange}
+                    onMoveToFolder={handleMoveNoteToFolder}
+                    onFolderSelect={handleFolderSelect}
+                    onBackToRoot={handleBackToRoot}
+                    onMoveNoteToFolder={handleMoveNoteToFolderSubmit}
+                    onMoveFolderToFolder={handleMoveFolderToFolder}
+                    onReorderFolders={handleReorderFolders}
+                    onEditFolder={handleEditFolder}
+                    onOpenArchive={handleArchive}
+                    onOpenTrash={handleTrash}
+                    searchQuery={searchQuery}
+                  />
+                )}
+                {sidebarView === 'archive' && (
+                  <ArchiveView
+                    onBack={handleBackToNotes}
+                    onNoteRestore={handleNoteRestore}
+                    onFolderRestore={handleFolderRestore}
+                  />
+                )}
+                {sidebarView === 'trash' && (
+                  <TrashView
+                    onBack={handleBackToNotes}
+                    onNoteRestore={handleNoteRestore}
+                    onFolderRestore={handleFolderRestore}
+                  />
+                )}
+              </>
             ) : (
               selectedNote && (
                 <NoteView
@@ -763,19 +837,19 @@ const App: React.FC = () => {
           </div>
 
           {/* Dialogs */}
-          <SettingsDialog 
+          <SettingsDialog
             open={isSettingsOpen}
             onOpenChange={setIsSettingsOpen}
             theme={theme}
             onToggleTheme={toggleTheme}
             onOpenShortcuts={() => setIsShortcutsOpen(true)}
           />
-          
-          <KeyboardShortcutsDialog 
-            open={isShortcutsOpen} 
+
+          <KeyboardShortcutsDialog
+            open={isShortcutsOpen}
             onOpenChange={setIsShortcutsOpen}
           />
-          
+
           <MoveToFolderDialog
             isOpen={isMoveToFolderDialogOpen}
             onClose={() => {
@@ -788,7 +862,7 @@ const App: React.FC = () => {
           />
 
 
-          {/* Toaster для уведомлений */}
+          {/* Toaster РґР»СЏ СѓРІРµРґРѕРјР»РµРЅРёР№ */}
           <Toaster />
         </>
       )}
