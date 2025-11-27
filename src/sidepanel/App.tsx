@@ -688,10 +688,10 @@ const App: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={handleCreateNote} title={t('header.newNote', { defaultValue: 'New note' })}>
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-5 w-5" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={handleCreateFolder} title={t('header.createFolder', { defaultValue: 'Create folder' })}>
-                    <FolderPlus className="h-4 w-4" />
+                    <FolderPlus className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -700,10 +700,10 @@ const App: React.FC = () => {
                     title={t('header.search', { defaultValue: 'Search' })}
                     className={isSearchOpen ? 'bg-accent text-accent-foreground' : ''}
                   >
-                    <Search className="h-4 w-4" />
+                    <Search className="h-5 w-5" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={handleSort} title={t('header.sort', { defaultValue: 'Sort' })}>
-                    <ArrowUpDown className="h-4 w-4" />
+                    <ArrowUpDown className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -712,7 +712,7 @@ const App: React.FC = () => {
                     title={t('header.archive', { defaultValue: 'Archive' })}
                     className={sidebarView === 'archive' ? 'bg-accent text-accent-foreground' : ''}
                   >
-                    <Archive className="h-4 w-4" />
+                    <Archive className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -721,7 +721,7 @@ const App: React.FC = () => {
                     title={t('header.trash', { defaultValue: 'Trash' })}
                     className={sidebarView === 'trash' ? 'bg-accent text-accent-foreground' : ''}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-5 w-5" />
                   </Button>
                 </div>
 
@@ -732,7 +732,7 @@ const App: React.FC = () => {
                     onClick={() => setIsSettingsOpen(true)}
                     title={t('header.settings', { defaultValue: 'Settings' })}
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-5 w-5" />
                   </Button>
 
                   {/* Иконки горячих клавиш и темы перенесены в настройки */}
