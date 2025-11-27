@@ -670,6 +670,14 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen w-full bg-background text-foreground flex flex-col">
+      {/* App Title Header */}
+      <div className="border-b border-border px-4 py-3 flex items-center gap-3">
+        <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-2xl">
+          👁️
+        </div>
+        <h1 className="text-xl font-semibold">Hidden Notes</h1>
+      </div>
+
       {/* Loading state */}
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
