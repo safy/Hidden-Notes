@@ -38,7 +38,8 @@
     "color": "Note color",
     "moveToFolder": "Move to folder",
     "archive": "Archive",
-    "delete": "Delete"
+    "delete": "Delete",
+    "untitled": "Untitled"
   },
   "search": {
     "placeholder": "Search notes...",
@@ -49,6 +50,7 @@
     "error": "Error",
     "back": "Back",
     "of": "of",
+    "loading": "Loading...",
     "dataIssues": "Data issues detected",
     "dataIssuesDesc": "Errors: {{count}}. Press Ctrl+Shift+R to restore.",
     "quotaExceeded": "Storage quota exceeded",
@@ -81,7 +83,6 @@
     "selectIcon": "Select Icon",
     "cancel": "Cancel",
     "save": "Save",
-    "delete": "Delete",
     "deleteConfirm": "Folder \"{{name}}\" contains {{count}} notes. Move them to root or delete with folder?",
     "moveToRoot": "Move to Root",
     "deleteAll": "Delete All",
@@ -103,7 +104,20 @@
     "currentFolder": "Current folder",
     "noFoldersAvailable": "No folders available",
     "move": "Move",
-    "create": "Create"
+    "created": {
+      "title": "Folder created",
+      "desc": "Folder created successfully"
+    },
+    "updated": {
+      "title": "Folder updated",
+      "desc": "Folder updated successfully"
+    },
+    "moved": {
+      "title": "Folder moved",
+      "desc": "Folder moved successfully"
+    },
+    "updateFailed": "Failed to update folder",
+    "moveFailed": "Failed to move folder"
   },
   "note": {
     "newNote": "New Note",
@@ -120,7 +134,24 @@
     "backToList": "Back to notes list",
     "editTitle": "Click to edit title",
     "save": "Save note",
-    "deleteNote": "Delete note"
+    "deleteNote": "Delete note",
+    "moved": {
+      "title": "Note moved",
+      "desc": "Note has been moved"
+    },
+    "deleted": {
+      "title": "Note deleted",
+      "desc": "Note has been removed from the list"
+    },
+    "archived": {
+      "title": "Note archived",
+      "desc": "Moved to archive"
+    },
+    "restored": {
+      "title": "Note restored",
+      "desc": "Restored from archive"
+    },
+    "moveFailed": "Failed to move note"
   },
   "editor": {
     "placeholder": "Start typing...",
@@ -142,9 +173,9 @@
     "link": "Link",
     "textColor": "Text Color",
     "backgroundColor": "Background Color",
-    "alignLeft": "Align Left",
-    "alignCenter": "Align Center",
-    "alignRight": "Align Right",
+    "alignLeft": "Align left",
+    "alignCenter": "Align center",
+    "alignRight": "Align right",
     "alignJustify": "Justify",
     "undo": "Undo",
     "redo": "Redo",
@@ -153,9 +184,6 @@
     "hideImage": "Hide Image",
     "unhideImage": "Show Image",
     "copyHidden": "Copy Hidden Text",
-    "alignLeft": "Align left",
-    "alignCenter": "Align center",
-    "alignRight": "Align right",
     "downloadImage": "Download image",
     "deleteImage": "Delete image",
     "text": "Text",
@@ -220,7 +248,18 @@
     "imageHidden": "Image hidden",
     "imageRevealed": "Image revealed",
     "textHidden": "Text hidden",
-    "textRevealed": "Text revealed"
+    "textRevealed": "Text revealed",
+    "themeChanged": {
+      "title": "Theme changed",
+      "desc": "Switched to {{theme}} theme"
+    },
+    "noteReady": "New note is ready to edit",
+    "noteSavedDesc": "Note saved successfully",
+    "noteDeletedDesc": "Note deleted",
+    "noteTitleChanged": "Title changed",
+    "noteRenamedTo": "Renamed",
+    "saveFailed": "Failed to save note",
+    "reorderFailed": "Failed to change folder order"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -266,30 +305,6 @@
     "folderRestored": "Folder restored",
     "folderRestoredDesc": "Folder has been restored from trash"
   },
-  "common": {
-    "error": "Error",
-    "back": "Back",
-    "of": "of",
-    "loading": "Loading...",
-    "dataIssues": "Data issues detected",
-    "dataIssuesDesc": "Errors: {{count}}. Press Ctrl+Shift+R to restore.",
-    "quotaExceeded": "Storage quota exceeded",
-    "quotaExceededDesc": "Extension storage is full (10 MB). Delete old notes or images to free up space."
-  },
-  "notes": {
-    "notFound": "Notes not found",
-    "empty": "No notes",
-    "foundOf": "Found",
-    "one": "note",
-    "many": "notes",
-    "reorder": "Drag to reorder",
-    "menu": "Note menu",
-    "color": "Note color",
-    "moveToFolder": "Move to folder",
-    "archive": "Archive",
-    "delete": "Delete",
-    "untitled": "Untitled"
-  },
   "sort": {
     "title": "Sort",
     "description": "Choose how to sort folders and notes",
@@ -312,9 +327,15 @@
     "successDesc": "Items have been sorted",
     "error": "Sort failed",
     "errorDesc": "Failed to sort items"
+  },
+  "error": {
+    "title": "Error",
+    "applyColor": "Failed to apply color"
+  },
+  "info": {
+    "soon": {
+      "title": "Info",
+      "reorder": "Reordering will be added in the next version"
+    }
   }
 }
-
-
-
-
