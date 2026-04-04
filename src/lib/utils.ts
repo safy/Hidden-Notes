@@ -106,40 +106,47 @@ export const KEYBOARD_SHORTCUTS = [
  */
 export function htmlToText(html: string): string {
   if (!html) return '';
-  
+
   // Создаем временный элемент для парсинга HTML
   const temp = document.createElement('div');
   temp.innerHTML = html;
-  
+
   // Получаем текст с сохранением переносов строк
   let text = '';
-  
+
   const walk = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE) {
       text += node.textContent || '';
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
-      
-      // Добавляем перенос строки для блочных элементов
-      if (['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BR'].includes(element.tagName)) {
-        if (text && !text.endsWith('\n')) {
-          text += '\n';
+
+      // Проверяем, это скрытый текст
+      if (element.classList.contains('hidden-text')) {
+        // Маскируем скрытый текст звездочками
+        const content = element.textContent || '';
+        text += '*'.repeat(Math.max(1, content.length));
+      } else {
+        // Добавляем перенос строки для блочных элементов
+        if (['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BR'].includes(element.tagName)) {
+          if (text && !text.endsWith('\n')) {
+            text += '\n';
+          }
         }
+
+        // Рекурсивно проходим по дочерним элементам
+        node.childNodes.forEach(child => walk(child));
       }
-      
-      // Рекурсивно проходим по дочерним элементам
-      node.childNodes.forEach(child => walk(child));
     }
   };
-  
+
   walk(temp);
-  
+
   // Очищаем текст
   text = text
     .trim()
     .replace(/\n\n+/g, '\n') // Удаляем множественные переносы
     .replace(/\s+/g, ' '); // Удаляем множественные пробелы
-  
+
   return text;
 }
 
