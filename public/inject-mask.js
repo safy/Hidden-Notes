@@ -7,6 +7,19 @@
 
 console.log('🔐 Inject-mask.js loaded in page context');
 
+// Magic strings as constants
+const MESSAGE_TYPES = {
+  CHECK_MASK: 'CHECK_CLIPBOARD_MASK',
+  MASK_RESULT: 'CLIPBOARD_MASK_RESULT'
+};
+
+const MESSAGE_SOURCES = {
+  WAR: 'hidden-notes-mask',
+  CONTENT_SCRIPT: 'hidden-notes-mask-content-script'
+};
+
+const STORAGE_PREFIX = 'masked_';
+
 /**
  * Initializes clipboard masking in page context
  * Intercepts paste events everywhere on page and in iframes
@@ -36,10 +49,11 @@ async function handlePasteInPageContext(event) {
     }
 
     // Ask Content Script: is there a hidden data flag?
+    const origin = window.location.origin || '*';
     window.postMessage({
-      type: 'CHECK_CLIPBOARD_MASK',
-      source: 'hidden-notes-mask',
-    }, '*');
+      type: MESSAGE_TYPES.CHECK_MASK,
+      source: MESSAGE_SOURCES.WAR,
+    }, origin);
 
     // Store reference to target element and event
     globalThis._currentPasteEvent = {
@@ -58,9 +72,10 @@ async function handlePasteInPageContext(event) {
  */
 function handleMessageFromContentScript(event) {
   if (event.source !== window) return;
-  if (event.data.source !== 'hidden-notes-mask-content-script') return;
+  if (event.origin !== window.location.origin && event.origin !== '*') return;
+  if (event.data.source !== MESSAGE_SOURCES.CONTENT_SCRIPT) return;
 
-  if (event.data.type === 'CLIPBOARD_MASK_RESULT') {
+  if (event.data.type === MESSAGE_TYPES.MASK_RESULT) {
     if (!event.data.hasMask) {
       return; // Regular data, no masking needed
     }
@@ -73,9 +88,18 @@ function handleMessageFromContentScript(event) {
 
     // Get data from clipboard
     navigator.clipboard.read().then((items) => {
-      if (items.length === 0) return;
+      if (items.length === 0) {
+        console.warn('[WARN] Clipboard is empty');
+        return;
+      }
 
-      items[0].getType('text/plain').then((blob) => {
+      const item = items[0];
+      if (!item.types.includes('text/plain')) {
+        console.warn('[WARN] Clipboard does not contain text data');
+        return;
+      }
+
+      item.getType('text/plain').then((blob) => {
         blob.text().then((realData) => {
           // Intercept paste
           pasteEvent.preventDefault();
@@ -95,24 +119,32 @@ function handleMessageFromContentScript(event) {
           target.style.letterSpacing = '0.5em';
 
           // Save real data
-          const inputId = target.id || `masked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          sessionStorage.setItem(`masked_${inputId}`, realData);
+          const inputId = target.id || `${STORAGE_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          sessionStorage.setItem(`${STORAGE_PREFIX}${inputId}`, realData);
           target.id = inputId;
 
           // Intercept form submission
           const form = target.closest('form');
           if (form) {
-            form.addEventListener('submit', () => {
-              const stored = sessionStorage.getItem(`masked_${inputId}`);
-              if (stored) {
-                target.value = stored;
-              }
-            });
+            // Only attach listener once per form
+            if (!form.maskingListenerAttached) {
+              form.maskingListenerAttached = true;
+              form.addEventListener('submit', () => {
+                const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${inputId}`);
+                if (stored) {
+                  target.value = stored;
+                }
+              });
+            }
           }
 
           console.log('✅ Hidden data masked in page context');
         });
       });
+    }).catch((error) => {
+      console.error('[ERROR] Failed to read clipboard:', error);
+      // Restore original paste behavior
+      return;
     });
   }
 }
