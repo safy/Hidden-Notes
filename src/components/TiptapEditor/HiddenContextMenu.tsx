@@ -185,52 +185,9 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
 
     const handleClick = (e: MouseEvent) => {
       setShowMenu(false);
-
-      // Ctrl + Click для копирования скрытого текста
-      if (e.ctrlKey && editor) {
-        const pos = editor.view.posAtDOM(e.target as Node, 0);
-
-        // Проверяем есть ли скрытый текст на позиции клика
-        let hasHiddenText = false;
-        let clickedText = '';
-
-        editor.state.doc.nodesBetween(pos - 50, pos + 50, (node, nodeStart) => {
-          if (node.isText) {
-            const hasHiddenMark = node.marks.some((mark) => mark.type.name === 'hiddenText');
-            if (hasHiddenMark && nodeStart <= pos && pos < nodeStart + node.nodeSize) {
-              hasHiddenText = true;
-              clickedText = node.text || '';
-              return false;
-            }
-          }
-          return true;
-        });
-
-        if (hasHiddenText && clickedText) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          console.log('[DEBUG] Copying hidden text via Ctrl+Click:', clickedText);
-
-          copyHiddenText(clickedText).then(() => {
-            toast({
-              title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
-              duration: 2000,
-            });
-          }).catch((err) => {
-            console.error('[ERROR] Failed to copy hidden text:', err);
-            // Fallback to regular copy if clipboard API fails
-            navigator.clipboard.writeText(clickedText).then(() => {
-              toast({
-                title: t('toast.textCopied', { defaultValue: 'Text copied' }),
-                duration: 2000,
-              });
-            });
-          });
-        }
-      }
     };
 
+    // Подключаем listeners на элемент editor'а
     const editorElement = editor.view.dom;
     editorElement.addEventListener('contextmenu', handleContextMenu);
     editorElement.addEventListener('click', handleClick);
@@ -239,7 +196,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       editorElement.removeEventListener('contextmenu', handleContextMenu);
       editorElement.removeEventListener('click', handleClick);
     };
-  }, [editor, toast]);
+  }, [editor, toast, t]);
 
   const toggleHidden = (hide: boolean) => {
     if (!editor) return;
@@ -263,7 +220,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
         }
         return false;
       }).run();
-      
+
       toast({
         title: hide ? t('toast.imageHidden', { defaultValue: 'Image hidden' }) : t('toast.imageRevealed', { defaultValue: 'Image revealed' }),
         duration: 2000,
@@ -283,7 +240,7 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
           editor.chain().focus().setTextSelection(currentHiddenSpan.end).run();
         }
       }
-      
+
       toast({
         title: hide ? t('toast.textHidden', { defaultValue: 'Text hidden' }) : t('toast.textRevealed', { defaultValue: 'Text revealed' }),
         duration: 2000,
@@ -293,6 +250,47 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
     setTimeout(() => {
       setShowMenu(false);
     }, 50);
+  };
+
+  const handleCopyText = () => {
+    if (!editor) return;
+
+    let textToCopy = '';
+
+    if (currentHiddenSpan) {
+      // Копируем скрытый текст из span'а
+      const { from, to } = { from: currentHiddenSpan.start, to: currentHiddenSpan.end };
+
+      editor.state.doc.nodesBetween(from, to, (node) => {
+        if (node.isText) {
+          textToCopy += node.text;
+        }
+      });
+    } else if (!isHidden) {
+      // Копируем выделенный текст
+      const { $from, $to } = editor.state.selection;
+      editor.state.doc.nodesBetween($from.pos, $to.pos, (node) => {
+        if (node.isText) {
+          textToCopy += node.text;
+        }
+      });
+    }
+
+    if (textToCopy) {
+      copyHiddenText(textToCopy).then(() => {
+        toast({
+          title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
+          duration: 2000,
+        });
+        setShowMenu(false);
+      }).catch((err) => {
+        console.error('Failed to copy hidden text:', err);
+        toast({
+          title: t('toast.error', { defaultValue: 'Failed to copy' }),
+          duration: 2000,
+        });
+      });
+    }
   };
 
   if (!showMenu) return null;
@@ -316,10 +314,10 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       style={{ top: `${menuPos.y}px`, left: `${menuPos.x}px` }}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Кнопка действия */}
+      {/* Кнопка действия (Show/Hide) */}
       {isHidden ? (
         <button
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2 w-full text-left"
           onClick={() => toggleHidden(false)}
           title={getButtonText(true)}
         >
@@ -328,13 +326,30 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
         </button>
       ) : (
         <button
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2 w-full text-left"
           onClick={() => toggleHidden(true)}
           title={getButtonText(false)}
         >
           <Eye className="h-5 w-5 text-gray-700 dark:text-gray-300" />
           <span className="text-sm text-gray-700 dark:text-gray-300">{getButtonText(false)}</span>
         </button>
+      )}
+
+      {/* Кнопка копирования для скрытого текста */}
+      {elementType === 'text' && isHidden && (
+        <>
+          <div className="border-t border-gray-300 dark:border-gray-600 my-1"></div>
+          <button
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-2 w-full text-left"
+            onClick={handleCopyText}
+            title={t('editor.copy', { defaultValue: 'Copy' })}
+          >
+            <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm text-gray-700 dark:text-gray-300">{t('editor.copy', { defaultValue: 'Copy' })}</span>
+          </button>
+        </>
       )}
     </div>
   );

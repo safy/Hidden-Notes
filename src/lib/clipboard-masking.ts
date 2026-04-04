@@ -1,15 +1,14 @@
 /**
  * @file: clipboard-masking.ts
- * @description: Utilities for copying hidden text with metadata to clipboard
- * @dependencies: Clipboard API
+ * @description: Utilities for copying hidden text with metadata to Chrome Storage
+ * @dependencies: Clipboard API, Chrome Storage API
  */
 
-const MASK_FLAG_TYPE = 'application/x-hidden-notes-masked';
+const MASK_KEY = 'lastMaskedText';
 
 /**
- * Копирует скрытый текст в буфер обмена с метаданными
+ * Копирует скрытый текст в буфер обмена с флагом в Chrome Storage
  * @param text - Реальные данные для копирования
- * @throws Error если Clipboard API недоступен
  */
 export async function copyHiddenText(text: string): Promise<void> {
   if (!navigator.clipboard) {
@@ -17,16 +16,20 @@ export async function copyHiddenText(text: string): Promise<void> {
   }
 
   try {
-    const textBlob = new Blob([text], { type: 'text/plain' });
-    const maskBlob = new Blob(['true'], { type: MASK_FLAG_TYPE });
+    // Копируем в буфер обмена
+    await navigator.clipboard.writeText(text);
+    console.log('✅ Text copied to clipboard');
 
-    const clipboardItem = new ClipboardItem({
-      'text/plain': textBlob,
-      [MASK_FLAG_TYPE]: maskBlob,
-    });
-
-    await navigator.clipboard.write([clipboardItem]);
-    console.log('✅ Hidden text copied with mask metadata');
+    // Сохраняем флаг маскирования в Chrome Storage (доступен для всех контекстов)
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.set({
+        [MASK_KEY]: {
+          timestamp: Date.now(),
+          text: text,
+        },
+      });
+      console.log('✅ Hidden text flag saved to Chrome Storage');
+    }
   } catch (error) {
     console.error('❌ Failed to copy hidden text:', error);
     throw error;
@@ -34,55 +37,52 @@ export async function copyHiddenText(text: string): Promise<void> {
 }
 
 /**
- * Проверяет, содержит ли буфер обмена флаг скрытых данных
+ * Проверяет, содержит ли Chrome Storage флаг скрытых данных
  * @returns Promise<boolean>
  */
 export async function isHiddenDataInClipboard(): Promise<boolean> {
   try {
-    if (!navigator.clipboard) {
+    if (typeof chrome === 'undefined' || !chrome.storage) {
       return false;
     }
 
-    const items = await navigator.clipboard.read();
+    return new Promise((resolve) => {
+      chrome.storage.local.get([MASK_KEY], (result) => {
+        if (chrome.runtime.lastError) {
+          console.warn('⚠️ Could not read Chrome Storage:', chrome.runtime.lastError);
+          resolve(false);
+          return;
+        }
 
-    return items.some(item => item.types.includes(MASK_FLAG_TYPE));
+        const data = result[MASK_KEY];
+        // Флаг действителен только 60 секунд
+        if (data && Date.now() - data.timestamp < 60000) {
+          console.log('✅ Found hidden text flag in storage');
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+    });
   } catch (error) {
-    console.warn('⚠️ Could not read clipboard:', error);
+    console.warn('⚠️ Could not check Chrome Storage:', error);
     return false;
   }
 }
 
 /**
- * Очищает флаг скрытых данных из буфера обмена
+ * Очищает флаг скрытых данных из Chrome Storage
  * @returns Promise<void>
  */
 export async function clearMaskFlag(): Promise<void> {
   try {
-    if (!navigator.clipboard) {
+    if (typeof chrome === 'undefined' || !chrome.storage) {
       return;
     }
 
-    // Читаем текущее содержимое буфера
-    const items = await navigator.clipboard.read();
-
-    if (items.length === 0) return;
-
-    // Получаем текст из первого item
-    const item = items[0];
-    if (!item) return;
-
-    const textBlob = await item.getType('text/plain');
-    const text = await textBlob.text();
-
-    // Пишем обратно без метаданных флага (только text/plain)
-    const newClipboardItem = new ClipboardItem({
-      'text/plain': new Blob([text], { type: 'text/plain' }),
-    });
-
-    await navigator.clipboard.write([newClipboardItem]);
-    console.log('✅ Mask flag cleared from clipboard');
+    chrome.storage.local.remove([MASK_KEY]);
+    console.log('✅ Mask flag cleared from Chrome Storage');
   } catch (error) {
     console.warn('⚠️ Could not clear mask flag:', error);
-    // Это не критично, просто логируем
   }
 }
