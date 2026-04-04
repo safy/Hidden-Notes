@@ -35,7 +35,7 @@
   "web_accessible_resources": [
     {
       "resources": ["inject-mask.js"],
-      "matches": ["https://*", "http://*"]
+      "matches": ["<all_urls>"]
     }
   ],
   "permissions": [
