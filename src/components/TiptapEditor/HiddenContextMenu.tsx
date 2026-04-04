@@ -220,13 +220,58 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       }
     };
 
+    // Обработчик стандартного копирования (Ctrl+C)
+    const handleCopy = (e: ClipboardEvent) => {
+      const selection = window.getSelection();
+      if (!selection || selection.toString().length === 0) return;
+
+      // Проверяем есть ли скрытый текст в выделении через editor state
+      let hasHiddenText = false;
+
+      if (editor) {
+        const { $from, $to } = editor.state.selection;
+        editor.state.doc.nodesBetween($from.pos, $to.pos, (node) => {
+          if (node.marks.some((mark) => mark.type.name === 'hiddenText')) {
+            hasHiddenText = true;
+            return false;
+          }
+          return true;
+        });
+      }
+
+      if (hasHiddenText) {
+        const text = selection.toString();
+        e.preventDefault();
+        e.stopPropagation();
+
+        copyHiddenText(text).then(() => {
+          toast({
+            title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
+            duration: 2000,
+          });
+        }).catch((err) => {
+          console.error('Failed to copy hidden text:', err);
+          // Fallback to regular copy if clipboard API fails
+          if (e.clipboardData) {
+            e.clipboardData.setData('text/plain', text);
+          }
+          toast({
+            title: t('toast.textCopied', { defaultValue: 'Text copied' }),
+            duration: 2000,
+          });
+        });
+      }
+    };
+
     const editorElement = editor.view.dom;
     editorElement.addEventListener('contextmenu', handleContextMenu);
     editorElement.addEventListener('click', handleClick);
+    editorElement.addEventListener('copy', handleCopy);
 
     return () => {
       editorElement.removeEventListener('contextmenu', handleContextMenu);
       editorElement.removeEventListener('click', handleClick);
+      editorElement.removeEventListener('copy', handleCopy);
     };
   }, [editor, toast]);
 
