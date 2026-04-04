@@ -206,18 +206,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 15% 25%, #999 0.8px, transparent 0.8px),
-    radial-gradient(circle at 85% 75%, #aaa 1.2px, transparent 1.2px),
-    radial-gradient(circle at 35% 45%, #888 0.6px, transparent 0.6px),
-    radial-gradient(circle at 65% 55%, #bbb 1.4px, transparent 1.4px),
-    radial-gradient(circle at 5% 85%, #777 0.9px, transparent 0.9px),
-    radial-gradient(circle at 95% 15%, #ccc 1.1px, transparent 1.1px),
-    radial-gradient(circle at 50% 10%, #999 0.7px, transparent 0.7px),
-    radial-gradient(circle at 25% 90%, #aaa 1.3px, transparent 1.3px),
-    radial-gradient(circle at 75% 30%, #888 0.5px, transparent 0.5px);
-  background-size: 12px 12px, 18px 18px, 8px 8px, 16px 16px, 20px 20px, 14px 14px, 10px 10px, 22px 22px, 6px 6px;
-  animation: telegram-noise 1.2s infinite ease-in-out;
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 0%,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%,
+    #e0e0e0 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
   z-index: 10;
   pointer-events: none;
   border-radius: 0.5rem;
@@ -244,17 +242,15 @@
 
 /* Dark mode support для скрытых изображений */
 .dark .hidden-image::before {
-  background: 
-    radial-gradient(circle at 15% 25%, #666 0.8px, transparent 0.8px),
-    radial-gradient(circle at 85% 75%, #555 1.2px, transparent 1.2px),
-    radial-gradient(circle at 35% 45%, #777 0.6px, transparent 0.6px),
-    radial-gradient(circle at 65% 55%, #444 1.4px, transparent 1.4px),
-    radial-gradient(circle at 5% 85%, #888 0.9px, transparent 0.9px),
-    radial-gradient(circle at 95% 15%, #333 1.1px, transparent 1.1px),
-    radial-gradient(circle at 50% 10%, #666 0.7px, transparent 0.7px),
-    radial-gradient(circle at 25% 90%, #555 1.3px, transparent 1.3px),
-    radial-gradient(circle at 75% 30%, #777 0.5px, transparent 0.5px);
-  background-size: 12px 12px, 18px 18px, 8px 8px, 16px 16px, 20px 20px, 14px 14px, 10px 10px, 22px 22px, 6px 6px;
+  background: linear-gradient(
+    90deg,
+    #404040 0%,
+    #505050 25%,
+    #404040 50%,
+    #505050 75%,
+    #404040 100%
+  );
+  background-size: 200% 100%;
 }
 
 @layer base {
