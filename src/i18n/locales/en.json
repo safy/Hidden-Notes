@@ -245,6 +245,7 @@
     "imageDownloadFailed": "Failed to download image",
     "imageDeleted": "Image deleted",
     "textCopied": "Text copied",
+    "copiedHidden": "Hidden text copied (will be masked when pasted)",
     "imageHidden": "Image hidden",
     "imageRevealed": "Image revealed",
     "textHidden": "Text hidden",

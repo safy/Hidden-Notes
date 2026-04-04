@@ -11,6 +11,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { TextSelection } from '@tiptap/pm/state';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { copyHiddenText } from '@/lib/clipboard-masking';
 
 interface HiddenContextMenuProps {
   editor: Editor | null;
@@ -184,26 +185,34 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
 
     const handleClick = (e: MouseEvent) => {
       setShowMenu(false);
-      
+
       // Ctrl + Click для копирования скрытого текста
       if (e.ctrlKey) {
         const target = e.target as HTMLElement;
         const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
-        
+
         if (hiddenTextElement) {
           e.preventDefault();
           e.stopPropagation();
-          
+
           if (window.getSelection) {
             window.getSelection()?.removeAllRanges();
           }
-          
+
           const text = hiddenTextElement.textContent?.trim() || '';
           if (text) {
-            navigator.clipboard.writeText(text).then(() => {
+            copyHiddenText(text).then(() => {
               toast({
-                title: t('toast.textCopied', { defaultValue: 'Text copied' }),
+                title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
                 duration: 2000,
+              });
+            }).catch(() => {
+              // Fallback to regular copy if clipboard API fails
+              navigator.clipboard.writeText(text).then(() => {
+                toast({
+                  title: t('toast.textCopied', { defaultValue: 'Text copied' }),
+                  duration: 2000,
+                });
               });
             });
           }
