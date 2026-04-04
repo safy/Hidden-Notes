@@ -436,6 +436,36 @@ console.groupEnd();
 - [ ] Все тесты проходят: `npm run test`
 - [ ] Нет ESLint ошибок: `npm run lint`
 
+## Clipboard Masking System
+
+### Overview
+Hidden Notes implements secure clipboard masking for sensitive data (passwords, API keys, credit cards).
+
+### Architecture
+- `src/lib/clipboard-masking.ts` - Core utilities
+- `src/content-scripts/clipboard-mask.ts` - Paste interception on websites
+- `public/inject-mask.js` - Works in iframes (Stripe, PayPal, etc.)
+
+### How It Works
+1. User copies hidden text from Hidden-Notes
+2. copyHiddenText() adds metadata to clipboard
+3. Content Script on any website intercepts paste
+4. Real data is pasted but visually masked with asterisks
+5. On form submit, real data is restored
+
+### Testing
+Run: `npm run test:unit -- tests/unit/clipboard-masking.test.ts`
+
+### Security Notes
+- Visual masking protects from screenshots/streams
+- Real data kept in memory only (sessionStorage)
+- Cleared when tab closes
+
+### Complete Guide
+See [CLIPBOARD_MASKING_GUIDE.md](./CLIPBOARD_MASKING_GUIDE.md) for detailed documentation.
+
+---
+
 ## 🎯 Принципы Разработки
 
 ### Всегда опирайтесь на DRAG_DROP_TIPTAP_GUIDE.md

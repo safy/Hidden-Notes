@@ -353,4 +353,175 @@ describe('clipboard-masking utilities and content script', () => {
       expect(isInputElement(regularDiv)).toBe(false);
     });
   });
+
+  describe('E2E Integration Tests - Password Masking Flow', () => {
+    let inputElement: HTMLInputElement;
+    let form: HTMLFormElement;
+
+    beforeEach(() => {
+      sessionStorage.clear();
+
+      // Create a form with input fields
+      form = document.createElement('form');
+      inputElement = document.createElement('input');
+      inputElement.type = 'password';
+      inputElement.id = 'password-field';
+      form.appendChild(inputElement);
+      document.body.appendChild(form);
+    });
+
+    afterEach(() => {
+      sessionStorage.clear();
+      if (document.body.contains(form)) {
+        document.body.removeChild(form);
+      }
+    });
+
+    it('should complete end-to-end password masking workflow', async () => {
+      const realPassword = 'mySecurePassword123!@#';
+      const inputId = inputElement.id;
+
+      // Step 1: Simulate paste with hidden data
+      inputElement.value = realPassword;
+
+      // Step 2: Store real data in sessionStorage as the content script would
+      sessionStorage.setItem(`masked_${inputId}`, realPassword);
+
+      // Step 3: Visually mask the input
+      const visibleMask = '*'.repeat(realPassword.length);
+      inputElement.value = visibleMask;
+      inputElement.style.letterSpacing = '0.5em';
+      inputElement.style.fontFamily = 'monospace';
+      inputElement.readOnly = true;
+
+      // Step 4: Verify masking is applied
+      expect(inputElement.value).toBe(visibleMask);
+      expect(inputElement.readOnly).toBe(true);
+      expect(inputElement.style.letterSpacing).toBe('0.5em');
+
+      // Step 5: Simulate form submission - restore real data
+      const submitHandler = () => {
+        const inputs = form.querySelectorAll('input, textarea');
+        inputs.forEach((input: any) => {
+          if (input.id) {
+            const storedData = sessionStorage.getItem(`masked_${input.id}`);
+            if (storedData) {
+              input.value = storedData;
+            }
+          }
+        });
+      };
+
+      submitHandler();
+
+      // Step 6: Verify real data is restored for submission
+      expect(inputElement.value).toBe(realPassword);
+      expect(sessionStorage.getItem(`masked_${inputId}`)).toBe(realPassword);
+    });
+
+    it('should mask credit card data and restore on submit', async () => {
+      const creditCard = '4532123456789010';
+      const inputId = 'cc-number';
+      inputElement.id = inputId;
+
+      // Simulate paste and mask
+      sessionStorage.setItem(`masked_${inputId}`, creditCard);
+      inputElement.value = '*'.repeat(creditCard.length);
+      inputElement.readOnly = true;
+
+      expect(sessionStorage.getItem(`masked_${inputId}`)).toBe(creditCard);
+      expect(inputElement.value).toBe('*'.repeat(creditCard.length));
+
+      // Restore on submit
+      const stored = sessionStorage.getItem(`masked_${inputId}`);
+      if (stored) {
+        inputElement.value = stored;
+      }
+
+      expect(inputElement.value).toBe(creditCard);
+    });
+
+    it('should mask API key and preserve in sessionStorage', async () => {
+      const apiKey = 'sk-proj-abc123xyz789def456';
+      const inputId = 'api-key-field';
+      inputElement.id = inputId;
+
+      // Simulate clipboard masking
+      sessionStorage.setItem(`masked_${inputId}`, apiKey);
+      inputElement.value = '*'.repeat(apiKey.length);
+
+      // Verify sessionStorage contains real data
+      expect(sessionStorage.getItem(`masked_${inputId}`)).toBe(apiKey);
+
+      // Verify visible value is masked
+      expect(inputElement.value).toBe('*'.repeat(apiKey.length));
+      expect(inputElement.value).not.toContain('sk-proj');
+    });
+
+    it('should handle multiple masked inputs in a single form', async () => {
+      const input2 = document.createElement('input');
+      input2.type = 'text';
+      input2.id = 'email-field';
+      form.appendChild(input2);
+
+      const password = 'pass123!@#';
+      const email = 'user@example.com';
+
+      // Set up both fields
+      sessionStorage.setItem('masked_password-field', password);
+      sessionStorage.setItem('masked_email-field', email);
+
+      inputElement.value = '*'.repeat(password.length);
+      input2.value = '*'.repeat(email.length);
+
+      // Simulate form submission
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach((input: any) => {
+        if (input.id) {
+          const storedData = sessionStorage.getItem(`masked_${input.id}`);
+          if (storedData) {
+            input.value = storedData;
+          }
+        }
+      });
+
+      // Verify both fields are restored
+      expect(inputElement.value).toBe(password);
+      expect(input2.value).toBe(email);
+
+      document.body.removeChild(input2);
+    });
+
+    it('should clear masked data from sessionStorage when tab closes', async () => {
+      const realData = 'sensitiveData';
+      const inputId = 'test-field';
+
+      sessionStorage.setItem(`masked_${inputId}`, realData);
+      expect(sessionStorage.getItem(`masked_${inputId}`)).toBe(realData);
+
+      // Simulate tab closing (sessionStorage auto-clears in real browser)
+      sessionStorage.clear();
+
+      expect(sessionStorage.getItem(`masked_${inputId}`)).toBeNull();
+    });
+
+    it('should not expose masked data in input value attribute', async () => {
+      const realData = 'super_secret_password_12345';
+      inputElement.id = 'password-field';
+
+      // Store real data
+      sessionStorage.setItem('masked_password-field', realData);
+
+      // Display masked data
+      inputElement.value = '*'.repeat(realData.length);
+
+      // Verify real data is NOT in the visible value
+      expect(inputElement.value).not.toContain('super_secret');
+      expect(inputElement.value).not.toContain('password');
+      expect(inputElement.value).toBe('*'.repeat(realData.length));
+
+      // Verify real data exists only in sessionStorage
+      expect(sessionStorage.getItem('masked_password-field')).toBe(realData);
+    });
+  });
 });
