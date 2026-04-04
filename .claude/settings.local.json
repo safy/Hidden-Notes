@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm list:*)",
+      "Bash(npx vitest:*)",
+      "Bash(git checkout:*)",
+      "Bash(grep -E \"\\\\.\\(test|spec\\)\\\\.\\(js|ts|jsx|tsx\\)$\")",
+      "Bash(node -c /d/Hidden-Notes/public/inject-mask.js)",
+      "Bash(node -e \"const m = require\\('./public/manifest.json'\\); console.log\\('✓ Valid JSON'\\); console.log\\('✓ content_scripts registered:', m.content_scripts ? 'Yes' : 'No'\\); console.log\\('✓ web_accessible_resources registered:', m.web_accessible_resources ? 'Yes' : 'No'\\); console.log\\('✓ clipboardRead permission:', m.permissions.includes\\('clipboardRead'\\) ? 'Yes' : 'No'\\); console.log\\('✓ clipboardWrite permission:', m.permissions.includes\\('clipboardWrite'\\) ? 'Yes' : 'No'\\);\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('/d/Hidden-Notes/src/i18n/locales/en.json'\\).toast, null, 2\\)\\)\")",
+      "Bash(python3 -m json.tool src/i18n/locales/en.json)",
+      "Bash(python3 -m json.tool src/i18n/locales/ru.json)",
+      "Bash(node -c tests/unit/clipboard-masking.test.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(node --check /d/Hidden-Notes/tests/unit/clipboard-masking.test.ts)",
+      "Read(//d/tmp/**)",
+      "Read(//c/Users/EE47~1/AppData/Local/Temp/claude/**)",
+      "Bash(npm ls:*)",
+      "Bash(node -e \"const vm = require\\('vm'\\); const code = \\\\`import { describe, it, expect } from 'vitest'; describe\\('test', \\(\\) => { it\\('should pass', \\(\\) => { expect\\(1\\).toBe\\(1\\); }\\); }\\);\\\\`; console.log\\('Code is syntactically valid'\\);\")"
+    ]
+  }
+}

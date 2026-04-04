@@ -1,10 +1,11 @@
 import { vi } from 'vitest';
 
-try {
-  require('@testing-library/jest-dom');
-} catch (e) {
-  console.warn('testing-library/jest-dom not available', e);
-}
+// Note: jest-dom import commented out as it's optional
+// try {
+//   require('@testing-library/jest-dom');
+// } catch (e) {
+//   console.warn('testing-library/jest-dom not available', e);
+// }
 
 // Setup global mocks before any tests run
 try {
