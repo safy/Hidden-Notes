@@ -24,10 +24,26 @@
   "side_panel": {
     "default_path": "src/sidepanel/index.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://*", "http://*"],
+      "js": ["src/content-scripts/clipboard-mask.ts"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject-mask.js"],
+      "matches": ["https://*", "http://*"]
+    }
+  ],
   "permissions": [
     "storage",
     "sidePanel",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "clipboardRead",
+    "clipboardWrite"
   ],
   "host_permissions": []
 }
