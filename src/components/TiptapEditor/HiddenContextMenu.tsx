@@ -187,91 +187,57 @@ export const HiddenContextMenu: React.FC<HiddenContextMenuProps> = ({ editor }) 
       setShowMenu(false);
 
       // Ctrl + Click для копирования скрытого текста
-      if (e.ctrlKey) {
-        const target = e.target as HTMLElement;
-        const hiddenTextElement = target.closest('.hidden-text') as HTMLElement;
+      if (e.ctrlKey && editor) {
+        const pos = editor.view.posAtDOM(e.target as Node, 0);
 
-        if (hiddenTextElement) {
-          e.preventDefault();
-          e.stopPropagation();
+        // Проверяем есть ли скрытый текст на позиции клика
+        let hasHiddenText = false;
+        let clickedText = '';
 
-          if (window.getSelection) {
-            window.getSelection()?.removeAllRanges();
-          }
-
-          const text = hiddenTextElement.textContent?.trim() || '';
-          if (text) {
-            copyHiddenText(text).then(() => {
-              toast({
-                title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
-                duration: 2000,
-              });
-            }).catch(() => {
-              // Fallback to regular copy if clipboard API fails
-              navigator.clipboard.writeText(text).then(() => {
-                toast({
-                  title: t('toast.textCopied', { defaultValue: 'Text copied' }),
-                  duration: 2000,
-                });
-              });
-            });
-          }
-        }
-      }
-    };
-
-    // Обработчик стандартного копирования (Ctrl+C)
-    const handleCopy = (e: ClipboardEvent) => {
-      const selection = window.getSelection();
-      if (!selection || selection.toString().length === 0) return;
-
-      // Проверяем есть ли скрытый текст в выделении через editor state
-      let hasHiddenText = false;
-
-      if (editor) {
-        const { $from, $to } = editor.state.selection;
-        editor.state.doc.nodesBetween($from.pos, $to.pos, (node) => {
-          if (node.marks.some((mark) => mark.type.name === 'hiddenText')) {
-            hasHiddenText = true;
-            return false;
+        editor.state.doc.nodesBetween(pos - 50, pos + 50, (node, nodeStart) => {
+          if (node.isText) {
+            const hasHiddenMark = node.marks.some((mark) => mark.type.name === 'hiddenText');
+            if (hasHiddenMark && nodeStart <= pos && pos < nodeStart + node.nodeSize) {
+              hasHiddenText = true;
+              clickedText = node.text || '';
+              return false;
+            }
           }
           return true;
         });
-      }
 
-      if (hasHiddenText) {
-        const text = selection.toString();
-        e.preventDefault();
-        e.stopPropagation();
+        if (hasHiddenText && clickedText) {
+          e.preventDefault();
+          e.stopPropagation();
 
-        copyHiddenText(text).then(() => {
-          toast({
-            title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
-            duration: 2000,
+          console.log('[DEBUG] Copying hidden text via Ctrl+Click:', clickedText);
+
+          copyHiddenText(clickedText).then(() => {
+            toast({
+              title: t('toast.copiedHidden', { defaultValue: 'Hidden text copied (will be masked when pasted)' }),
+              duration: 2000,
+            });
+          }).catch((err) => {
+            console.error('[ERROR] Failed to copy hidden text:', err);
+            // Fallback to regular copy if clipboard API fails
+            navigator.clipboard.writeText(clickedText).then(() => {
+              toast({
+                title: t('toast.textCopied', { defaultValue: 'Text copied' }),
+                duration: 2000,
+              });
+            });
           });
-        }).catch((err) => {
-          console.error('Failed to copy hidden text:', err);
-          // Fallback to regular copy if clipboard API fails
-          if (e.clipboardData) {
-            e.clipboardData.setData('text/plain', text);
-          }
-          toast({
-            title: t('toast.textCopied', { defaultValue: 'Text copied' }),
-            duration: 2000,
-          });
-        });
+        }
       }
     };
 
     const editorElement = editor.view.dom;
     editorElement.addEventListener('contextmenu', handleContextMenu);
     editorElement.addEventListener('click', handleClick);
-    editorElement.addEventListener('copy', handleCopy);
 
     return () => {
       editorElement.removeEventListener('contextmenu', handleContextMenu);
       editorElement.removeEventListener('click', handleClick);
-      editorElement.removeEventListener('copy', handleCopy);
     };
   }, [editor, toast]);
 
