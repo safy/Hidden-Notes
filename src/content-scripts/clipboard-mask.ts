@@ -88,7 +88,8 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
     }
 
     // Маскируем визуально
-    maskInputField(target, realData);
+    const maskedData = '*'.repeat(realData.length);
+    maskInputField(target, realData, maskedData);
 
     // Сохраняем реальные данные в sessionStorage
     const inputId = target.id || generateInputId();
@@ -112,9 +113,9 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
  * Реальные данные остаются в value, но отображаются звездочки
  * @param element - input/textarea элемент
  * @param realData - Реальные данные
+ * @param maskedData - Маскированные данные для отображения
  */
-function maskInputField(element: HTMLInputElement | HTMLTextAreaElement, realData: string): void {
-  const maskedData = '*'.repeat(realData.length);
+function maskInputField(element: HTMLInputElement | HTMLTextAreaElement, realData: string, maskedData: string): void {
 
   // Для input, можно использовать type="password"
   if (element instanceof HTMLInputElement && element.type === 'text') {
