@@ -114,6 +114,7 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
 /**
  * Маскирует данные в поле ввода визуально
  * Реальные данные остаются в value, но отображаются звездочки
+ * Пользователь может редактировать поле
  * @param element - input/textarea элемент
  * @param realData - Реальные данные
  * @param maskedData - Маскированные данные для отображения
@@ -138,8 +139,8 @@ function maskInputField(element: HTMLInputElement | HTMLTextAreaElement, realDat
   element.style.letterSpacing = '0.5em';
   element.style.fontFamily = 'monospace';
 
-  // Предотвращаем редактирование маскированного содержимого
-  element.readOnly = true;
+  // НЕ устанавливаем readOnly - пользователь должен иметь возможность редактировать
+  // element.readOnly = true; // Удалено - позволяем редактирование
 }
 
 /**
