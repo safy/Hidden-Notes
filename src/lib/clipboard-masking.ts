@@ -68,7 +68,10 @@ export async function clearMaskFlag(): Promise<void> {
     if (items.length === 0) return;
 
     // Получаем текст из первого item
-    const textBlob = await items[0].getType('text/plain');
+    const item = items[0];
+    if (!item) return;
+
+    const textBlob = await item.getType('text/plain');
     const text = await textBlob.text();
 
     // Пишем обратно без метаданных флага (только text/plain)

@@ -37,11 +37,11 @@ function injectMaskingScript(): void {
     script.src = chrome.runtime.getURL('inject-mask.js');
     script.onload = function() {
       console.log('✅ Masking script injected into page context');
-      this.remove();
+      script.remove();
     };
     script.onerror = function() {
       console.warn('⚠️ Failed to inject masking script, using Content Script fallback');
-      this.remove();
+      script.remove();
     };
     (document.head || document.documentElement).appendChild(script);
   } catch (error) {
@@ -77,7 +77,10 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
     const items = await navigator.clipboard.read();
     if (items.length === 0) return;
 
-    const textBlob = await items[0].getType('text/plain');
+    const item = items[0];
+    if (!item) return;
+
+    const textBlob = await item.getType('text/plain');
     const realData = await textBlob.text();
 
     // Вставляем реальные данные в поле

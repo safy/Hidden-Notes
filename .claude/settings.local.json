@@ -24,7 +24,9 @@
       "Read(//d/tmp/**)",
       "Read(//c/Users/EE47~1/AppData/Local/Temp/claude/**)",
       "Bash(npm ls:*)",
-      "Bash(node -e \"const vm = require\\('vm'\\); const code = \\\\`import { describe, it, expect } from 'vitest'; describe\\('test', \\(\\) => { it\\('should pass', \\(\\) => { expect\\(1\\).toBe\\(1\\); }\\); }\\);\\\\`; console.log\\('Code is syntactically valid'\\);\")"
+      "Bash(node -e \"const vm = require\\('vm'\\); const code = \\\\`import { describe, it, expect } from 'vitest'; describe\\('test', \\(\\) => { it\\('should pass', \\(\\) => { expect\\(1\\).toBe\\(1\\); }\\); }\\);\\\\`; console.log\\('Code is syntactically valid'\\);\")",
+      "Read(//c/Users/EE47~1/AppData/Local/Temp/claude/d--Hidden-Notes/85e010a3-7014-4dea-ac65-d02f5905082a/tasks/**)",
+      "Bash(git push:*)"
     ]
   }
 }
