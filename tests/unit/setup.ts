@@ -7,6 +7,34 @@ afterEach(() => {
   cleanup();
 });
 
+// Mock Blob.text() method if it doesn't exist
+if (!Blob.prototype.text) {
+  (Blob.prototype as any).text = async function () {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsText(this);
+    });
+  };
+}
+
+// Mock ClipboardItem
+global.ClipboardItem = class {
+  data: Record<string, Blob>;
+
+  constructor(data: Record<string, Blob | Promise<Blob>>) {
+    this.data = data as Record<string, Blob>;
+  }
+
+  async getType(type: string): Promise<Blob> {
+    return this.data[type] || new Blob();
+  }
+
+  get types(): string[] {
+    return Object.keys(this.data);
+  }
+} as any;
+
 // Mock Chrome API
 global.chrome = {
   storage: {
