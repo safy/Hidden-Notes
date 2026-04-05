@@ -199,10 +199,16 @@ function isInputElement(element: any): boolean {
 }
 
 /**
- * Генерирует уникальный ID для поля ввода
+ * Генерирует криптографически стойкий уникальный ID
+ * Использует Web Crypto API вместо Math.random() для улучшенной безопасности
  */
 function generateInputId(): string {
-  return `masked_input_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const randomBytes = new Uint8Array(12);
+  crypto.getRandomValues(randomBytes);
+  const hex = Array.from(randomBytes)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+  return `masked_${hex}`;
 }
 
 // Инициализируем при загрузке скрипта
