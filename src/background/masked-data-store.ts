@@ -29,6 +29,21 @@ class MaskedDataStore {
    * @returns Promise that resolves when stored
    */
   set(id: string, data: string): Promise<void> {
+    // Validation: id must be non-empty string
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      return Promise.reject(new Error('Invalid id: must be non-empty string'));
+    }
+
+    // Validation: data must be non-empty string
+    if (!data || typeof data !== 'string') {
+      return Promise.reject(new Error('Invalid data: must be non-empty string'));
+    }
+
+    // Protection from very large data (max 10KB)
+    if (data.length > 10240) {
+      return Promise.reject(new Error('Data exceeds max size of 10KB'));
+    }
+
     const now = Date.now();
     this.store.set(id, {
       id,
@@ -46,6 +61,11 @@ class MaskedDataStore {
    * @returns Promise resolving to data or null if not found/expired
    */
   async get(id: string): Promise<string | null> {
+    // Validation: id must be non-empty string
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      throw new Error('Invalid id: must be non-empty string');
+    }
+
     const entry = this.store.get(id);
 
     if (!entry) {
@@ -95,7 +115,7 @@ class MaskedDataStore {
       if (cleanedCount > 0) {
         console.log(`🧹 Cleaned up ${cleanedCount} expired masked data entries`);
       }
-    }, 30000); // Check every 30 seconds
+    }, 60000); // Check every 60 seconds (optimized for 5-minute TTL)
   }
 
   destroy(): void {
