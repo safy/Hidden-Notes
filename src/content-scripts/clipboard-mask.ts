@@ -94,9 +94,13 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
     const maskedData = '*'.repeat(realData.length);
     maskInputField(target, realData, maskedData);
 
-    // Сохраняем реальные данные в sessionStorage
+    // Сохраняем реальные данные в Service Worker (безопаснее чем sessionStorage)
     const inputId = target.id || generateInputId();
-    sessionStorage.setItem(`masked_${inputId}`, realData);
+    await chrome.runtime.sendMessage({
+      type: 'STORE_MASKED_DATA',
+      id: inputId,
+      data: realData,
+    });
     target.id = inputId;
 
     // Перехватываем отправку формы, чтобы отправить реальные данные
@@ -148,20 +152,41 @@ function maskInputField(element: HTMLInputElement | HTMLTextAreaElement, realDat
  * @param form - HTMLFormElement
  */
 function interceptFormSubmit(form: HTMLFormElement): void {
-  form.addEventListener('submit', (e) => {
+  // Проверяем, не добавлен ли уже listener (избегаем дублей)
+  if ((form as any).maskingListenerAttached) {
+    console.log('⚠️ Listener already attached to this form, skipping');
+    return;
+  }
+
+  form.addEventListener('submit', async (e) => {
     // Восстанавливаем реальные данные перед отправкой
     const inputs = form.querySelectorAll('input, textarea');
-    inputs.forEach((input: any) => {
-      const inputId = input.id;
-      if (inputId) {
-        const realData = sessionStorage.getItem(`masked_${inputId}`);
-        if (realData) {
-          input.value = realData;
-          console.log('✅ Real data restored for form submission');
+
+    for (const input of Array.from(inputs)) {
+      const inputElement = input as HTMLInputElement | HTMLTextAreaElement;
+      const inputId = inputElement.id;
+
+      if (inputId && inputId.startsWith('masked_')) {
+        try {
+          // Получаем реальные данные из Service Worker
+          const response = await chrome.runtime.sendMessage({
+            type: 'GET_MASKED_DATA',
+            id: inputId,
+          });
+
+          if (response.success && response.data) {
+            inputElement.value = response.data;
+            console.log('✅ Real data restored from Service Worker for form submission');
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not restore masked data:', error);
         }
       }
-    });
+    }
   });
+
+  // Отмечаем, что listener уже добавлен
+  (form as any).maskingListenerAttached = true;
 }
 
 /**
