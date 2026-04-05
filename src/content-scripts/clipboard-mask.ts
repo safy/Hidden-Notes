@@ -124,8 +124,28 @@ async function handlePaste(event: ClipboardEvent): Promise<void> {
  * @param maskedData - Маскированные данные для отображения
  */
 function maskInputField(element: HTMLInputElement | HTMLTextAreaElement, realData: string, maskedData: string): void {
+  // Проверяем если это структурированное поле (MM/YY, дата, телефон)
+  const placeholder = (element as HTMLInputElement).placeholder?.toLowerCase() || '';
+  const name = element.name?.toLowerCase() || '';
+  const inputType = (element as HTMLInputElement).type?.toLowerCase() || '';
 
-  // Для input, можно использовать type="password"
+  // Паттерны структурированных полей которые НЕ нужно маскировать
+  const structuredPatterns = ['mm/yy', 'mm/yyyy', 'expir', 'date', 'month', 'year', 'phone', 'tel', 'cvv', 'cvc', 'postal', 'zip'];
+  const isStructured = structuredPatterns.some(pattern =>
+    placeholder.includes(pattern) || name.includes(pattern) || inputType === pattern
+  );
+
+  // Для структурированных полей - не маскируем, оставляем как есть
+  if (isStructured) {
+    console.log('ℹ️ Structured field detected, skipping mask for:', {
+      placeholder,
+      name,
+      type: inputType,
+    });
+    return;
+  }
+
+  // Для обычных полей - маскируем
   if (element instanceof HTMLInputElement && element.type === 'text') {
     // Заменяем тип на password для встроенного маскирования
     try {
