@@ -5,6 +5,8 @@
  * @created: 2025-10-15
  */
 
+import { maskedDataStore } from './masked-data-store';
+
 console.log('Hidden Notes: Background Service Worker started');
 
 /**
@@ -42,7 +44,32 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ status: 'PONG' });
   }
 
+  if (message.type === 'STORE_MASKED_DATA') {
+    maskedDataStore.set(message.id, message.data).then(() => {
+      sendResponse({ success: true });
+    });
+    return true; // Will respond asynchronously
+  }
+
+  if (message.type === 'GET_MASKED_DATA') {
+    maskedDataStore.get(message.id).then((data) => {
+      sendResponse({ success: true, data: data || null });
+    });
+    return true; // Will respond asynchronously
+  }
+
+  if (message.type === 'DELETE_MASKED_DATA') {
+    maskedDataStore.delete(message.id);
+    sendResponse({ success: true });
+    return true;
+  }
+
   return true; // Indicates we'll send a response asynchronously
+});
+
+// On extension shutdown
+chrome.runtime.onSuspend?.addListener(() => {
+  maskedDataStore.clear();
 });
 
 /**
