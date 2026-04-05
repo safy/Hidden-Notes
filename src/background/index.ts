@@ -5,6 +5,17 @@
  * @created: 2025-10-15
  */
 
+import { maskedDataStore } from './masked-data-store';
+
+/**
+ * Type definition for incoming messages
+ */
+interface MaskedDataMessage {
+  type: 'STORE_MASKED_DATA' | 'GET_MASKED_DATA' | 'DELETE_MASKED_DATA' | 'PING';
+  id?: string;
+  data?: string;
+}
+
 console.log('Hidden Notes: Background Service Worker started');
 
 /**
@@ -34,15 +45,71 @@ chrome.action.onClicked.addListener((tab) => {
 /**
  * Обработчик сообщений от других частей расширения
  */
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log('Background received message:', message);
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+  const msg = message as MaskedDataMessage;
+  console.log('Background received message:', msg);
 
-  // Здесь можно добавить обработку различных типов сообщений
-  if (message.type === 'PING') {
+  if (msg.type === 'PING') {
     sendResponse({ status: 'PONG' });
+    return true;
+  }
+
+  if (msg.type === 'STORE_MASKED_DATA') {
+    // Validate required parameters
+    if (!msg.id || !msg.data) {
+      sendResponse({ success: false, error: 'Missing id or data' });
+      return true;
+    }
+
+    maskedDataStore
+      .set(msg.id, msg.data)
+      .then(() => {
+        sendResponse({ success: true });
+      })
+      .catch((error) => {
+        console.error('Failed to store masked data:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Will respond asynchronously
+  }
+
+  if (msg.type === 'GET_MASKED_DATA') {
+    // Validate required parameters
+    if (!msg.id) {
+      sendResponse({ success: false, error: 'Missing id' });
+      return true;
+    }
+
+    maskedDataStore
+      .get(msg.id)
+      .then((data) => {
+        sendResponse({ success: true, data: data || null });
+      })
+      .catch((error) => {
+        console.error('Failed to retrieve masked data:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Will respond asynchronously
+  }
+
+  if (msg.type === 'DELETE_MASKED_DATA') {
+    // Validate required parameters
+    if (!msg.id) {
+      sendResponse({ success: false, error: 'Missing id' });
+      return true;
+    }
+
+    maskedDataStore.delete(msg.id);
+    sendResponse({ success: true });
+    return true;
   }
 
   return true; // Indicates we'll send a response asynchronously
+});
+
+// On extension shutdown
+chrome.runtime.onSuspend?.addListener(() => {
+  maskedDataStore.destroy();
 });
 
 /**
