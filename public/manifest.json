@@ -26,22 +26,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://github.com/*",
-        "https://gitlab.com/*",
-        "https://bitbucket.org/*",
-        "https://npmjs.com/*",
-        "https://hub.docker.com/*",
-        "https://aws.amazon.com/*",
-        "https://console.cloud.google.com/*",
-        "https://console.aws.amazon.com/*",
-        "https://dashboard.stripe.com/*",
-        "https://app.netlify.com/*",
-        "https://vercel.com/*",
-        "https://heroku.com/*",
-        "https://www.digitalocean.com/*",
-        "https://linode.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["src/content-scripts/clipboard-mask.ts"],
       "run_at": "document_end",
       "all_frames": false
